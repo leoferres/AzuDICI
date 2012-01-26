@@ -1,8 +1,8 @@
 These are the sources of the (pedagogical) parallel SAT solver
-AzuDICI. To compile, just run 'make'. This will create a 'bin' folder
-and will build 'bin/ad', the parallel solver. This solver has been
-inspired, quite heavily, by both the Barcelogic SAT solver and
-Lingeling (http://fmv.jku.at/lingeling/) by Armin Biere.
+AzuDICI. To compile, just run 'make'. This will build 'ad', the
+parallel solver. This solver has been inspired, quite heavily, by both
+the Barcelogic SAT solver and Lingeling (http://fmv.jku.at/lingeling/)
+by Armin Biere.
 
 The file 'src/version.h' contains the current version of the system.
 
@@ -13,6 +13,6 @@ AzuDICI is copyright (c) 2012 by Juan Olate and Leo Ferres, Department
 of Computer Science, Universidad de Concepción, Chile
 <lferres@inf.udec.cl>, <jolate@udec.cl> and by Roberto Asín Achá,
 Department of Computer Science, Universidad Católica de la Santísima
-Concepción, Concepción, Chile <rasin@ucsc.cl>
+Concepción, Concepción, Chile <rasin@ucsc.cl>.
 
 2012-01-25-21:35
