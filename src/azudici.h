@@ -1,12 +1,13 @@
-#ifndef _SOLVER_H_
-#define _SOLVER_H_
+#ifndef _AZUDICI_H_
+#define _AZUDICI_H_
 
 #include "clausedb.h"
 
 typedef struct _azuDICI{
   unsigned int lastUnitAdded; //this will be used in later versions of the solver
-  unsigned int lastTernaryAdded;
-  unsigned int lastNAryAdded;
+  unsigned int lastNaryAdded;  //this will be used in late versions
+  unsigned int randomNumberIndex;
+
   vec(unsigned int) lastBinariesAdded;
   State           state;
   Watches         watches;
@@ -14,8 +15,8 @@ typedef struct _azuDICI{
   Heap            heap;
   Clause          conflict;
   Clause          newLemma;
-  ClauseDB        *generalClauseDB;
-  ThreadClauseDB  *selfClauseDB;
+  ClauseDB        *cdb;
+  ThreadClauseDB  *owncdb;
   Stats           stats;
 } AzuDICI;
 
@@ -38,4 +39,4 @@ unsigned int set_true_due_to_decision(AzuDICI* ad, Lit l);
 unsigned int set_true_due_to_propagation(AzuDICI* ad, Lit l, Reason r);
 
 
-#endif /* _SOLVER_H_ */
+#endif /* _AZUDICI_H_ */

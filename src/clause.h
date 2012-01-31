@@ -3,10 +3,12 @@
 
 #include "common.h"
 #include "literal.h"
+#include "kvec.h"
+#include "ts_vec.h"
 
 typedef struct _naryclause {
-  ts_vec(bool) flags; //thread safe vector of literals
-  vec(Literal) lits; 
+  ts_vec(bool)  flags; //thread safe vector of literals
+  kvec(Literal) lits; 
   //unsigned int size;
   bool is_original; /*yes=input clause, no=lemma*/
   char padding[3];  /*half a cacheline per n-ary clause*/ //RECALCULATE THIS DEPENDING ON ts_vec size
@@ -19,7 +21,7 @@ typedef struct _teryclause {
 } TClause; 
 
 typedef struct _clause {
-  vec(Literal) lits;
+  kvec(Literal) lits;
   unsigned int size;
 } Clause; /*Can be unit, binary, ternary or nary*/
 
