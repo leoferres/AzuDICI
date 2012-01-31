@@ -5,20 +5,21 @@
 #include "literal.h"
 
 typedef struct _naryclause {
-  bool* flags;
-  ts_vec(Literal) lits; //thread safe vector of literals
+  ts_vec(bool) flags; //thread safe vector of literals
+  vec(Literal) lits; 
   //unsigned int size;
   bool is_original; /*yes=input clause, no=lemma*/
   char padding[3];  /*half a cacheline per n-ary clause*/ //RECALCULATE THIS DEPENDING ON ts_vec size
 } NClause; 
 
 typedef struct _teryclause {
+  ts_vec(bool) flags; //thread safe vector of literals
   Literal lits[3];
-  char padding[4]; /*half a cacheline per ternary clause*/
+  char padding[4]; /*half a cacheline per ternary clause*/ //RECALCULATE THIS DEPENDING ON ts_vec size
 } TClause; 
 
 typedef struct _clause {
-  ts_vec(Literal) lits;
+  vec(Literal) lits;
   unsigned int size;
 } Clause; /*Can be unit, binary, ternary or nary*/
 
