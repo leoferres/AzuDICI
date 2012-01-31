@@ -24,8 +24,6 @@ main(int argc, char *argv[]) {
 
   printf ("To report errors: <leoferres@gmail.com>\n");
 
-//testing git
-
   if (argc!=2) {
     printf ("%s\n",usage);
     return -1;
