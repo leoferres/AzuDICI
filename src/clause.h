@@ -35,5 +35,12 @@ typedef struct _naryThreadClause{
   unsigned int     posInDB;
 }ThNClause;
 
+typedef struct _reasonStruct{
+  unsigned int     size;
+  Literal          binLit;
+  lits*            tClPtr;
+  ThNClause*       thNClPtr; //this we need to update activity of clause
+}Reason;
+
 
 #endif /* _CLAUSE_H_ */
