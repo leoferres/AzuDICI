@@ -8,8 +8,8 @@ unsigned int nInsertedClauses;
 
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
-  kvec_init(inputClause.lits); //init inputClause
-  kvec_resize(Literal, inputClaue.lits, nVars);//Set size of nVars
+  kv_init(inputClause.lits); //init inputClause
+  kv_resize(Literal, inputClaue.lits, nVars);//Set size of nVars
 
   inputClause.size = 0; //the vector is nVars size, so we keep the number of lits actually added in other counter.
   nInsertedClauses=0;
@@ -49,10 +49,10 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*******************************/
 
   /*Init 3watches structures*/
-  kvec_init( cdb->3Watches );
-  kvec_resize( kvec(unsigned int), cdb->3Watches,  2*(nVars+1) );
+  kvec_init( cdb->ThreeWatches );
+  kvec_resize( kvec(unsigned int), cdb->ThreeWatches,  2*(nVars+1) );
   for(i=0;i<=2*(nVars+1);i++){
-    kvec_init( kvec_A(cdb->3Watches,i) );
+    kvec_init( kvec_A(cdb->ThreeWatches,i) );
   }
   /*************************/
 
@@ -252,7 +252,7 @@ void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
 
   for( i=0; i<3; i++){
     litIndex = lit_as_uint(-ternary.lits[i]);
-    vec_push_back( vec_ith(cdb->3Watches, litIndex), indexOfNewClause );
+    vec_push_back( vec_ith(cdb->ThreeWatches, litIndex), indexOfNewClause );
   }
 
   if(isOriginal) cdb->numInputClauses++;
