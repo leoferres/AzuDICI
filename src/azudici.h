@@ -2,18 +2,21 @@
 #define _AZUDICI_H_
 
 #include "clausedb.h"
+#include "threadclausedb.h"
 
 typedef struct _azuDICI{
-  unsigned int lastUnitAdded; //this will be used in later versions of the solver
-  unsigned int lastNaryAdded;  //this will be used in late versions
-  unsigned int randomNumberIndex;
-  unsigned int dlToBackjump;
-  unsigned int decisionLevel;
-  double       scoreBonus; //Remember to initialize this.
+  unsigned int        lastUnitAdded; //will be used in later versions
+  unsigned int        lastNaryAdded;  //will be used in late versions
+  unsigned int        randomNumberIndex;
+  unsigned int        dlToBackjump;
+  unsinged int        dlToBackjumpPos;
+  unsigned int        decisionLevel;
+  double              scoreBonus; //Remember to initialize this.
 
   kvec(unsigned int)  lastBinariesAdded;
   kvec(bool)          varMarks;
 
+  Reason              rUIP;
   State               state;
   Watches             watches;
   Model               model;
@@ -22,6 +25,7 @@ typedef struct _azuDICI{
   Clause              lemma;
   Clause              lemmaToLearn; //The shortened lemma
   ClauseDB            *cdb;
+  ThreadClauseDB      *tcdb;
   Stats               stats;
 } AzuDICI;
 
@@ -33,7 +37,7 @@ unsigned int azuDICI_solve(AzuDICI* ad);
 unsigned int azuDICI_propagate(AzuDICI* ad);
 void azuDICI_conflict_analysis(AzuDICI* ad);
 void azuDICI_lemma_shortening(AzuDICI* ad);
-void azuDICI_learn_lemma(AzuDICI* ad);
+void azuDICI_learn_lemma_backjump_and_set_uip(AzuDICI* ad);
 void azuDICI_clause_cleanup(AzuDICI* ad);
 void azuDICI_restart(AzuDICI* ad);
 Lit  azuDICI_decide(AzuDICI* ad);

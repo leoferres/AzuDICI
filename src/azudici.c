@@ -51,14 +51,17 @@ unsigned int azuDICI_solve(AzuDICI* ad){
   //setTrue at dl 0 all unit clauses
   if( !azuDICI_set_true_units(ad) ) return 20;
   Literal dec;
+  Reason r;
 
   while (true) {
     while( !azuDICI_propagate(ad) ){ //While conflict in propagate
-      if( ad->decisionLevel==0 ) return 20;
+      if( ad->decisionLevel == 0 ) return 20;
       azuDICI_conflict_analysis(ad);
       azuDICI_lemma_shortening(ad);
-      azuDICI_learn_lemma_and_backjump(ad);
-    } else break;      
+      azuDICI_learnLemma(ad);
+      azuDICI_backjump(ad);
+      azuDICI_set_true_uip(ad);
+    }
     
     azuDICI_restart_if_adequate(ad);
     if( !azuDICI_cleanup_if_adequate(ad) ) return 20;
@@ -172,8 +175,8 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
    */
   Clause cl = NULL;
   uint j, lastMarkedInLemma, testingIndex;
-  Lit litOfLemma, testingLit;
-  uint i, dl, dlPos, lowestDL;
+  Literal litOfLemma, testingLit;
+  uint i, lowestDL;
   Var v;
   bool litIsRedundant;
   Reason r;
@@ -199,12 +202,15 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
   // }
   //}
 
-  dl=0; dlPos=0; 
+  ad->dlToBackjump = 0; 
+  ad->dlToBackjumpPos=0; 
+
   stats.totalLearnedLits+=numLitsInLemma;
 
   ad->lemmaToLearn.size = 0;
 
-  //Go through the lits in lemma, and test if they're redundant
+  //Go through the lits in lemma (except the UIP - lemma[0])
+  // and test if they're redundant
   for( i=1; i < ad->lemma.size; i++ ){
     litIsRedundant=true;
 
@@ -282,11 +288,12 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
       //      varMarks.setUnMarked(var(litOfLemma));
     }else{
       kvec_A(ad->lemmaToLearn.lits, ad->lemmaToLearn.size) = litOfLemma;
-      if ( numLitsInLemmaToLearn>0 && dl < model_get_lit_DL(ad->model, litOfLemma) ){
-	dl=model_get_lit_DL(ad->model, litOfLemma);
-	dlPos=ad->lemmaToLearn.size;  //dlpos is position in lemma of maxDLLit
+      //Keep track of literal with highest dl besides de UIP
+      if ( ad->lemmaToLearn.size > 0 && ad->dlToBackjump < model_get_lit_DL(ad->model, litOfLemma) ){
+	ad->dlToBackjump = model_get_lit_DL(ad->model, litOfLemma);
+	ad->dlToBackjumpPos = ad->lemmaToLearn.size;  //dlpos is position in lemma of maxDLLit
       }
-      ad->lemmaTuLearn.size++;
+      ad->lemmaToLearn.size++;
     }
   }
 
@@ -300,6 +307,23 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     if (!(stats.numConflicts%10000))
     cout<<"total lits: "<<stats.totalLearnedLits<<" removed: "<<stats.totalRemovedLits<<"("<<(100*stats.totalRemovedLits)/stats.totalLearnedLits<<"pct)"<<endl;*/
 
+}
+
+void azuDICI_learn_lemma(AzuDICI* ad){
+  //learn clause stored in ad->lemmaToLearn
+  //store in ad->rUIP the reason to set the uip
+  //If nclause, the 2 watched literals are the uip and the highest dl one.
+
+  switch(ad->lemmaToLearn.size){
+  case 1:
+    break;
+  case 2:
+    break;
+  case 3:
+    break;
+  default:
+    //Nclause
+  }
 }
 
 #endif

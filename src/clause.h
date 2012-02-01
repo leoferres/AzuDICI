@@ -6,23 +6,33 @@
 #include "kvec.h"
 #include "ts_vec.h"
 
-typedef struct _naryclause {
-  ts_vec_t(bool)  flags; //thread safe vector of literals
+typedef struct _naryclause { /*half a cacheline per ternary clause*/ 
+  unsigned int    size;
+  bool            is_original; /*yes=input clause, no=lemma*/
+  bool            flags[14];   //supports max 14 threads
   kvec_t(Literal) lits; 
-  //unsigned int size;
-  bool is_original; /*yes=input clause, no=lemma*/
-  char padding[3];  /*half a cacheline per n-ary clause*/ //RECALCULATE THIS DEPENDING ON ts_vec size
 } NClause; 
 
-typedef struct _teryclause {
-  ts_vec_t(bool) flags; //thread safe vector of literals
+typedef struct _teryclause {/*half a cacheline per ternary clause*/ 
   Literal lits[3];
-  char padding[4]; /*half a cacheline per ternary clause*/ //RECALCULATE THIS DEPENDING ON ts_vec size
+  bool    flags[14]; //supports max 14 threads
+  char    padding[5]; 
 } TClause; 
 
 typedef struct _clause {
   kvec_t(Literal) lits;
   unsigned int size;
 } Clause; /*Can be unit, binary, ternary or nary*/
+
+typedef struct _naryThreadClause{
+  unsigned int size;
+  double       activity; 
+  Literal      lwatch1;
+  Literal      lwatch2;
+  Literal      cachedLit1;
+  Literal      cachedLit2;
+  unsigned int posInDB;
+}ThNClause;
+
 
 #endif /* _CLAUSE_H_ */
