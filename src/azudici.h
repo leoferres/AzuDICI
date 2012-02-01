@@ -7,17 +7,22 @@ typedef struct _azuDICI{
   unsigned int lastUnitAdded; //this will be used in later versions of the solver
   unsigned int lastNaryAdded;  //this will be used in late versions
   unsigned int randomNumberIndex;
+  unsigned int dlToBackjump;
+  unsigned int decisionLevel;
+  double       scoreBonus; //Remember to initialize this.
 
-  vec(unsigned int) lastBinariesAdded;
-  State           state;
-  Watches         watches;
-  Model           model;
-  Heap            heap;
-  Clause          conflict;
-  Clause          newLemma;
-  ClauseDB        *cdb;
-  ThreadClauseDB  *owncdb;
-  Stats           stats;
+  kvec(unsigned int)  lastBinariesAdded;
+  kvec(bool)          varMarks;
+
+  State               state;
+  Watches             watches;
+  Model               model;
+  Heap                heap;
+  Clause              conflict;
+  Clause              lemma;
+  Clause              lemmaToLearn; //The shortened lemma
+  ClauseDB            *cdb;
+  Stats               stats;
 } AzuDICI;
 
 /*Reserva de memoria para las estructuras de AzuDICI*/
