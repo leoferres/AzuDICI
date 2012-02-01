@@ -10,3 +10,16 @@ unsigned int lit_as_uint(Literal l) {
     return l*2+1;
 
 }
+
+/* Return the 0 literal*/
+inline Literal zero_lit(){
+    return 0;
+}
+
+/*Check if a literal is positive*/
+inline bool lit_is_positive(Literal lit){
+    if(lit>=0){
+        return true;
+    }
+    return false;
+}

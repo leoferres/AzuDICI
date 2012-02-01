@@ -5,6 +5,7 @@
 #include "varinfo.h"
 #include "heap.h"
 #include "common.h"
+#include "varMarks.h"
 
 typedef struct _model {
         kvec_t(Literal) model_stack; /* Keeps track of the state of the model */ 
@@ -30,7 +31,7 @@ Model init_model(unsigned int num_vars);
 
 inline bool lit_is_of_current_DL(Literal lit, Model model);
 inline unsigned int lit_DL(Literal lit, Model model);
-inline unsigned int lit_height(Literal lit);
+inline unsigned int lit_height(Literal lit, Model model);
 inline Literal  pop_and_set_undef(Model model);
 inline bool is_true(Literal lit, Model model);
 inline bool is_false(Literal lit, Model model);
@@ -65,8 +66,8 @@ inline Model init_model(unsigned int num_vars){
     model.last3propagated = -1;
     model.lastNpropagated = -1;
     kv_init(model.vinfo);
-    kv_resize(Literal,model.vinfo,model.n_vars+1);
-    model.assignment = model.n_lits;
+    kv_resize(VarInfo,model.vinfo,model.n_vars+1);
+    kv_resize(char,model.assignment),model.n_lits;
     model.vassignment = ((short unsigned *)((char *)model.assignment));
     model.dlMarker = zero_lit();
     model.decision_lvl = 0;
@@ -83,7 +84,7 @@ inline void print(Model model){
   for(i=kv_size(model.model_stack)-1;i>0;i--) {
     lit=kv_A(model.model_stack,i);
     if (lit != model.dlMarker) 
-      lit.print();
+      printf("%i ",lit);
     else
       printf("===========");
     if (i==model.last2propagated) printf("  <-- last2 propagated");
@@ -101,7 +102,7 @@ inline Literal get_next_marked_literal(VarMarks var_marks, Model model){
     lit = kv_A(model.model_stack,i);
    dassert(lit != model.dlMarker);
    i--;
-  } while(!var_marks.isMarked(var(lit)));
+  } while(!is_marked(var(lit)));
   return(lit);
 }
 
@@ -133,7 +134,7 @@ inline bool is_undef_var(Var v, Model model){
 }
 
 inline void set_true_in_assignment(Literal lit, Model model){
-    model.vassignment[var(lit)] &= lit.is_positive()?0xFDFC:0xFCFD; //D=1101 c=1100
+    model.vassignment[var(lit)] &= lit_is_positive(lit)?0xFDFC:0xFCFD; //D=1101 c=1100
 }
 
 inline void set_undef_in_assignment(Literal lit, Model model){
@@ -152,7 +153,7 @@ inline void set_true_due_to_reason(Literal lit, Reason r, Model model){
     vi->r=r;
     vi->decision_lvl=model.decision_lvl;
     vi->model_height=kv_size(model.model_stack)-1;
-    vi->last_phase=lit.is_positive();
+    vi->last_phase=lit_is_positive(lit);
 }
 
 inline void set_true_due_to_decision(Literal lit, Model model){
@@ -231,16 +232,6 @@ inline Reason reason_of_lit(Literal lit, Model model){
 
 inline bool is_decision(Literal lit, Model model){
     return reason_of_lit(lit,model).is_unit_clause() && lit_DL(lit,model) > 0;
-}
-
-inline void add_new_var(Model model){
-    model.n_vars++;
-    model.n_lits+=2;
-    model.vinfo.push();
-    model.assignment.push();
-    model.assignment.push();
-    model.vassignment = ((short unsigned *)((char *)model.assignment));
-    init_in_assignment(model.n_vars,model);
 }
 
 inline unsigned int model_size(Model model){
