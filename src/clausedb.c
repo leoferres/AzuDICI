@@ -103,8 +103,7 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
     }    
     //new clause will be read
     inputClause.size = 0;
-    cdb->numInputClauses++;
-    nInsertedClauses++;
+    //nInsertedClauses++;
   }else{
     kvec.A(inputClause.lits,inputClause.size) = l;
     inputClause.size++;
@@ -205,15 +204,16 @@ void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
 	break;
       }
     }
-    if(index>0) break;
+    if(index!=-1) break;
   }
   /*********************/
 
   /*In case the clause already exists, modify flags if it's learned*/
   if(index!=-1){
+    dassert(index>=0);
     if(!isOriginal){
       ts_vec_ith( ternary, cdb->tDB, index);
-      ts_vec_set_ith(bool, ternary.flags, wId, true );
+      ternary.flags[wId] = true;
     }
     return;
   }
@@ -221,19 +221,15 @@ void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
 
   /*In case it doesn't exist, insert it and watch*/
   //Init flags
-  ts_vec_init(ternary.flags);
-  ts_vec_resize( bool, ternary.flags, cdb->numWorkers );
 
   if(isOriginal){
     for(i=0;i<cdb->numWorkers;i++){
-      ts_vec_set_ith(bool, ternary.flags, i, true);
+      ternary.flags[i] = true;
     }
   }else{
     for(i=0;i<cdb->numWorkers;i++){
-      if(i==wId)
-	ts_vec_set_ith(bool, ternary.flags, i, true);
-      else
-	ts_vec_set_ith(bool, ternary.flags, i, false);
+      if(i==wId) ternary.flags[i] = true;
+      else ternary.flags[i] = false;
     }
   }
 
@@ -298,7 +294,7 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
   if(index!=-1){
     if(!isOriginal){
       ts_vec_ith( nclause, cdb->tDB, index );
-      ts_vec_set_ith( bool, nclause.flags, wId, true);
+      nclause.flags[wId] = true;
     }
     return index; //this is returned for watches in threads
   }
@@ -306,17 +302,15 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
 
   /***********In case it doesn't exist, insert it***/
   //Init flags
-  ts_vec_init(nclause.flags);
-  ts_vec_resize( bool, nclause.flags, cdb->numWorkers );
 
   if(isOriginal){
     for( i=0; i<cdb->numWorkers; i++ ){
-      ts_vec_set_ith( bool, nclause.flags, i, true );
+      nclause.flags[i] = true;
     }
   }else{
     for( i=0; i<cdb->numWorkers; i++ ){
-      if(i==wId) ts_vec_set_ith( bool, nclause.flags, i, true );
-      else ts_vec_set_ith( bool, nclause.flags, i, false );
+      if(i==wId) nclause.flags[i] = true;
+      else nclause.flags[i] = false;
     }
   }
   //Insert literals

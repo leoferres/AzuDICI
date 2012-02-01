@@ -7,16 +7,16 @@
 #include "ts_vec.h"
 
 typedef struct _naryclause { /*half a cacheline per ternary clause*/ 
-  unsigned int    size;
+  //  unsigned int    size; //we don't need size, we have it in kvec_t(Literals)
   bool            is_original; /*yes=input clause, no=lemma*/
-  bool            flags[14];   //supports max 14 threads
-  kvec_t(Literal) lits; 
+  bool            flags[18];   //supports max 14 threads
+  kvec_t(Literal) lits;
 } NClause; 
 
 typedef struct _teryclause {/*half a cacheline per ternary clause*/ 
   Literal lits[3];
-  bool    flags[14]; //supports max 14 threads
-  char    padding[5]; 
+  bool    flags[18]; //supports max 14 threads
+  char    padding[1]; 
 } TClause; 
 
 typedef struct _clause {
@@ -25,13 +25,14 @@ typedef struct _clause {
 } Clause; /*Can be unit, binary, ternary or nary*/
 
 typedef struct _naryThreadClause{
-  unsigned int size;
-  double       activity; 
-  Literal      lwatch1;
-  Literal      lwatch2;
-  Literal      cachedLit1;
-  Literal      cachedLit2;
-  unsigned int posInDB;
+  //unsigned int     size; //we have this info in the vector of literals
+  double           activity; 
+  Literal          lwatch1;
+  Literal          lwatch2;
+  Literal          lcatched1;
+  Literal          lcatched2;
+  kvec_t(Literal)* lits;
+  unsigned int     posInDB;
 }ThNClause;
 
 

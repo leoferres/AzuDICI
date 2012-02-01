@@ -20,8 +20,9 @@
 
 int main(int argc, char *argv[])
 {
-  printf ("%d\n",sizeof(bool));
-  printf ("%d\n",sizeof(TClause));
-  printf ("%d\n",sizeof(NClause));
+  printf ("Bool: %d\n",sizeof(bool));
+  printf ("TClause: %d\n",sizeof(TClause));
+  printf ("NClause: %d\n",sizeof(NClause));
+  printf ("ThNClause: %d\n",sizeof(ThNClause));
   return 0;
 }
