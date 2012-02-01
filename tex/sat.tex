@@ -1,0 +1,98 @@
+
+\documentclass{llncs}
+
+\usepackage{graphicx}
+\usepackage{url}
+
+\usepackage{amsmath}
+
+\begin{document}
+
+%\conferenceinfo{WXYZ '05}{date, City.} 
+%\copyrightyear{2011} 
+%\copyrightdata{[to be supplied]} 
+
+%\titlebanner{DRAFT---Do not distribute}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+
+\newcommand{\barc}{Barelogic$^S$}
+\title{Performance of Parallel SAT Solvers}
+\titlerunning{Parallel SAT}
+\toctitle{Parallel SAT}
+%\subtitle{Subtitle Text, if any, or comment out}
+
+\author{Roberto As\'in Ach\'a\inst{1} \and Juan Olate \inst{2} \and Leo Ferres \inst{2}}
+
+\institute{Departamento de Ingenier\'ia Civil Inform\'atica\\
+  Facultad de Ingenier\'ia\\ Universidad Cat\'olica de la Sant\'isima
+  Concepci\'on, Chile\\ \email{rasin@ucsc.cl} \and Department of
+  Computer Science\\Faculty of Engineering\\Universidad de
+  Concepci\'on, Chile\\ \email{\{lferres|juanolate\}@udec.cl}}
+
+
+\maketitle
+
+\begin{abstract}
+This is the text of the abstract.
+\end{abstract}
+
+\section{Introduction}
+
+This paper discusses the parallel behavior of portfolio-approach
+parallel SAT solvers.
+
+SAT...
+
+SAT solvers...
+
+Over the past 35 years, chip manufacturers have relied on three main
+areas to achieve performance gains: increasing the amount of work done
+per cycle (Out-Of-Order execution), decreasing memory access time
+using fast-but-expensive memories (cache-driven hierarchical memory
+architectures), and, in particular, increasing the clock cycle count
+(more instructions per some unit of time). Up to not too long ago,
+about 2003, programs ran faster only in virtue of manufacturers
+increasing clock speeds. However, because of several physical problems
+(heat, power consumption, and energy leaking), Intel announced in 2004
+that 4GHz processors would not be released to the market.  In the
+Intel Development Forum of September 2005, Intel announced that there
+would be a shift to multicore processors by most major chip
+manufacturers, including themselves, given that it was the only way to
+keep increasing performance without relying on ever faster
+clocks. However, to take advantage of multicore processors, special
+software must be developed, and multicore parallel programs have been
+hard to write and understand, given their inherent non-determinism, in
+particular when sharing memory. Parallel SAT solvers are not the
+exception. Although they have been performing at the top of the SAT
+competition\footnote{\url{http://www.satcompetition.org/}} (in 2011,
+all three wall-clock time winners of the competition are parallel
+solvers).
+
+In this paper, we present empirical results that we hope will shed
+some light on several aspects of parallel SAT solvers such as memory
+consumption, cache contention, and thread communication. We also
+suggest solutions to some of the problems.
+
+\section{Barcelogic$^S$}
+\label{sec:barsimple}
+
+\section{Cache performance of Barcelogic$^S$}
+\label{sec:cachebar}
+
+
+
+\appendix
+\section{Appendix Title}
+
+This is the text of the appendix, if you need one.
+
+Acknowledgments, if needed.
+
+% We recommend abbrvnat bibliography style.
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+\bibliography{bitap}
+
+\end{document}
