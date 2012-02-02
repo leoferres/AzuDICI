@@ -49,20 +49,18 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*******************************/
 
   /*Init 3watches structures*/
-  kvec_init( cdb->ThreeWatches );
-  kvec_resize( kvec(unsigned int), cdb->ThreeWatches,  2*(nVars+1) );
+  kvec_init( cdb->ternaryWatches );
+  kvec_resize(ts_vec_t(unsigned int), cdb->ternaryWatches,  2*(nVars+1) );
   for(i=0;i<=2*(nVars+1);i++){
-    kvec_init( kvec_A(cdb->ThreeWatches,i) );
+    ts_vec_init( kvec_A(cdb->ternaryWatches,i) );
   }
   /*************************/
 
 
   /*Init random numbers vector*/
   srandom(0);
-  kvec_init( randomNumbers );
-  kvec_resize( int, randomNumbers, 10000000 );
-  for(i=0;i<10000000;i++){
-    kvec_A(randomNumbers,i) = random();
+  for(i=0;i<MAX_RANDOM_NUMBERS;i++){
+    randomNumbers[i] = random();
   }
   /****************************/
 
@@ -182,7 +180,7 @@ void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
 }
 
 /************MAKE THIS THREAD SAFE**********/
-void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
+Lit* insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
 {
   dassert(cl->size == 3);
   int i,j;
@@ -215,7 +213,7 @@ void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
       ts_vec_ith( ternary, cdb->tDB, index);
       ternary.flags[wId] = true;
     }
-    return;
+    return ternary.lits;
   }
   /********************************************************/
 
@@ -248,12 +246,13 @@ void insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
 
   for( i=0; i<3; i++){
     litIndex = lit_as_uint(-ternary.lits[i]);
-    vec_push_back( vec_ith(cdb->ThreeWatches, litIndex), indexOfNewClause );
+    ts_vec_push_back(unsigned int, kvec_A(cdb->ternaryWatches, litIndex), indexOfNewClause );
   }
 
   if(isOriginal) cdb->numInputClauses++;
   cdb->numTernaries++;
   cdb->numClauses++;
+  return ternary.lits; //check if this indeed is the direction of the literals
   //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
   /************************************************/
 }

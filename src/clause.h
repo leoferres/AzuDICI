@@ -29,16 +29,16 @@ typedef struct _naryThreadClause{
   double           activity; 
   Literal          lwatch1;
   Literal          lwatch2;
-  Literal          lcatched1;
-  Literal          lcatched2;
+  void*            nextWatched1;
+  void*            nextWatched2;
   kvec_t(Literal)* lits;
-  unsigned int     posInDB;
+  unsigned int     posInDB; //maybe this is not needed
 }ThNClause;
 
 typedef struct _reasonStruct{
   unsigned int     size;
   Literal          binLit;
-  lits*            tClPtr;
+  Literal*         tClPtr;
   ThNClause*       thNClPtr; //this we need to update activity of clause
 }Reason;
 
