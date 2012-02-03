@@ -82,33 +82,19 @@ valuable time due to latency.
 Thus, given the three arguments above: how {\em do} pSATs scale in
 hierarchical-memory multicore architectures? Our case study is the
 winner of the 2011 SAT Competition, {\tt plingeling}, a
-<<<<<<< HEAD
-portfolio-approach SAT solver \cite{lingeling}. Portfolio-approach
-solvers such as \pling\ run multiple SAT solvers in parallel, taking
-advantage of the fact that different solvers perform better for
-different problems. The first experiment tested \pling\ on a 6-core
-multicore machine, varying the number of threads. In Figure
-\ref{fig:decay} we can see how \pling's performance tends to decay
-sharply (up to 30\%) when several instances are executed in the same
-processor, even when they do not, in principle, share any software
-resources other than the common process address space. We would thus
-expect that all instances would perform similarly at around 1, plus or
-minus a small fraction. This is in fact what happens when \pling\ is
-run in two different cores of two different chips, even in the same
-machine.
-=======
 portfolio-approach SAT solver \cite{lingeling}. The first experiment
-tested a \emph{modified} \pling\ in a 6-core multicore machine, varying the number of
-threads. \pling was modified in order that, for each {\em thread worker}, the {\em same search} is performed (i.e. same strategies, starting parameters and no lemma exchanging occur). 
-In Figure \ref{fig:decay} we can see how modified-\pling's performance
-tends to decay sharply (up to 30\%) when several instances are
-executed in the same processor, even when they do not, in principle,
-share any resources other than the common process address space. We
-would thus expect that all instances would perform similarly at 1,
-plus or minus a small fraction. This is in fact what happens when
-\pling\ is run in two different cores of two different chips, but in
-the same machine.
->>>>>>> bde3f5a6324f6221687a49fbeb1ff1e1f3832096
+tested a \emph{modified} \pling\ on a 6-core multicore machine,
+varying the number of threads. \pling\ was modified in order that, for
+each {\em thread worker}, the {\em same search} is performed
+(i.e. same strategies, starting parameters and without lemma
+exchanging).  In Figure \ref{fig:decay} we can see how
+modified-\pling's performance tends to decay sharply (up to 30\%) when
+several instances are executed in the same processor, even when they
+do not, in principle, share any resources other than the common
+process address space. We would thus expect that all instances would
+perform similarly at 1, plus or minus a small fraction. This is in
+fact what happens when \pling\ is run in two different cores of two
+different chips, but in the same machine.
 
 \begin{figure}[tp]
   \centering
