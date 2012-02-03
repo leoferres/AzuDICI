@@ -21,44 +21,44 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   //  ad->scoreBonus         = some_magic_value;  
 
   //lastBinariesAdded
-  kvec_init( ad->lastBinariesAdded );
-  kvec_resize(unsigned int,  ad->lastBinariesAdded, 2*(ad->cdb->numVars+1) );
+  kv_init( ad->lastBinariesAdded );
+  kv_resize(unsigned int,  ad->lastBinariesAdded, 2*(ad->cdb->numVars+1) );
   int listSize;
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
-    ts_vec_size( listSize, kvec_A(ad->cdb->bDB, i) );
-    kvec_A(ad->lastBinariesAdded, i) = listSize;
+    ts_vec_size( listSize, kv_A(ad->cdb->bDB, i) );
+    kv_A(ad->lastBinariesAdded, i) = listSize;
   }
 
   //varMarks
-  kvec_init(ad->varMarks);
-  kvec_resize(bool, ad->varMarks, ad->cdb->numVars+1);
+  kv_init(ad->varMarks);
+  kv_resize(bool, ad->varMarks, ad->cdb->numVars+1);
   for( i=0; i < ad->cdb->numVars + 1 ; i++ ){
-    kvec_A(ad->varMarks, i) = false;
+    kv_A(ad->varMarks, i) = false;
   }
 
   //thcdb (thread clause data base)
-  kvec_init(ad->thcdb);
+  kv_init(ad->thcdb);
 
   //watches
-  kvec_init(ad->watches);
-  kvec_resize(ThNClause*,  ad->watches, 2*(ad->cdb->numVars + 1) );
+  kv_init(ad->watches);
+  kv_resize(ThNClause*,  ad->watches, 2*(ad->cdb->numVars + 1) );
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
-    kvec_A(ad->watches, i) = NULL;
+    kv_A(ad->watches, i) = NULL;
   }
 
   //conflict clause
-  kvec_init(conflict.lits);
-  kvec_resize(Literal, conflict.lits, ad->db->numVars);
+  kv_init(conflict.lits);
+  kv_resize(Literal, conflict.lits, ad->db->numVars);
   conflict.size = 0;
 
   //lemma clause
-  kvec_init(lemma.lits);
-  kvec_resize(Literal, lemma.lits, ad->db->numVars);
+  kv_init(lemma.lits);
+  kv_resize(Literal, lemma.lits, ad->db->numVars);
   lemma.size = 0;
 
   //shortenned lemma clause
-  kvec_init(lemmaToLearn.lits);
-  kvec_resize(Literal, lemmaToLearn.lits, ad->db->numVars);
+  kv_init(lemmaToLearn.lits);
+  kv_resize(Literal, lemmaToLearn.lits, ad->db->numVars);
   lemmaToLearn.size = 0;
 
   model_init(ad->model);  //model
@@ -140,20 +140,20 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
     //cl->increaseActivity(); This should be incremented when processing the reason or when conflict detected......
     
     while( index < cl.size ){//traverse conflictingclause/currentreasonclause,
-      lit = kvec_A( cl.lits, index ); 
+      lit = kv_A( cl.lits, index ); 
       index++; // marking literals and counting lits of this DL
       azuDICI_increaseScore(ad, lit);
       if( lit != poppedLit ){
 	//in reasonclause for lit, don't treat this "poppedLit" 
 	if( model_lit_is_of_current_dl( ad->model, lit ) ){
-	  if ( !kvec_A( ad->varMarks, var(lit) ) ){
-	    kvec_A( ad->varMarks, var(lit) ) = true;
+	  if ( !kv_A( ad->varMarks, var(lit) ) ){
+	    kv_A( ad->varMarks, var(lit) ) = true;
 	    numLitsThisDLPending++;
 	  }
-	} else if ( !kvec_A(ad->varMarks, var(lit) ) && model_get_lit_DL(ad->model,lit) > 0 ) {
-	  kvec_A(ad->varMarks, var(lit)) = true;  // Note: we ignore dl-zero lits
+	} else if ( !kv_A(ad->varMarks, var(lit) ) && model_get_lit_DL(ad->model,lit) > 0 ) {
+	  kv_A(ad->varMarks, var(lit)) = true;  // Note: we ignore dl-zero lits
 	  ad->lemma.size++;
-	  kvec_A(ad->emma.lits, ad->lemma.size) = lit; // lower-dl-lit marked->already in lemma
+	  kv_A(ad->emma.lits, ad->lemma.size) = lit; // lower-dl-lit marked->already in lemma
 	}
       }
     }
@@ -162,8 +162,8 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
       poppedLit = model_pop_and_set_undef(ad->model); 
       dassert(poppedLit!=0);
       azuDICI_notify_unassigned_lit(ad, poppedLit);
-    } while ( !kvec_A(ad->varMarks, var(poppedLit)) );
-    kvec_A(ad->varMarks, var(poppedLit)) = false;
+    } while ( !kv_A(ad->varMarks, var(poppedLit)) );
+    kv_A(ad->varMarks, var(poppedLit)) = false;
 
     r = model_get_reason_of_Lit(ad->model, poppedLit);
     azuDICI_increase_activity(r);
@@ -177,11 +177,11 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
   }
 
   dassert(numLitsThisDLPending==1);
-  kvec_A(ad->lemma.lits,0) = -poppedLit; //THe 1UIP is the first lit in the lemma
+  kv_A(ad->lemma.lits,0) = -poppedLit; //THe 1UIP is the first lit in the lemma
   ad->lemma.size++; 
 
   for (i=0;i<numLitsInLemma;i++) {
-    kvec_A( ad->varMarks, var(kvec_A(ad->lemma,i)) ) = false;
+    kv_A( ad->varMarks, var(kv_A(ad->lemma,i)) ) = false;
   }
 
 }
@@ -209,11 +209,11 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
  
   //First of all, mark all lits in original lemma.
   for (i=0;i<ad->lemma.size;i++) 
-    kvec_A( varMarks, kvec_A(ad->lemma.lits,i) )=true;
+    kv_A( varMarks, kv_A(ad->lemma.lits,i) )=true;
 
   //Order lemma's lit from most recent to oldest (from highest dl to lowest)
   azuDICI_sort_lits_according_to_DL_from_index(ad->model, ad->lemma,1);
-  lowestDL = model_get_lit_DL(ad->model, kvec_A(ad->lemma, ad->size-1) );
+  lowestDL = model_get_lit_DL(ad->model, kv_A(ad->lemma, ad->size-1) );
 
   ad->dlToBackjump = 0; 
   ad->dlToBackjumpPos=0; 
@@ -227,7 +227,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
   for( i=1; i < ad->lemma.size; i++ ){
     litIsRedundant=true;
 
-    litOfLemma = kvec_A(ad->lemma.lits,i);
+    litOfLemma = kv_A(ad->lemma.lits,i);
     dassert( varMarks.isMarked(var(litOfLemma)) );
 
     //Begins test to see if literal is redundant
@@ -243,18 +243,18 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
       //add literals of lit's reason to test
       lastMarkedInLemma = ad->lemma.size;
       for( j=0 ; j<cl.size ; j++ ){
-	v = var( kvec_A(cl->lits, j));
-	if(kvec_A(ad->varMarks, v)) continue;
+	v = var( kv_A(cl->lits, j));
+	if(kv_A(ad->varMarks, v)) continue;
 
-	kvec_A(ad->varMarks, v) = true;
-	kvec_A(ad->lemma, lastMarkedInLemma++) = kvec_A(cl->lits,j);
+	kv_A(ad->varMarks, v) = true;
+	kv_A(ad->lemma, lastMarkedInLemma++) = kv_A(cl->lits,j);
       }
 
       //test added literals and subsequent ones....
       testingIndex = ad->lemma.size;
       while(testingIndex < lastMarkedInLemma){
-	testingLit = kvec_A(ad->lemma.lits,testingIndex);
-	dassert(kvec_A(ad->varMarks, var(testingLit)));
+	testingLit = kv_A(ad->lemma.lits,testingIndex);
+	dassert(kv_A(ad->varMarks, var(testingLit)));
 	if ( model_get_lit_DL(ad->model, testingLit) < lowestDL || //has lower dl
 	     model_lit_is_decision(testingLit) ) { //is decision
 	  //test fails
@@ -268,11 +268,11 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 	//cl = clauseReasonOfLit(testingLit.negation());
 	//If testing lit passes test, add its reason's literals to test
 	for(j=0;j<cl.size;j++){
-	  v = var( kvec_A(cl.lits,j) );	
-	  if(kvec_A(ad->varMarks,v)) continue;
+	  v = var( kv_A(cl.lits,j) );	
+	  if(kv_A(ad->varMarks,v)) continue;
 	
-	  kvec_A(ad->varMarks,v) = true;
-	  kvec_A(ad->lemma,lastMarkedInLemma++) = kvec_A(cl.lits, j);
+	  kv_A(ad->varMarks,v) = true;
+	  kv_A(ad->lemma,lastMarkedInLemma++) = kv_A(cl.lits, j);
 	}
 	testingIndex++;
       }
@@ -282,17 +282,17 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 
       //Clean tested literals
       while ( lastMarkedInLemma > ad->lemma.size ) {
-	kvec_A(ad->varMarks,--lastMarkedInLemma)=false;
+	kv_A(ad->varMarks,--lastMarkedInLemma)=false;
 	//varMarks.setUnMarked(var(lemma[--lastMarkedInLemma]));
       }
     }
 
     //Add (or not) litOfLemma to lemmaToLearn
     if(litIsRedundant){
-      kvec_A(ad->lemma,i)=0;
-      kvec_A(ad->varMarks,var(litOfLemma))=false;
+      kv_A(ad->lemma,i)=0;
+      kv_A(ad->varMarks,var(litOfLemma))=false;
     }else{
-      kvec_A(ad->lemmaToLearn.lits, ad->lemmaToLearn.size) = litOfLemma;
+      kv_A(ad->lemmaToLearn.lits, ad->lemmaToLearn.size) = litOfLemma;
       //Keep track of literal with highest dl besides de UIP
       if ( ad->lemmaToLearn.size > 0 && ad->dlToBackjump < model_get_lit_DL(ad->model, litOfLemma) ){
 	ad->dlToBackjump = model_get_lit_DL(ad->model, litOfLemma);
@@ -303,17 +303,17 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
   }
 
   /*Put in lemmaToLearn[1] the lit with highest dl*/
-  Literal aux = kvec_A(ad->lemmaToLearn.lits, ad->dlToBackjumpPos);
-  kvec_A(ad->lemmaToLearn.lits, ad->dlToBackjumpPos) = 
-    kvec_A(ad->lemmaToLearn.lits, 1);
+  Literal aux = kv_A(ad->lemmaToLearn.lits, ad->dlToBackjumpPos);
+  kv_A(ad->lemmaToLearn.lits, ad->dlToBackjumpPos) = 
+    kv_A(ad->lemmaToLearn.lits, 1);
 
-  kvec_A(ad->lemmaToLearn.lits, 1) = aux;
+  kv_A(ad->lemmaToLearn.lits, 1) = aux;
 
 
   //  stats.totalRemovedLits += (numLitsInLemma - numLitsInLemmaToLearn);
 
   for (i=0;i<numLitsInLemmaToLearn;i++){
-    kvec_A(ad->varMarks, var(kvec_A(ad->lemmaToLearn.lits,i)) )=false;
+    kv_A(ad->varMarks, var(kv_A(ad->lemmaToLearn.lits,i)) )=false;
   }
 
   /*  if(verboseMin)
@@ -339,14 +339,14 @@ void azuDICI_learn_lemma(AzuDICI* ad){
 
   case 2:
     Literal l1,l2;
-    l1 = kvec_A(ad->lemmaToLearn.lits,0);
-    l2 = kvec_A(ad->lemmaToLearn.lits,1);
-    kvec_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack for same search
-    kvec_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack for same search
+    l1 = kv_A(ad->lemmaToLearn.lits,0);
+    l2 = kv_A(ad->lemmaToLearn.lits,1);
+    kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack for same search
+    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack for same search
 
     insert_binary_clause(ad->cdb, ad->lemmaToLearn, false);
     ad->rUIP.size     = 2;
-    ad->rUIP.binLit   = kvec_A(ad->lemmaToLearn,1);
+    ad->rUIP.binLit   = kv_A(ad->lemmaToLearn,1);
     ad->rUIP.tClPtr   = NULL;
     ad->rUIP.thNClPtr = NULL;
     break;
@@ -360,8 +360,8 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     break;
 
   default:
-    Literal uip    = kvec_A(ad->lemmaToLearn.lits,0);
-    Literal hdlLit = kvec_A(ad->lemmaToLearn.lits,1);
+    Literal uip    = kv_A(ad->lemmaToLearn.lits,0);
+    Literal hdlLit = kv_A(ad->lemmaToLearn.lits,1);
 
     dassert(ad->lemmaToLearn.size>3);
     //here, lemmaToLearn will be sorted
@@ -372,9 +372,9 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     //highest decision level is ad->dlToBackjump   
     Literal aux;
     for(int i=1; i < ad->lemmaToLearn.size; i++){
-      if( kvec_A(ad->lemmaToLearn.lits,i) == uip ){
-	kvec_A(ad->lemmaToLearn.lits,0) = uip;
-	kvec_A(ad->lemmaToLearn.lits,i) = kvec_A(ad->lemmaToLearn.lits,0);
+      if( kv_A(ad->lemmaToLearn.lits,i) == uip ){
+	kv_A(ad->lemmaToLearn.lits,0) = uip;
+	kv_A(ad->lemmaToLearn.lits,i) = kv_A(ad->lemmaToLearn.lits,0);
 	break;
       }
     }
@@ -383,10 +383,10 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     //highest decision level is ad->dlToBackjump   
     Literal aux;
     for(int i=1; i < ad->lemmaToLearn.size; i++){
-      if( kvec_A(ad->lemmaToLearn.lits,i) == hdlLit ){
-	dassert(model_get_lit_DL(kvec_A(ad->lemmaToLearn.lits,i)) == ad->dlToBackjump);
-	kvec_A(ad->lemmaToLearn.lits,i) = kvec_A(ad->lemmaToLearn.lits,1);
-	kvec_A(ad->lemmaToLearn.lits,1) = hdlLit;
+      if( kv_A(ad->lemmaToLearn.lits,i) == hdlLit ){
+	dassert(model_get_lit_DL(kv_A(ad->lemmaToLearn.lits,i)) == ad->dlToBackjump);
+	kv_A(ad->lemmaToLearn.lits,i) = kv_A(ad->lemmaToLearn.lits,1);
+	kv_A(ad->lemmaToLearn.lits,1) = hdlLit;
 	break;
       }
     }
@@ -424,7 +424,7 @@ void azuDICI_set_true_uip(AzuDICI* ad){
     ad->stats.numDLZeroLits++;
   }
 
-  model_set_true_due_to_reason(ad->model, kvec_A(ad->lemmaToLearn.lits,0), ad->rUIP);
+  model_set_true_due_to_reason(ad->model, kv_A(ad->lemmaToLearn.lits,0), ad->rUIP);
   //conflict ends, and then we propagate
   ad->conflict.size = 0;
 }
@@ -486,8 +486,8 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList, litIndex;
   litIndex = lit_as_uint(l);
-  ts_vec_t(Literal) list = kvec_A(ad->bDB,litIndex);
-  sizeOfList = kvec_A(ad->lastBinariesAdded,litIndex); //hack for same search
+  ts_vec_t(Literal) list = kv_A(ad->bDB,litIndex);
+  sizeOfList = kv_A(ad->lastBinariesAdded,litIndex); //hack for same search
   //  ts_vec_size(sizeOfList, list);
   Reason r;
   r.size = 2;
@@ -505,8 +505,8 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
       }
     }else if(model_is_false(lToSetTrue)){ //Conflict
       ad->conflict.size = 2;
-      kvec_A(ad->conflict.lits,0) = -l;
-      kvec_A(ad->conflict.lits,1) = lToSetTrue;
+      kv_A(ad->conflict.lits,0) = -l;
+      kv_A(ad->conflict.lits,1) = lToSetTrue;
       return false;
     }    
   }
@@ -520,7 +520,7 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList;
   unsigned int litIndex = lit_as_uint(-l);
-  ts_vec_t(unsigned int) list = kvec_A(ad->tDB,litIndex);
+  ts_vec_t(unsigned int) list = kv_A(ad->tDB,litIndex);
   ts_vec_size(sizeOfList, list);
   Reason r;
   r.size = 3;
@@ -556,9 +556,9 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
 	}
       }else if(model_is_false(lToSetTrue)){ //Conflict
 	ad->conflict.size = 3;
-	kvec_A(ad->conflict.lits,0) = l1;
-	kvec_A(ad->conflict.lits,1) = l2;
-	kvec_A(ad->conflict.lits,2) = l3;
+	kv_A(ad->conflict.lits,0) = l1;
+	kv_A(ad->conflict.lits,1) = l2;
+	kv_A(ad->conflict.lits,2) = l3;
 	return false;
       }    
     }
@@ -568,9 +568,9 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
 
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
   int i;
-  ThNClause** ptrToWatchedClauseAddr =  &kvec_A(ad->watches,lit_as_uint(-l));
-  //  ThNClause** previouslyWatchedClause = &kvec_A(ad->watches,lit_as_uint(-l));
-  ThNClause* watchedClause = kvec_A(ad->watches,lit_as_uint(-l));
+  ThNClause** ptrToWatchedClauseAddr =  &kv_A(ad->watches,lit_as_uint(-l));
+  //  ThNClause** previouslyWatchedClause = &kv_A(ad->watches,lit_as_uint(-l));
+  ThNClause* watchedClause = kv_A(ad->watches,lit_as_uint(-l));
   bool first;
   unsigned int sizeOfClause;
   Literal otherLit, toReselect;
@@ -588,7 +588,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       first=false;
       otherLit = watchedClause->lwatch1;
     }
-    sizeOfClause = kvec_size(watchedClause->lits);
+    sizeOfClause = kv_size(watchedClause->lits);
 
     if(model_is_true(otherLit)){
       //Update watchedLiteral and previouslyWatchedLiteral
@@ -606,7 +606,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     //if other watched is not true, try to reselect.
     foundForReselection=false;
     for(i=0;i<sizeOfClause;i++){
-      toReselect = kvec_A(watchedClause->lits, i);
+      toReselect = kv_A(watchedClause->lits, i);
       if( toReselect!=-l && toReselect != otherLit && 
 	  model_is_true_or_undef(toReselect)){ //found to reselect
 	foundForReselection =true;
@@ -621,15 +621,15 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	watchedClause->lwatch1 = toReselect;
 	//what stores this direction, is overwritten 
 	*ptrToWatchedClauseAddr = watchedClause->nextWatched1; 
-	watchedClause->nextWatched1 = kvec_A(ad->watches,lit_as_uint(toReselect));
+	watchedClause->nextWatched1 = kv_A(ad->watches,lit_as_uint(toReselect));
       } else {
 	watchedClause->lwatch2 = toReselect;
 	//what stores this direction, is overwritten 
 	*ptrToWatchedClauseAddr = watchedClause->nextWatched2; 
-	watchedClause->nextWatched2 = kvec_A(ad->watches,lit_as_uint(toReselect))
+	watchedClause->nextWatched2 = kv_A(ad->watches,lit_as_uint(toReselect))
       }
       //update previouslyWatchedClause
-      kvec_A(ad->watches, lit_as_uint(toReselect)) = watchedClause;
+      kv_A(ad->watches, lit_as_uint(toReselect)) = watchedClause;
       watchedClause = *ptrToWatchedClauseAddr;
       continue;
     }else{//Propagate otherLit or conflict
@@ -655,7 +655,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	watchedClause->activity++;
 	ad->conflict.size = sizeOfClause;
 	for(i=0;i<sizeOfClause;i++){
-	  kvec_A(ad->conflict.lits,i) = kvec_A(watchedClause->lits,i);
+	  kv_A(ad->conflict.lits,i) = kv_A(watchedClause->lits,i);
 	}
 	return false;
       }    
@@ -668,8 +668,8 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
 
   ThNClause threadClause;
   Literal l1,l2;
-  l1 = kvec_A(cl.lits, 0);
-  l2 = kvec_A(cl.lits, 1);
+  l1 = kv_A(cl.lits, 0);
+  l2 = kv_A(cl.lits, 1);
 
   threadClause.activity  = 0;
   threadClause.lwatch1   = l1;
@@ -677,20 +677,20 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
   threadClause.lwatch2   = l2;
 
   //init nextWatches with appropiate information
-  threadClause.nextWatched1  = (void*)kvec_A(ad->watches, lit_as_uint(-l1)); 
-  threadClause.nextWatched2  = (void*)kvec_A(ad->watches, lit_as_uint(-l2));
+  threadClause.nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(-l1)); 
+  threadClause.nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(-l2));
 
   NClause clInDB;
   ts_vec_ith(clInDB, ad->cdb.nDB, indexInDB);
   threadClause.lits      = &clInDB.lits;
   //  threadClause.posInDB      = posInDB; Do we need this, rethink?
 
-  kvec_push(ThNClause, ad->thcdb, threadClause);
+  kv_push(ThNClause, ad->thcdb, threadClause);
 
   //insert at beginning of watches linked lists.
-  ThNClause* ptrToThClause = &kvec_A(ad->thcdb, kvec_size(ad->thcdb)-1);
-  kvec_A(ad->watches, lit_as_uint(-l1)) = ptrToThClause;
-  kvec_A(ad->watches, lit_as_uint(-l2)) = ptrToThClause;
+  ThNClause* ptrToThClause = &kv_A(ad->thcdb, kv_size(ad->thcdb)-1);
+  kv_A(ad->watches, lit_as_uint(-l1)) = ptrToThClause;
+  kv_A(ad->watches, lit_as_uint(-l2)) = ptrToThClause;
 
   return ptrToThClause;
 }

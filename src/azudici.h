@@ -2,15 +2,15 @@
 #define _AZUDICI_H_
 
 #include "clausedb.h"
-#include "threadclausedb.h"
+//#include "threadclausedb.h" //to be implemented
 
 typedef struct _azuDICI{
-  unsinged int        wId;
+  unsigned int        wId;
   unsigned int        lastUnitAdded;    //will be used in later versions
   unsigned int        lastNaryAdded;    //will be used in later versions
   unsigned int        randomNumberIndex;
   unsigned int        dlToBackjump;
-  unsinged int        dlToBackjumpPos;
+  unsigned int        dlToBackjumpPos;
   //unsigned int        decisionLevel; This will go to model
   double              scoreBonus; //Remember to initialize this.
 
@@ -26,7 +26,7 @@ typedef struct _azuDICI{
   ClauseDB            *cdb;
 
   Model               model; 
-  Heap                heap;
+  MaxHeap             heap;
   Stats               stats; //To implement
   Strategy            strat; //To implement
 } AzuDICI;
@@ -57,7 +57,7 @@ void azuDICI_increase_activity(Reason r); //To implement, ¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //To implement, ¿in model.c? 
 
 
-unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Lit l, Reason r);
+unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Literal l, Reason r);
 ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, bool isOriginal, unsigned int indexInDB);
 
 

@@ -29,6 +29,10 @@
  * 
  * Resize the vector to hold 50 elements:
  *      ts_vec_resize(int,myVector,50);
+ * 
+ * To get the memory address of element 0 in the vector:
+ *      int *number;
+ *      ts_vec_ith_ma(number,myVector,0);
  *  
  */
 #define __USE_UNIX98 1 
@@ -71,6 +75,12 @@ bool init_flag = false;
 #define ts_vec_ith(temp, v, i) do{ \
                                pthread_rwlock_rdlock(&(kv_A(ts_vec_locks,(v).id))); \
                                temp= ((v).a[(i)]); \
+                               pthread_rwlock_unlock(&(kv_A(ts_vec_locks,(v).id))); \
+                               } while(0)
+
+#define ts_vec_ith_ma(temp, v, i) do{ \
+                               pthread_rwlock_rdlock(&(kv_A(ts_vec_locks,(v).id))); \
+                               temp= &((v).a[(i)]); \
                                pthread_rwlock_unlock(&(kv_A(ts_vec_locks,(v).id))); \
                                } while(0)
 
