@@ -28,10 +28,10 @@ typedef struct _cdb {
 ClauseDB* init_clause_database(unsigned int numVars);
 
 /**/
-unsigned int add_input_literal(ClauseDB* cdb, Clause *cl);
+unsigned int add_input_literal(ClauseDB* cdb, Literal lit);
 void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal);
 void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal);
-Lit* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId);
+Literal* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId);
 unsigned int insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId);
 void cleanup_database(ClauseDB* cdb);
 void vec_literal_sort(Clause* cl, unsigned int size);

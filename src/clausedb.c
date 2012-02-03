@@ -2,6 +2,7 @@
 #define _CLAUSEDB_C_
 
 #include "clausedb.h"
+#include "mergeSort.h"
 
 Clause inputClause;
 unsigned int nInsertedClauses;
@@ -9,7 +10,7 @@ unsigned int nInsertedClauses;
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   kv_init(inputClause.lits); //init inputClause
-  kv_resize(Literal, inputClaue.lits, nVars);//Set size of nVars
+  kv_resize(Literal, inputClause.lits, nVars);//Set size of nVars
 
   inputClause.size = 0; //the vector is nVars size, so we keep the number of lits actually added in other counter.
   nInsertedClauses=0;
@@ -31,12 +32,12 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /******************************/
 
   /*Init Binary clauses database*/
-  kvec_init(cdb->bDB,2*(nVars+1));//init vector 
-  kvec_resize( ts_vec(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
+  kv_init(cdb->bDB);//init vector 
+  kv_resize(ts_vec_t(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
 
-  /*Init each of this elements*/
+  /*Init each of the binary clause database elements*/
   for(i=0;i<=2*(nVars+1);i++){
-    ts_vec_init( kvec_A(cdb->bDB,i) );
+    ts_vec_init(kv_A(cdb->bDB,i));
   }
   /******************************/
 
@@ -49,10 +50,10 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*******************************/
 
   /*Init 3watches structures*/
-  kvec_init( cdb->ternaryWatches );
-  kvec_resize(ts_vec_t(unsigned int), cdb->ternaryWatches,  2*(nVars+1) );
+  kv_init( cdb->ternaryWatches );
+  kv_resize(ts_vec_t(unsigned int), cdb->ternaryWatches,  2*(nVars+1) );
   for(i=0;i<=2*(nVars+1);i++){
-    ts_vec_init( kvec_A(cdb->ternaryWatches,i) );
+    ts_vec_init( kv_A(cdb->ternaryWatches,i) );
   }
   /*************************/
 
@@ -60,7 +61,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*Init random numbers vector*/
   srandom(0);
   for(i=0;i<MAX_RANDOM_NUMBERS;i++){
-    randomNumbers[i] = random();
+    cdb->randomNumbers[i] = random();
   }
   /****************************/
 
@@ -73,17 +74,20 @@ void vec_literal_sort(Clause* cl, unsigned int size){
   Literal aux;
   for( i=0; i < size-1; i++ ){
     for( j = i+1; j < size; j++ ){
-      if( kvec_A(cl->lits,i) > kvec_A(cl->lits,j)){
-	aux = kvec_A(cl->lits,i);
-	kvec_A(cl->lits,i) = kvec_A(cl->lits,j);
-	kvec_A(cl->lits,j) = aux;
+      if( kv_A(cl->lits,i) > kv_A(cl->lits,j)){
+	aux = kv_A(cl->lits,i);
+	kv_A(cl->lits,i) = kv_A(cl->lits,j);
+	kv_A(cl->lits,j) = aux;
       }
     }
   }
 }
 
+/*Adding an input literal (from file) to the input clause*/
 unsigned int add_input_literal(ClauseDB* cdb, Literal l){
-  if(l==0){
+  /*checking if the clause is complete.
+   A literal with value 0 indicates this.*/
+    if(l==0){
     switch(inputClause.size){
     case 0:
       return 20; //empty clause in original formula
@@ -101,32 +105,33 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
     }    
     //new clause will be read
     inputClause.size = 0;
-    //nInsertedClauses++;
   }else{
-    kvec.A(inputClause.lits,inputClause.size) = l;
+        /*if the clause is not complete, we add the literal to it*/
+    kv_A(inputClause.lits,inputClause.size) = l;
     inputClause.size++;
   }
 }
 
-void insert_unitary_clause(ClauseCB* cdb, Clause *cl){
+/*Inserting, in the clause database, an input clause that only has one literal*/
+void insert_unitary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
   dassert(cl->size == 1);
   int i;
   bool alreadyAdded=false;
   Literal unitInList;
   int listSize;
   ts_vec_size(listSize, cdb->uDB);
-  dassert(listSize == cl->numUnits);
-
-  for(i=0; i < cl->numUnits; i++){
+  dassert(listSize == cdb->numUnits);
+/*Checking if the literal is already in the uDB (unitary clause database).*/
+  for(i=0; i < cdb->numUnits; i++){
     ts_vec_ith(unitInList, cdb->uDB, i);
-    if( kvec_A(cl->lits,0) == unitInList ) {
+    if( kv_A(cl->lits,0) == unitInList ) {
       alreadyAdded=true;
       break;
     }
   }
-  
+  /*If it isn't already in the uDB, add it*/
   if(!alreadyAdded){
-    ts_vec_push_back( cdb->uDB, vec_ith(cl->lits,0) );
+    ts_vec_push_back( Literal, cdb->uDB, kv_A(cl->lits,0) );
     if(isOriginal) cdb->numInputClauses++;
     cdb->numUnits++;
     cdb->numClauses++;
@@ -135,22 +140,31 @@ void insert_unitary_clause(ClauseCB* cdb, Clause *cl){
 
 
 /*******************Make this Thread safe****************************/
+  /*bDB stores 2 literals in a clause as following:
+   dDB is a vector which size is (numVars*2)+1 and each position in the vector
+   corresponds to a literal which has a literal vector associated to it. If the 
+   clause (x1 or ~x2) is to be stored in dBD, we store x1 in the literal vector
+   associated to the literal x2, and we store ~x2 in the literal vector associated
+   to literal ~x1. This way we have an implication vector for all literals. 
+   Associating x1 with x2 means that if x2 were to be true, then x1 must be true.
+   Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
 void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
   //we will have problems here for keeping the same search for each thread
   int i;
 
   dassert(cl->size == 2);
-
+  /*We are storing implications, so we want to know the negation of each literal
+   that belongs to the binary clause*/
   Literal l1,l2;
-  l1 = vec_ith(cl->lits,0);
-  l2 = vec_ith(cl->lits,1);
+  l1 = kv_A(cl->lits,0);
+  l2 = kv_A(cl->lits,1);
   unsigned int not_l1,not_l2;
   not_l1 = lit_as_uint(-l1);
   not_l2 = lit_as_uint(-l2);
   
-  ts_vec(Literal) list:
+  ts_vec_t(Literal) list;
 
-  list = kvec_A(cdb->bDB, not_l1);
+  list = kv_A(cdb->bDB, not_l1);
   /*Search to see if element is already in list*/
   bool alreadyInList=false;
   Literal lInList;  
@@ -168,7 +182,7 @@ void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
   if(!alreadyInList){
     ts_vec_push_back(Literal,list,l2);
     //If it is not in list, it's not in the other list either
-    list = kvec_A(cdb->bDB, not_l2);
+    list = kv_A(cdb->bDB, not_l2);
     ts_vec_push_back(Literal, list,l1);
     //update clauseDB stats
     if(isOriginal) cdb->numInputClauses++;
@@ -178,83 +192,113 @@ void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
   /********************************************/
 
 }
+/*Function for sorting literals in a vector.
+ Sorts from lower to highest*/
+void vec_literal_sort(Literal *lits, int size) {
+
+    struct sort_node *head;
+    struct sort_node *current;
+    struct sort_node *next;
+    int i = 0;
+
+    kvec_t(Literal) tmp;
+    tmp.a = lits;
+
+    head = NULL;
+    /* insert the numbers into the linked list */
+    for (i = 0; i < size; i++)
+        head = addsort_node(kv_A(tmp, i), head);
+
+    /* sort the list */
+    head = mergesort(head);
+
+    /*Store the list back into the vector*/
+    i = 0;
+    for (current = head; current != NULL; current = current->next)
+        kv_A(tmp, i++) = current->number;
+
+    /* free the list */
+    for (current = head; current != NULL; current = next)
+        next = current->next, free(current);
+}
+
 
 /************MAKE THIS THREAD SAFE**********/
-Lit* insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId)
-{
-  dassert(cl->size == 3);
-  int i,j;
-  int index=-1;
-  TClause ternary;
+/* To insert a clause with 3 literals into the tDB*/
+Lit* insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId) {
+    dassert(cl->size == 3);
+    int i, j;
+    int index = -1;
+    TClause ternary;
 
-  vec_literal_sort(cl->lits,cl->size); //Implement
+    vec_literal_sort(cl->lits.a, cl->size);
 
-  /*Check if alreadyAdded*/
-  int listSize;
-  ts_vec_size(listSize, cdb->tDB);
-  dassert(cdb->numTernaries == listSize);
-  for( i=0; i<cdb->numTernaries; i++){
-    ts_vec_ith( ternary, cdb->tDB, i );
-    index=i;
-    for( j=0; j<3; j++){
-      if( ternary.lits[j] != kvec_A(cl->lits, j) ){
-	index = -1;
-	break;
-      }
+    /*Check if alreadyAdded*/
+    int listSize;
+    ts_vec_size(listSize, cdb->tDB);
+    dassert(cdb->numTernaries == listSize);
+    for (i = 0; i < cdb->numTernaries; i++) {
+        ts_vec_ith(ternary, cdb->tDB, i);
+        index = i;
+        for (j = 0; j < 3; j++) {
+            if (ternary.lits[j] != kv_A(cl->lits, j)) {
+                index = -1;
+                break;
+            }
+        }
+        if (index != -1) break;
     }
-    if(index!=-1) break;
-  }
-  /*********************/
+    /*********************/
 
-  /*In case the clause already exists, modify flags if it's learned*/
-  if(index!=-1){
-    dassert(index>=0);
-    if(!isOriginal){
-      ts_vec_ith( ternary, cdb->tDB, index);
-      ternary.flags[wId] = true;
+    /*In case the clause already exists, modify flags if it's learned*/
+    if (index != -1) {
+        dassert(index >= 0);
+        if (!isOriginal) {
+            ts_vec_ith(ternary, cdb->tDB, index);
+            ternary.flags[wId] = true;
+        }
+        return ternary.lits;
     }
-    return ternary.lits;
-  }
-  /********************************************************/
+    /********************************************************/
 
-  /*In case it doesn't exist, insert it and watch*/
-  //Init flags
+    /*In case it doesn't exist, insert it and watch*/
+    //Init flags
 
-  if(isOriginal){
-    for(i=0;i<cdb->numWorkers;i++){
-      ternary.flags[i] = true;
+    if (isOriginal) {
+        for (i = 0; i < cdb->numWorkers; i++) {
+            ternary.flags[i] = true;
+        }
+    } else {
+        for (i = 0; i < cdb->numWorkers; i++) {
+            if (i == wId) ternary.flags[i] = true;
+            else ternary.flags[i] = false;
+        }
     }
-  }else{
-    for(i=0;i<cdb->numWorkers;i++){
-      if(i==wId) ternary.flags[i] = true;
-      else ternary.flags[i] = false;
+
+    //Insert literals
+    for (i = 0; i < 3; i++) {
+        ternary.lits[i] = kv_A(cl->lits, i);
     }
-  }
+    //update clauseDB
+    ts_vec_push_back(TClause, cdb->tDB, ternary);
 
-  //Insert literals
-  for(i=0;i<3;i++){
-    ternary.lits[i] = vec_A(cl->lits,i);
-  }
-  //update clauseDB
-  ts_vec_push_back(TClause, cdb->tDB, ternary);
+    /*add this clause position in tDB to each neg literal watches*/
+    unsigned int litIndex;
+    unsigned int indexOfNewClause;
+    ts_vec_size(indexOfNewClause, cdb->tDB);
+    indexOfNewClause--;
 
-  /*add this clause position in tDB to each neg literal watches*/
-  unsigned int litIndex;
-  unsigned int indexOfNewClause;
-  ts_vec_size(indexOfNewClause, cdb->tDB);
-  indexOfNewClause--;
+    for (i = 0; i < 3; i++) {
+        litIndex = lit_as_uint(-ternary.lits[i]);
+        ts_vec_push_back(unsigned int, kv_A(cdb->ternaryWatches, litIndex), indexOfNewClause);
+    }
 
-  for( i=0; i<3; i++){
-    litIndex = lit_as_uint(-ternary.lits[i]);
-    ts_vec_push_back(unsigned int, kvec_A(cdb->ternaryWatches, litIndex), indexOfNewClause );
-  }
-
-  if(isOriginal) cdb->numInputClauses++;
-  cdb->numTernaries++;
-  cdb->numClauses++;
-  return ternary.lits; //check if this indeed is the direction of the literals
-  //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
-  /************************************************/
+    if (isOriginal) cdb->numInputClauses++;
+    cdb->numTernaries++;
+    cdb->numClauses++;
+    return ternary.lits; //check if this indeed is the direction of the literals
+    //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
+    /************************************************/
 }
 
 
@@ -265,7 +309,7 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
   int i,j;
   int index=-1;
   NClause nclause;
-  vec_literal_sort(cl->lits,cl->size); //To implement
+  vec_literal_sort(cl->lits.a,cl->size);
 
   /*Check if alreadyAdded*/
   int listSize;
@@ -278,7 +322,7 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
     if(kvec_size(nclause.lits) == cl->size){
       index=i;
       for( j=0; j<cl->size; j++ ){
-	if( kvec_A(nclause.lits,j) != kvec_A(cl->lits,j) ){
+	if( kv_A(nclause.lits,j) != kv_A(cl->lits,j) ){
 	  index = -1;
 	  break;
 	}
@@ -314,7 +358,7 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
   }
   //Insert literals
   for(i=0;i<cl->size;i++){
-    kvec_A( nclause.lits, i ) = kvec_A( cl->lits, i );
+    kv_A( nclause.lits, i ) = kv_A( cl->lits, i );
   }
   nclause.isOriginal = isOriginal;
 

@@ -74,6 +74,12 @@ bool init_flag = false;
                                pthread_rwlock_unlock(&(kv_A(ts_vec_locks,(v).id))); \
                                } while(0)
 
+#define ts_vec_ith_ma(temp, v, i) do{ \
+                               pthread_rwlock_rdlock(&(kv_A(ts_vec_locks,(v).id))); \
+                               temp= &((v).a[(i)]); \
+                               pthread_rwlock_unlock(&(kv_A(ts_vec_locks,(v).id))); \
+                               } while(0)
+
 #define ts_vec_pop(temp, v) do{ \
                                pthread_rwlock_wrlock(&(kv_A(ts_vec_locks,(v).id))); \
                                temp= ((v).a[--(v).n]); \

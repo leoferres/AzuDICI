@@ -63,31 +63,32 @@ int main (int argc, char *argv[]) {
   unsigned int nClauses;
   gzFile in;
 
-  /*Read number of vars and clauses*/
+  /*Read number of vars and clauses from the input CNF file*/
   in = gzopen(inputFileName, "rb");
   input_read_header(in, &nVars, &nClauses);
   gzclose(in);
   /**********************************/
 
-  /*Init Clause DataBase and read clauses*/
+  /*Initialize Clause DataBase and read clauses*/
   ClauseDB* cdb = init_clause_database(nVars);
   input_read_clauses(cdb, inputFileName);
   /***************************************/
 
-  /*init workers*/
-  ts_vec_init(workers, nworkers);
+  /*Initialize workers and assign each thread a new AzuDICI solver*/
+  ts_vec_init(workers);
+  ts_vec_resize(Worker,workers,nworkers);
 
   Worker *w;
-  for (i = 0; i < nworkers; i++) {
-    w = &ts_vec_ith(workers,i);
+  for (int i = 0; i < nworkers; i++) {
+    ts_vec_ith_ma(w,workers,i);
     w->id=i;
     w->solver = azuDICI_init (cdb);
   }
   /**************/
 
-  /*Call solving in nthreads*/
-  for (i = 0; i < nworkers; i++) {
-    w = &ts_vec_ith(workers,i);
+  /*Call solving in each thread*/
+  for (int i = 0; i < nworkers; i++) {
+    ts_vec_ith_ma(w,workers,i);
     if ( pthread_create (&(w->thread), 0, work, (void*)w) ){
       printf("failed to create worker thread %d", i);
       exit(-1);
