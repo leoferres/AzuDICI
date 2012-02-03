@@ -7,8 +7,10 @@ enum RTYPE {
 };
 
 typedef struct _reason {
-  NClause* nclause;
-  TClause* tclause;
-  Literal bliteral; /*implied binary literal*/
+  NClause* nClPtr;
+  TClause* tClPtr;
+  ThNClause* thNClPtr;
+  Literal binLit; /*implied binary literal*/
+  unsigned int size;
   enum RTYPE w; /*syntax of enums???*/
 } Reason;

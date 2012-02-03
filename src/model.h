@@ -20,14 +20,14 @@ typedef struct _model {
         unsigned int n_lits;
 } Model;
 
-void set_true_due_to_decision(Literal l, Model model);
-void set_true_due_to_reason(Literal l, Reason r, Model model);
+inline void model_set_true_decision(Model model, Literal l);
+inline void set_true_due_to_reason(Literal l, Reason r, Model model);
 
 inline void push(Literal lit, Model model);
 inline void set_true_in_assignment(Literal lit, Model model);
 inline void set_undef_in_assignment(Literal lit, Model model);
-void init_in_assignment(Var var, Model model);
-Model init_model(unsigned int num_vars);
+inline void init_in_assignment(Var var, Model model);
+inline Model model_init(unsigned int num_vars);
 
 inline bool lit_is_of_current_DL(Literal lit, Model model);
 inline unsigned int lit_DL(Literal lit, Model model);
@@ -35,12 +35,12 @@ inline unsigned int lit_height(Literal lit, Model model);
 inline Literal  pop_and_set_undef(Model model);
 inline bool is_true(Literal lit, Model model);
 inline bool is_false(Literal lit, Model model);
-inline bool is_undef(Literal lit, Model model);
+inline bool model_is_undef(Literal lit, Model model);
 inline bool is_true_or_undef(Literal lit, Model model);
 inline bool is_undef_var(Var v, Model model);
-inline Literal  next_lit_for_2Prop(Model model);
-inline Literal  next_lit_for_NProp(Model model);
-inline Literal  next_lit_for_TProp(Model model);
+inline Literal  model_next_lit_for_2_prop(Model model);
+inline Literal  model_next_lit_for_n_prop(Model model);
+inline Literal  model_next_lit_for_3_prop(Model model);
 inline void set_last_TPropagated(unsigned int num_unused_lits, Model model);
 inline bool last_phase(Var v, Model model);
 inline void set_last_phase(Var v, bool phase, Model model);

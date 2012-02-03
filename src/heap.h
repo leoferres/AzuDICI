@@ -9,7 +9,7 @@ typedef struct _maxheap {
 	unsigned int numElems;
 } MaxHeap;
 
-MaxHeap init_max_heap(unsigned int nElems, MaxHeap mh);
+MaxHeap heap_init(unsigned int nElems, MaxHeap mh);
 void heap_placeNode(int n, unsigned int pos, MaxHeap mh);
 void heap_percolateUp(unsigned int pos, MaxHeap mh);
 bool heap_nodeIsGreater (int n1, int n2, MaxHeap mh);

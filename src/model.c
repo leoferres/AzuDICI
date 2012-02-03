@@ -4,7 +4,7 @@ inline void push(Literal lit, Model model){
     kv_push(Literal,model.model_stack,lit);
 }
 
-inline Model init_model(unsigned int num_vars){
+inline Model model_init(unsigned int num_vars){
     Model model;
     model.n_vars = num_vars;
     model.n_lits = num_vars*2+2;
@@ -15,7 +15,7 @@ inline Model init_model(unsigned int num_vars){
     model.lastNpropagated = -1;
     kv_init(model.vinfo);
     kv_resize(VarInfo,model.vinfo,model.n_vars+1);
-    kv_resize(char,model.assignment),model.n_lits;
+    kv_resize(char,model.assignment,model.n_lits);
     model.vassignment = ((short unsigned *)((char *)model.assignment));
     model.dlMarker = zero_lit();
     model.decision_lvl = 0;
@@ -69,7 +69,7 @@ inline bool is_false(Literal lit, Model model){
     return !(kv_A(model.assignment,lit_as_uint(lit)) & 0x03);
 }
 
-inline bool is_undef(Literal lit, Model model){
+inline bool model_is_undef(Literal lit, Model model){
     return (kv_A(model.assignment,lit_as_uint(lit)) & 0x02);
 }
 
@@ -104,7 +104,7 @@ inline void set_true_due_to_reason(Literal lit, Reason r, Model model){
     vi->last_phase=lit_is_positive(lit);
 }
 
-inline void set_true_due_to_decision(Literal lit, Model model){
+inline void model_set_true_decision(Model model, Literal lit){
     dassert(is_undef(lit,model));
     model.decision_lvl++;
     model.last2propagated++;
@@ -144,19 +144,19 @@ inline Literal pop_and_set_undef(Model model){
     return(lit);
 }
 
-inline Literal next_lit_for_2Prop(Model model){
+inline Literal model_next_lit_for_2_prop(Model model){
     if(model.last2propagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.last2propagated++;
     return(kv_A(model.model_stack,model.last2propagated));
 }
 
-inline Literal next_lit_for_NProp(Model model){
+inline Literal model_next_lit_for_n_prop(Model model){
     if(model.lastNpropagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.lastNpropagated++;
     return(kv_A(model.model_stack,model.lastNpropagated));
 }
 
-inline Literal next_lit_for_TProp(Model model){
+inline Literal model_next_lit_for_3_prop(Model model){
     if(model.last3propagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.last3propagated++;
     return(kv_A(model.model_stack,model.last3propagated));

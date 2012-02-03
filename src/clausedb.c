@@ -6,6 +6,10 @@
 
 Clause inputClause;
 unsigned int nInsertedClauses;
+pthread_rwlock_t insert_unitary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t insert_binary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t insert_ternary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t insert_nary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
@@ -114,6 +118,7 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
 
 /*Inserting, in the clause database, an input clause that only has one literal*/
 void insert_unitary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
+  pthread_rwlock_wrlock(&insert_unitary_clause_lock);
   dassert(cl->size == 1);
   int i;
   bool alreadyAdded=false;
@@ -136,6 +141,7 @@ void insert_unitary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
     cdb->numUnits++;
     cdb->numClauses++;
   }
+  pthread_rwlock_unlock(&insert_unitary_clause_lock);
 }
 
 
@@ -146,12 +152,12 @@ void insert_unitary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
    clause (x1 or ~x2) is to be stored in dBD, we store x1 in the literal vector
    associated to the literal x2, and we store ~x2 in the literal vector associated
    to literal ~x1. This way we have an implication vector for all literals. 
-   Associating x1 with x2 means that if x2 were to be true, then x1 must be true.
+   Associating x1 with x2 means that if x2 were to be true, then x1 must also be true.
    Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
 void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
+  pthread_rwlock_wrlock(&insert_binary_clause_lock);
   //we will have problems here for keeping the same search for each thread
   int i;
-
   dassert(cl->size == 2);
   /*We are storing implications, so we want to know the negation of each literal
    that belongs to the binary clause*/
@@ -190,7 +196,7 @@ void insert_binary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
     cdb->numClauses++;
   }
   /********************************************/
-
+  pthread_rwlock_unlock(&insert_binary_clause_lock);
 }
 /*Function for sorting literals in a vector.
  Sorts from lower to highest*/
@@ -226,6 +232,7 @@ void vec_literal_sort(Literal *lits, int size) {
 /************MAKE THIS THREAD SAFE**********/
 /* To insert a clause with 3 literals into the tDB*/
 Lit* insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId) {
+    pthread_rwlock_wrlock(&insert_ternary_clause_lock);
     dassert(cl->size == 3);
     int i, j;
     int index = -1;
@@ -299,11 +306,13 @@ Lit* insert_ternary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, int wId) 
     return ternary.lits; //check if this indeed is the direction of the literals
     //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
     /************************************************/
+    pthread_rwlock_unlock(&insert_ternary_clause_lock);
 }
 
 
 /****MAKE THIS THREAD SAFE**********/
 unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsigned int wId){
+  pthread_rwlock_wrlock(&insert_nary_clause_lock);
   //we will have problems here for keeping the same search for each thread
   dassert(cl->size > 3);
   int i,j;
@@ -371,6 +380,7 @@ unsigned int insert_nary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal, unsi
   //  dassert(ts_vec_size(NClause, cdb->nDB)==cdb->numNClauses);
   return cdb->numNClauses-1;
   /**************************************************/
+  pthread_rwlock_wrlock(&insert_nary_clause_lock);
 }
 
 #endif /* _CLAUSEDB_C_ */

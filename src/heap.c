@@ -1,7 +1,7 @@
 #include "heap.h"
 
 /*The constructor of the MaxHeap structure*/
-MaxHeap init_max_heap(unsigned int nElems){
+MaxHeap heap_init(unsigned int nElems){
     
     /*we create a MaxHeap structure.*/
     MaxHeap mh; 

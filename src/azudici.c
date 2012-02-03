@@ -84,9 +84,8 @@ unsigned int azuDICI_solve(AzuDICI* ad){
   if( !azuDICI_set_true_units(ad) ) return 20;
   Literal dec;
   Reason r;
-
   while (true) {
-    while( !azuDICI_propagate(ad) ){ //While conflict in propagate
+    while(!azuDICI_propagate(ad)){ //While conflict in propagate
       if( ad->model.decisionLevel == 0 ) return 20;
       azuDICI_conflict_analysis(ad);
       azuDICI_lemma_shortening(ad);
@@ -100,10 +99,8 @@ unsigned int azuDICI_solve(AzuDICI* ad){
     
     dec = azuDICI_get_next_decision(ad);
     if (dec == 0)  return 10;
-    
-    model_set_true__decision( ad->model, dec ); //decisionLevel should be increased
-  }
-  
+    model_set_true_decision( ad->model, dec ); //decisionLevel should be increased
+  } 
   return 0;
 }
 
@@ -533,8 +530,13 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
 
   for(int i=0;i<sizeOfList;i++){
     ts_vec_ith(lToSetTrue, list, i);
+<<<<<<< HEAD
     if (model_is_undef(lToSetTrue)){
       r.binLit = -l;
+=======
+    if (model_is_undef(lToSetTrue,ad->model)){
+      r.binLit = lToSetTrue;
+>>>>>>> more fixes
       model_set_true_w_reason(ad->model,lToSetTrue,r);
       if(model->decisionLevel ==0){
 	ad->stats.numDLZeroLits++;
