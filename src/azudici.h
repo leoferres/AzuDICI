@@ -45,6 +45,7 @@ void azuDICI_set_true_uip(AzuDICI* ad);
 void azuDICI_clause_cleanup_if_adequate(AzuDICI* ad); //to implement
 void azuDICI_restart_if_adequate(AzuDICI* ad); //to implement
 Literal  azuDICI_decide(AzuDICI* ad);
+void  azuDICI_increaseScore(AzuDICI* ad, Literal lit);
 /****************/
 
 /*Other methods*/
@@ -52,13 +53,13 @@ void azuDICI_init_thcdb(AzuDICI* ad); //to implement
 bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l);
-Clause azuDICI_get_clause_from_reason(Reason r); //To implement, ¿in clause.c?
-void azuDICI_increase_activity(Reason r); //To implement, ¿in clause.c?
-void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //To implement, ¿in model.c? 
-
-
-unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Literal l, Reason r);
+Clause azuDICI_get_clause_from_reason(Reason r); //¿in clause.c?
+void azuDICI_increase_activity(Reason r, Literal l); //¿in clause.c?
+void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
+void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
+//unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Literal l, Reason r);
 ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, bool isOriginal, unsigned int indexInDB);
-
+bool azuDICI_set_true_units(AzuDICI *ad);
+void azuDICI_init_thcdb(AzuDICI* ad);
 
 #endif /* _AZUDICI_H_ */
