@@ -141,7 +141,7 @@ void insert_unitary_clause(ClauseCB* cdb, Clause *cl, bool isOriginal){
 
 /*******************Make this Thread safe****************************/
   /*bDB stores 2 literals in a clause as following:
-   dDB is a vector which size is (numVars*2)+1 and each position in the vector
+   dDB is a vector which size is 2*(numVars+1) and each position in the vector
    corresponds to a literal which has a literal vector associated to it. If the 
    clause (x1 or ~x2) is to be stored in dBD, we store x1 in the literal vector
    associated to the literal x2, and we store ~x2 in the literal vector associated

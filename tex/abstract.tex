@@ -58,7 +58,7 @@ Opteron 3260 EE in late 2011, and Intel will do the same with the Xeon
 E5-2650, and its low power version, the Xeon E5-2650L early this
 year). As Herb Sutter once put it, ``the free lunch is over''
 \cite{FreeLunchIsOver}, and it effectively means that software in
-general will not be getting any faster as years go by by simply
+general will not be getting any faster as years go by simply
 relying on faster processors, but by relying on how software scales in
 over multicore systems.
 
@@ -83,8 +83,9 @@ Thus, given the three arguments above: how {\em do} pSATs scale in
 hierarchical-memory multicore architectures? Our case study is the
 winner of the 2011 SAT Competition, {\tt plingeling}, a
 portfolio-approach SAT solver \cite{lingeling}. The first experiment
-tested \pling\ in a 6-core multicore machine, varying the number of
-threads. In Figure \ref{fig:decay} we can see how \pling's performance
+tested a \emph{modified} \pling\ in a 6-core multicore machine, varying the number of
+threads. \pling was modified in order that, for each {\em thread worker}, the {\em same search} is performed (i.e. same strategies, starting parameters and no lemma exchanging occur). 
+In Figure \ref{fig:decay} we can see how modified-\pling's performance
 tends to decay sharply (up to 30\%) when several instances are
 executed in the same processor, even when they do not, in principle,
 share any resources other than the common process address space. We
