@@ -530,13 +530,8 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
 
   for(int i=0;i<sizeOfList;i++){
     ts_vec_ith(lToSetTrue, list, i);
-<<<<<<< HEAD
-    if (model_is_undef(lToSetTrue)){
-      r.binLit = -l;
-=======
     if (model_is_undef(lToSetTrue,ad->model)){
-      r.binLit = lToSetTrue;
->>>>>>> more fixes
+      r.binLit = -l;
       model_set_true_w_reason(ad->model,lToSetTrue,r);
       if(model->decisionLevel ==0){
 	ad->stats.numDLZeroLits++;
