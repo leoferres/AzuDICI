@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <assert.h>
+#include "literal.h"
 
 /*debug assert*/
 #define DEBUG 1
