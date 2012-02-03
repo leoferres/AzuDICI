@@ -21,8 +21,8 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   //  ad->scoreBonus         = some_magic_value;  
 
   //lastBinariesAdded
-  kvec_init( ad->lastBinariesAdded );
-  kvec_resize(unsigned int,  ad->lastBinariesAdded, 2*(ad->cdb->numVars+1) );
+  kv_init( ad->lastBinariesAdded );
+  kv_resize(unsigned int,  ad->lastBinariesAdded, 2*(ad->cdb->numVars+1) );
   int listSize;
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
     ts_vec_size( listSize, kv_A(ad->cdb->bDB, i) );
@@ -30,35 +30,35 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   }
 
   //varMarks
-  kvec_init(ad->varMarks);
-  kvec_resize(bool, ad->varMarks, ad->cdb->numVars+1);
+  kv_init(ad->varMarks);
+  kv_resize(bool, ad->varMarks, ad->cdb->numVars+1);
   for( i=0; i < ad->cdb->numVars + 1 ; i++ ){
     kv_A(ad->varMarks, i) = false;
   }
 
   //thcdb (thread clause data base)
-  kvec_init(ad->thcdb);
+  kv_init(ad->thcdb);
 
   //watches
-  kvec_init(ad->watches);
-  kvec_resize(ThNClause*,  ad->watches, 2*(ad->cdb->numVars + 1) );
+  kv_init(ad->watches);
+  kv_resize(ThNClause*,  ad->watches, 2*(ad->cdb->numVars + 1) );
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
     kv_A(ad->watches, i) = NULL;
   }
 
   //conflict clause
-  kvec_init(conflict.lits);
-  kvec_resize(Literal, conflict.lits, ad->db->numVars);
+  kv_init(conflict.lits);
+  kv_resize(Literal, conflict.lits, ad->db->numVars);
   conflict.size = 0;
 
   //lemma clause
-  kvec_init(lemma.lits);
-  kvec_resize(Literal, lemma.lits, ad->db->numVars);
+  kv_init(lemma.lits);
+  kv_resize(Literal, lemma.lits, ad->db->numVars);
   lemma.size = 0;
 
   //shortenned lemma clause
-  kvec_init(lemmaToLearn.lits);
-  kvec_resize(Literal, lemmaToLearn.lits, ad->db->numVars);
+  kv_init(lemmaToLearn.lits);
+  kv_resize(Literal, lemmaToLearn.lits, ad->db->numVars);
   lemmaToLearn.size = 0;
 
   model_init(ad->model);  //model
@@ -588,7 +588,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       first=false;
       otherLit = watchedClause->lwatch1;
     }
-    sizeOfClause = kvec_size(watchedClause->lits);
+    sizeOfClause = kv_size(watchedClause->lits);
 
     if(model_is_true(otherLit)){
       //Update watchedLiteral and previouslyWatchedLiteral
@@ -685,10 +685,10 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
   threadClause.lits      = &clInDB.lits;
   //  threadClause.posInDB      = posInDB; Do we need this, rethink?
 
-  kvec_push(ThNClause, ad->thcdb, threadClause);
+  kv_push(ThNClause, ad->thcdb, threadClause);
 
   //insert at beginning of watches linked lists.
-  ThNClause* ptrToThClause = &kv_A(ad->thcdb, kvec_size(ad->thcdb)-1);
+  ThNClause* ptrToThClause = &kv_A(ad->thcdb, kv_size(ad->thcdb)-1);
   kv_A(ad->watches, lit_as_uint(-l1)) = ptrToThClause;
   kv_A(ad->watches, lit_as_uint(-l2)) = ptrToThClause;
 

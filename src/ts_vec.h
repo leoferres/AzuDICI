@@ -29,6 +29,10 @@
  * 
  * Resize the vector to hold 50 elements:
  *      ts_vec_resize(int,myVector,50);
+ * 
+ * To get the memory address of element 0 in the vector:
+ *      int *number;
+ *      ts_vec_ith_ma(number,myVector,0);
  *  
  */
 #define __USE_UNIX98 1 
