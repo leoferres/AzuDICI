@@ -79,18 +79,19 @@ words of the same cache line, then the cache line in one or the other
 processor becomes ``dirty'' and a round trip to RAM ensues, wasting
 valuable time due to latency.
 
-Thus, given the current interest in pSATs, the increasing number of
-cores in current processors (which are bound to increase even more),
-and many-level cache memory architectures as discussed above, how {\em
-  do} pSATs scale in hierarchical-memory multicore architectures? Our
-case study is the winner of the 2011 SAT Competition, {\tt
-  plingeling}, a portfolio-approach SAT solver \cite{lingeling}. In
-Figure \ref{fig:decay} we can see how \pling's performance tends to
-decay sharply (up to 30\%) when several instances are executed in the
-same processor, even when they do not, in principle, share any
-resources other than the common process address space. We would thus
-expect that all instances would perform similarly at 1, plus or minus
-a small fraction.
+Thus, given the three arguments above: how {\em do} pSATs scale in
+hierarchical-memory multicore architectures? Our case study is the
+winner of the 2011 SAT Competition, {\tt plingeling}, a
+portfolio-approach SAT solver \cite{lingeling}. The first experiment
+tested \pling\ in a 6-core multicore machine, varying the number of
+threads. In Figure \ref{fig:decay} we can see how \pling's performance
+tends to decay sharply (up to 30\%) when several instances are
+executed in the same processor, even when they do not, in principle,
+share any resources other than the common process address space. We
+would thus expect that all instances would perform similarly at 1,
+plus or minus a small fraction. This is in fact what happens when
+\pling\ is run in two different cores of two different chips, but in
+the same machine.
 
 \begin{figure}[tp]
   \centering
@@ -130,6 +131,10 @@ improvement of performance.
 % rendimiento). Hasta que no tengamos nuestro solver, no sabemos qué
 % conclusión tenemos. Según experimentos con matrices de Juan, la cosa
 % no está tan clara, esperemos que la cosa vaya bien.
+
+\section{The AzuDICI SAT Solver}
+\label{sec:azudici}
+
 
 
 

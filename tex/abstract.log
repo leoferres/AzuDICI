@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.2-0.9995.2 (TeX Live 2009/Debian) (format=xelatex 2011.7.4)  2 FEB 2012 18:26
+This is XeTeX, Version 3.1415926-2.2-0.9995.2 (TeX Live 2009/Debian) (format=xelatex 2011.7.4)  3 FEB 2012 15:18
 entering extended mode
  %&-line parsing enabled.
 **\input abstract.tex
@@ -244,18 +244,18 @@ LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
 File: plingeling_6cores_speedup.eps Graphic file (type eps)
  <plingeling_6cores_speedup.eps> (./abstract.bbl
 Missing character: There is no ’ in font cmr9!
-) [2] (./abstract.aux)
+ [2]) [3] (./abstract.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 1652 strings out of 495724
- 19063 string characters out of 1189347
+ 1653 strings out of 495724
+ 19076 string characters out of 1189347
  78817 words of memory out of 3000000
- 4796 multiletter control sequences out of 15000+50000
+ 4797 multiletter control sequences out of 15000+50000
  8568 words of font info for 32 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  29i,9n,21p,217b,264s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on abstract.pdf (2 pages).
+Output written on abstract.pdf (3 pages).
