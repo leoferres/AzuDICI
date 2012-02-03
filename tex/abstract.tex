@@ -82,16 +82,19 @@ valuable time due to latency.
 Thus, given the three arguments above: how {\em do} pSATs scale in
 hierarchical-memory multicore architectures? Our case study is the
 winner of the 2011 SAT Competition, {\tt plingeling}, a
-portfolio-approach SAT solver \cite{lingeling}. The first experiment
-tested \pling\ in a 6-core multicore machine, varying the number of
-threads. In Figure \ref{fig:decay} we can see how \pling's performance
-tends to decay sharply (up to 30\%) when several instances are
-executed in the same processor, even when they do not, in principle,
-share any resources other than the common process address space. We
-would thus expect that all instances would perform similarly at 1,
-plus or minus a small fraction. This is in fact what happens when
-\pling\ is run in two different cores of two different chips, but in
-the same machine.
+portfolio-approach SAT solver \cite{lingeling}. Portfolio-approach
+solvers such as \pling\ run multiple SAT solvers in parallel, taking
+advantage of the fact that different solvers perform better for
+different problems. The first experiment tested \pling\ on a 6-core
+multicore machine, varying the number of threads. In Figure
+\ref{fig:decay} we can see how \pling's performance tends to decay
+sharply (up to 30\%) when several instances are executed in the same
+processor, even when they do not, in principle, share any software
+resources other than the common process address space. We would thus
+expect that all instances would perform similarly at around 1, plus or
+minus a small fraction. This is in fact what happens when \pling\ is
+run in two different cores of two different chips, even in the same
+machine.
 
 \begin{figure}[tp]
   \centering
@@ -104,7 +107,7 @@ In order to find the culprit of the performance decay, we have
 developed a simple portfolio-based SAT solver that allows us to
 replicate the behavior of \pling, and then also experiment with
 alternative scenarios in order to take measures towards the
-improvement of performance.
+improvement of its performance.
 
 % Solvers implementando el portfolio-approach. Realizando experimentos,
 % hemos notado que varios cdcl SAT-solvers ejecutándose en un mismo

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.2-0.9995.2 (TeX Live 2009/Debian) (format=xelatex 2011.7.4)  3 FEB 2012 15:18
+This is XeTeX, Version 3.1415926-2.2-0.9995.2 (TeX Live 2009/Debian) (format=xelatex 2011.7.4)  3 FEB 2012 15:46
 entering extended mode
  %&-line parsing enabled.
 **\input abstract.tex
@@ -244,7 +244,11 @@ LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
 File: plingeling_6cores_speedup.eps Graphic file (type eps)
  <plingeling_6cores_speedup.eps> (./abstract.bbl
 Missing character: There is no ’ in font cmr9!
- [2]) [3] (./abstract.aux)
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [2])
+[3] (./abstract.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
