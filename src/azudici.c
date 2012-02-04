@@ -87,7 +87,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
   Reason r;
   while (true) {
     while(!azuDICI_propagate(ad)){ //While conflict in propagate
-      if( ad->model.decisionLevel == 0 ) return 20;
+      if( ad->model.decision_lvl == 0 ) return 20;
       azuDICI_conflict_analysis(ad);
       azuDICI_lemma_shortening(ad);
       azuDICI_learn_lemma(ad);
@@ -157,12 +157,12 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
       azuDICI_increaseScore(ad, lit);
       if( lit != poppedLit ){
 	//in reasonclause for lit, don't treat this "poppedLit" 
-	if( model_lit_is_of_current_dl( ad->model, lit ) ){
+	if( model_lit_is_of_current_dl( lit, ad->model ) ){
 	  if ( !kv_A( ad->varMarks, var(lit) ) ){
 	    kv_A( ad->varMarks, var(lit) ) = true;
 	    numLitsThisDLPending++;
 	  }
-	} else if ( !kv_A(ad->varMarks, var(lit) ) && model_get_lit_DL(ad->model,lit) > 0 ) {
+	} else if ( !kv_A(ad->varMarks, var(lit) ) && model_get_lit_dl(lit,ad->model) > 0 ) {
 	  kv_A(ad->varMarks, var(lit)) = true;  // Note: we ignore dl-zero lits
 	  ad->lemma.size++;
 	  kv_A(ad->emma.lits, ad->lemma.size) = lit; // lower-dl-lit marked->already in lemma
@@ -177,7 +177,7 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
     } while ( !kv_A(ad->varMarks, var(poppedLit)) );
     kv_A(ad->varMarks, var(poppedLit)) = false;
 
-    r = model_get_reason_of_Lit(ad->model, poppedLit);
+    r = model_get_reason_of_lit(poppedLit , ad->model);
     azuDICI_increase_activity(r);
     cl = azuDICI_get_clause_from_reason(r, poppedLit);
 
@@ -217,7 +217,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
   Reason r;
 
   ad->lemmaToLearn.size = 0;
-  if (ad->model.decisionLevel == 0) return;
+  if (ad->model.decision_lvl == 0) return;
  
   //First of all, mark all lits in original lemma.
   for (i=0;i<ad->lemma.size;i++) 
@@ -225,7 +225,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 
   //Order lemma's lit from most recent to oldest (from highest dl to lowest)
   azuDICI_sort_lits_according_to_DL_from_index(ad->model, ad->lemma,1);
-  lowestDL = model_get_lit_DL(ad->model, kv_A(ad->lemma, ad->size-1) );
+  lowestDL = model_get_lit_dl(kv_A(ad->lemma, ad->size-1), ad->model);
 
   ad->dlToBackjump = 0; 
   ad->dlToBackjumpPos=0; 
@@ -243,13 +243,13 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     dassert( varMarks.isMarked(var(litOfLemma)) );
 
     //Begins test to see if literal is redundant
-    if( model_lit_is_decision(ad->model, litOfLemma) || i==0 ){
+    if( model_lit_is_decision(litOfLemma,ad->model) || i==0 ){
       //If it's decision or the UIP, lit is not Redundant 
       litIsRedundant=false;
     }else{
       //We add reasons' lits at the end of the lemma
       //      r = model.reasonOfLit(litOfLemma.negation());
-      r = model_get_reason_of_Lit(ad->model, poppedLit);
+      r = model_get_reason_of_lit(poppedLit,ad->model);
       cl = azuDICI_get_clause_from_reason(r, poppedLit);
 
       //add literals of lit's reason to test
@@ -267,14 +267,14 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
       while(testingIndex < lastMarkedInLemma){
 	testingLit = kv_A(ad->lemma.lits,testingIndex);
 	dassert(kv_A(ad->varMarks, var(testingLit)));
-	if ( model_get_lit_DL(ad->model, testingLit) < lowestDL || //has lower dl
-	     model_lit_is_decision(testingLit) ) { //is decision
+	if ( model_get_lit_dl(testingLit, ad->model) < lowestDL || //has lower dl
+	     model_lit_is_decision(testingLit, ad->model) ) { //is decision
 	  //test fails
 	  litIsRedundant=false;
 	  break;
 	}
       
-	r = model_get_reason_of_lit(-testingLit);
+	r = model_get_reason_of_lit(-testingLit,ad->model);
 	cl = azuDICI_get_clause_from_reason(r, -testingLit);
 
 	//cl = clauseReasonOfLit(testingLit.negation());
@@ -306,8 +306,8 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     }else{
       kv_A(ad->lemmaToLearn.lits, ad->lemmaToLearn.size) = litOfLemma;
       //Keep track of literal with highest dl besides de UIP
-      if ( ad->lemmaToLearn.size > 0 && ad->dlToBackjump < model_get_lit_DL(ad->model, litOfLemma) ){
-	ad->dlToBackjump = model_get_lit_DL(ad->model, litOfLemma);
+      if ( ad->lemmaToLearn.size > 0 && ad->dlToBackjump < model_get_lit_dl(litOfLemma, ad->model) ){
+	ad->dlToBackjump = model_get_lit_dl(litOfLemma, ad->model);
 	ad->dlToBackjumpPos = ad->lemmaToLearn.size;  //dlpos is position in lemma of maxDLLit
       }
       ad->lemmaToLearn.size++;
@@ -396,7 +396,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     Literal aux;
     for(int i=1; i < ad->lemmaToLearn.size; i++){
       if( kv_A(ad->lemmaToLearn.lits,i) == hdlLit ){
-	dassert(model_get_lit_DL(kv_A(ad->lemmaToLearn.lits,i)) == ad->dlToBackjump);
+	dassert(model_get_lit_dl(kv_A(ad->lemmaToLearn.lits,i),ad->model) == ad->dlToBackjump);
 	kv_A(ad->lemmaToLearn.lits,i) = kv_A(ad->lemmaToLearn.lits,1);
 	kv_A(ad->lemmaToLearn.lits,1) = hdlLit;
 	break;
@@ -416,18 +416,18 @@ void azuDICI_learn_lemma(AzuDICI* ad){
 
 void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl){
   Literal lit;
-  uint dL1 = ad->model.decisionLevel;
+  uint dL1 = ad->model.decision_lvl;
 
   if (dl==0) ad->stats.numConflictsSinceLastDLZero=0;
   while ( dL1>dl ){
-    lit = model_pop_and_set_undef();
+    lit = model_pop_and_set_undef(ad->model);
     while ( lit != 0 ) {
       azuDICI_notify_unassigned_lit(lit);
-      lit=model_pop_and_set_undef();
+      lit=model_pop_and_set_undef(ad->model);
     }
     dL1--;
   }
-  ad->model.decisionLevel = dl;
+  ad->model.decision_lvl = dl;
 }
 
 void azuDICI_set_true_uip(AzuDICI* ad){
@@ -436,7 +436,7 @@ void azuDICI_set_true_uip(AzuDICI* ad){
     ad->stats.numDLZeroLits++;
   }
 
-  model_set_true_due_to_reason(ad->model, kv_A(ad->lemmaToLearn.lits,0), ad->rUIP);
+  model_set_true_w_reason(kv_A(ad->lemmaToLearn.lits,0), ad->rUIP, ad->model);
   //conflict ends, and then we propagate
   ad->conflict.size = 0;
 }
@@ -461,15 +461,15 @@ Literal  azuDICI_decide(AzuDICI* ad){
   int i,v=0;
   Literal l;
 
-  if ( (ad->model.decisionLevel < ad->strat.DLBelowWhichRandomDecisions) &&
+  if ( (ad->model.decision_lvl < ad->strat.DLBelowWhichRandomDecisions) &&
        !(ad->stats.numDecisions % strat.fractionRandomDecisions) ){
     unsigned int rNumber= ad->cdb->randomNumbers[ad->randomNumberIndex++];
     v = (uint) ( (double)rNumber/RAND_MAX * ad->cdb.numVars ) + 1;
     for( i=1;i<1000;i++ ) {
-      if (model.isUndefVar(v)) break;
+      if (model.is_undef_var(v,ad->model)) break;
       v = (v+1) % ad->cdb.numVars +1;
     }
-    if ( !model_is_undef_var(ad->model,v) ) v=0;
+    if ( !model_is_undef_var(v,ad->model) ) v=0;
   }
 
   if (ad->strat.decideOverLits){
@@ -486,28 +486,28 @@ Literal  azuDICI_decide(AzuDICI* ad){
     if (!l) do {
 	l = uint_as_lit(maxHeap_remove_max(ad->heap));
 	if (!l) return(0);
-      } while (!model_is_undef_var(ad->model, var(l)));
+      } while (!model_is_undef_var(var(l),ad->model));
   }else{
     if (!v) do {
 	v = maxHeap_remove_max(ad->heap);
 	if (!v) return(0);
-      } while (!model_is_undef_var(ad->model, v));
+      } while (!model_is_undef_var(v,ad->model));
   }
 
   ad->stats.numDecisions++;
 
   if(ad->strat.decideOverLits){
-    dassert(model_is_undef_var(ad->model, var(l)));
+    dassert(model_is_undef_var(var(l), ad->model));
     return l;  
   }
 
   //Decide over vars depends on other strat parameters.
-  dassert(model_is_undef_var(ad->model, v)); 
+  dassert(model_is_undef_var(v,ad->model)); 
   if( ad->strat.phaseSelectionDLParity ){
-    if( ad->model.decisionLevel % 2 ) return -v;
+    if( ad->model.decision_lvl % 2 ) return -v;
     else return v;
   } else if( ad->strat.phaseSelectionLastPhase ){
-    if( ad->model_get_lastPhase(ad->model,v) ) return v;
+    if( model_get_last_phase(v, ad->model) ) return v;
     else return -v;
   } else if( ad->strat.phaseSelectionAlwaysPositive ){
     return v
@@ -534,12 +534,12 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
     ts_vec_ith(lToSetTrue, list, i);
     if (model_is_undef(lToSetTrue,ad->model)){
       r.binLit = -l;
-      model_set_true_w_reason(ad->model,lToSetTrue,r);
-      if(model->decisionLevel ==0){
+      model_set_true_w_reason(lToSetTrue,r,ad->model);
+      if(ad->model.decision_lvl ==0){
 	ad->stats.numDLZeroLits++;
 	ad->stats.numDLZeroLitsSinceLastRestart++;
       }
-    }else if(model_is_false(lToSetTrue)){ //Conflict
+    }else if(model_is_false(lToSetTrue,ad->model)){ //Conflict
       ad->conflict.size = 2;
       kv_A(ad->conflict.lits,0) = -l;
       kv_A(ad->conflict.lits,1) = lToSetTrue;
@@ -572,25 +572,25 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
       l2 = ternaryClause.lits[1];
       l3 = ternaryClause.lits[2];
       lToSetTrue = 0;
-      if(model_is_false(l1) && model_is_false(l2)){
+      if(model_is_false(l1,ad->model) && model_is_false(l2,ad->model)){
 	lToSetTrue = l3;
-      }else if (model_is_false(l2) && model_is_false(l3)){
+      }else if (model_is_false(l2, ad->model) && model_is_false(l3,ad->model)){
 	lToSetTrue = l1;
-      }else if (model_is_false(l1) && model_is_false(l3)){
+      }else if (model_is_false(l1,ad->model) && model_is_false(l3,ad->model)){
 	lToSetTrue = l2;
       }else{
 	continue;
       }
 
       dassert(lToSetTrue>0);
-      if (model_is_undef(lToSetTrue)){
+      if (model_is_undef(lToSetTrue,ad->model)){
 	r.tClPtr = ternaryClause.lits; //check if this works
-	model_set_true_w_reason(ad->model,lToSetTrue,r);
-	if(model->decisionLevel ==0){
+	model_set_true_w_reason(lToSetTrue,r,ad->model);
+	if(ad->model.decision_lvl ==0){
 	  ad->stats.numDLZeroLits++;
 	  ad->stats.numDLZeroLitsSinceLastRestart++;
 	}
-      }else if(model_is_false(lToSetTrue)){ //Conflict
+      }else if(model_is_false(lToSetTrue,ad->model)){ //Conflict
 	ad->conflict.size = 3;
 	kv_A(ad->conflict.lits,0) = l1;
 	kv_A(ad->conflict.lits,1) = l2;
@@ -626,7 +626,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     }
     sizeOfClause = kv_size(watchedClause->lits);
 
-    if(model_is_true(otherLit)){
+    if(model_is_true(otherLit,ad->model)){
       //Update watchedLiteral and previouslyWatchedLiteral
       if(first){
 	ptrToWatchedClauseAddr = &watchedClause->nextWatched1;
@@ -644,7 +644,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     for(i=0;i<sizeOfClause;i++){
       toReselect = kv_A(watchedClause->lits, i);
       if( toReselect!=-l && toReselect != otherLit && 
-	  model_is_true_or_undef(toReselect)){ //found to reselect
+	  model_is_true_or_undef(toReselect,ad->model)){ //found to reselect
 	foundForReselection =true;
 	break;
       }
@@ -652,7 +652,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 
     //    if( i < sizeOfClause){  //Found lit to reselect
     if( foundForReselection ){  //Found lit to reselect
-      dassert(model_is_false(-l));
+      dassert(model_is_false(-l,ad->model));
       if ( first ) {
 	watchedClause->lwatch1 = toReselect;
 	//what stores this direction, is overwritten 
@@ -670,11 +670,11 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       continue;
     }else{//Propagate otherLit or conflict
       dassert(i==sizeOfClause);
-      if (model_is_undef(otherLit)){ //Propagate
+      if (model_is_undef(otherLit,ad->model)){ //Propagate
 	r.size = sizeOfClause;
 	r.thNClPtr = watchedClause;
-	model_set_true_w_reason(ad->model,otherLit,r);
-	if(model->decisionLevel ==0){
+	model_set_true_w_reason(otherLit,r,ad->model);
+	if(ad->model.decision_lvl == 0){
 	  ad->stats.numDLZeroLits++;
 	  ad->stats.numDLZeroLitsSinceLastRestart++;
 	}
@@ -686,7 +686,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	}
 	watchedClause = *ptrToWatchedClauseAddr;
 	continue;
-      }else if(model_is_false(otherLit)){ //Conflict
+      }else if(model_is_false(otherLit,ad->model)){ //Conflict
 	//Remember to update activity
 	watchedClause->activity++;
 	ad->conflict.size = sizeOfClause;
@@ -737,8 +737,8 @@ void  azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned 
   Literal aux;
   for(i=indexFrom;i<cl.size-1;i++){
     for(j=i+1;j<cl.size;j++){
-      if( model_get_lit_height(m, kv_A(cl.lits,j)) > 
-	  model_get_lit_height(m, kv_A(cl.lits,i)) ){
+      if( model_get_lit_height(kv_A(cl.lits,j),m) > 
+	  model_get_lit_height(kv_A(cl.lits,i),m) ){
 	aux = kv_A(cl.lits, i);
 	kv_A(cl.lits, i) = kv_A(cl.lits, j);
 	kv_A(cl.lits, j) = aux;
@@ -844,12 +844,12 @@ bool azuDICI_set_true_units(AzuDICI *ad){
   for(int i=0;i<numUnits;i++){
     ts_vec_ith(unitToSetTrue, ad->cdb->uDB,i);
 
-    if (model_is_undef(unitToSetTrue)){
+    if (model_is_undef(unitToSetTrue,ad->model)){
       r.binLit = -l;
-      model_set_true_w_reason(ad->model,unitToSetTrue,r);
+      model_set_true_w_reason(unitToSetTrue,r,ad->model);
       ad->stats.numDLZeroLits++;
       ad->stats.numDLZeroLitsSinceLastRestart++;      
-    }else if(model_is_false(unitToSetTrue)){
+    }else if(model_is_false(unitToSetTrue,ad->model)){
       return false;
     }    
   }
