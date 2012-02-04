@@ -37,10 +37,15 @@ typedef struct _naryThreadClause{
 
 typedef struct _reasonStruct{
   unsigned int     size;
+  unsigned long int reason;
   Literal          binLit;
   Literal*         tClPtr;
   ThNClause*       thNClPtr; //this we need to update activity of clause
 }Reason;
+
+Reason no_reason();
+
+bool is_unit_clause(Reason r);
 
 
 #endif /* _CLAUSE_H_ */

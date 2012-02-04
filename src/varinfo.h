@@ -1,5 +1,5 @@
-#include "reason.h"
 #include "stdbool.h"
+#include "clause.h"
 
 typedef struct _vinfo {
   Reason r;

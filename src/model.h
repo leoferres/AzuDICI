@@ -1,10 +1,8 @@
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
-#include "kvec.h" /*TO DO*/
 #include "varinfo.h"
 #include "heap.h"
-#include "common.h"
 #include "varMarks.h"
 
 typedef struct _model {
@@ -46,7 +44,7 @@ inline bool model_get_last_phase(Var v, Model model);
 inline void set_last_phase(Var v, bool phase, Model model);
 inline Reason model_get_reason_of_lit (Literal lit, Model model);
 inline bool model_lit_is_decision (Literal lit, Model model);
-inline void add_new_var (Model model );
+//inline void add_new_var (Model model ); //not implemented
 inline bool tPropagated(Literal lit, Model model);
 inline void print(Model model);
 inline Literal get_next_marked_literal(VarMarks var_marks, Model model);

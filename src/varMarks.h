@@ -2,6 +2,7 @@
 #define	VARMARKS_H
 #include "kvec.h"
 #include "common.h"
+#include <stdio.h>
 
 typedef struct _varMarks{
     kvec_t(bool) marked;
@@ -21,7 +22,7 @@ inline VarMarks init_VarMarks(unsigned int num_vars){
 inline void add_new_var(VarMarks varMarks){
     varMarks.n_vars++;
     kv_push(bool,varMarks.marked,false);
-    dassert(kv_size(varMarks.marked)==int(varMarks.n_vars)+1);
+    dassert(kv_size(varMarks.marked)==(varMarks.n_vars)+1);
 }
 
 inline void ensure_all_unmarked(VarMarks varMarks){

@@ -2,6 +2,10 @@
 #define _AZUDICI_H_
 
 #include "clausedb.h"
+#include "model.h"
+#include "heap.h"
+#include "strategy.h"
+#include "stats.h"
 
 typedef struct _azuDICI{
   unsigned int        wId;

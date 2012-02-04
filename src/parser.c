@@ -13,7 +13,7 @@
   }\
   else c = buf[i];}
 
-void input_read_header(gzFile in, uint *numVars, uint *numInputClauses)
+void input_read_header(gzFile in, unsigned int *numVars, unsigned int *numInputClauses)
 {
   char c; unsigned int n=0;
   if (in == NULL){printf("No file \n"); exit(1);}
@@ -35,14 +35,14 @@ void input_read_clauses (ClauseDB* cdb, char* inputFileName){
   char  buf[4096];                          // used by getNext
   unsigned int  i=0, size=0;                        // used by getNext
   char  c='a';                              // used by getNext
-  unsigned int  var;
+  unsigned int  variable;
   bool isPos;
   unsigned int nVars,nClauses;
 
   in = gzopen(inputFileName, "rb");
   input_read_header(in, &nVars,&nClauses);
-  dassert(nVars==numVars);
-  dassert(nClauses==numInputClauses);
+  dassert(nVars==cdb->numVars);
+  dassert(nClauses==cdb->numInputClauses);
 
   bool fileEnd=false;
   while(!fileEnd) { // each iteration of this loop reads one (possibly signed) int
@@ -55,14 +55,14 @@ void input_read_clauses (ClauseDB* cdb, char* inputFileName){
       //at this point, c is either a digit or '-' 
       if (c == '-') { isPos = false; getNext(); }
       //at this point, c is a digit for sure
-      var = 0; 
-      while (c>='0' && c<='9') { var = var*10+(c-'0'); getNext(); }
-      //at this point, var is a variable and isPos indicates it's polarity.
-      //if var is 0, then that's the end of the clause.
+      variable = 0; 
+      while (c>='0' && c<='9') { variable = variable*10+(c-'0'); getNext(); }
+      //at this point, variable is a variable and isPos indicates it's polarity.
+      //if variable is 0, then that's the end of the clause.
       if(isPos)
-	add_input_literal(cdb,var);
+	add_input_literal(cdb,variable);
       else
-	add_input_literal(cdb,-var);
+	add_input_literal(cdb,-variable);
     }    
   }
 

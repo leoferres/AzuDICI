@@ -1,4 +1,5 @@
 #include "model.h"
+#include "common.h"
 
 inline void push(Literal lit, Model model){
     kv_push(Literal,model.model_stack,lit);
@@ -16,7 +17,7 @@ inline Model model_init(unsigned int num_vars){
     kv_init(model.vinfo);
     kv_resize(VarInfo,model.vinfo,model.n_vars+1);
     kv_resize(char,model.assignment,model.n_lits);
-    model.vassignment = ((short unsigned *)((char *)model.assignment));
+    model.vassignment = ((short unsigned *)((char *)model.assignment.a));
     model.dlMarker = zero_lit();
     model.decision_lvl = 0;
     for(unsigned int v=0;v<=model.n_vars;v++){
@@ -50,7 +51,7 @@ inline Literal get_next_marked_literal(VarMarks var_marks, Model model){
     lit = kv_A(model.model_stack,i);
    dassert(lit != model.dlMarker);
    i--;
-  } while(!is_marked(var(lit)));
+  } while(!is_marked(var(lit),var_marks));
   return(lit);
 }
 
@@ -94,7 +95,7 @@ inline void init_in_assignment(Var var, Model model){
 }
 
 inline void model_set_true_w_reason(Literal lit, Reason r, Model model){
-    dassert(is_undef(lit,model));
+    dassert(model_is_undef(lit,model));
     push(lit,model);
     set_true_in_assignment(lit,model);
     VarInfo *vi = &kv_A(model.vinfo,var(lit));
@@ -105,7 +106,7 @@ inline void model_set_true_w_reason(Literal lit, Reason r, Model model){
 }
 
 inline void model_set_true_decision(Model model, Literal lit){
-    dassert(is_undef(lit,model));
+    dassert(model_is_undef(lit,model));
     model.decision_lvl++;
     model.last2propagated++;
     model.lastNpropagated++;
@@ -174,12 +175,12 @@ inline void set_last_phase(Var v, bool phase, Model model){
     kv_A(model.vinfo,v).last_phase=phase;
 }
 
-inline Reason get_reason_of_lit(Literal lit, Model model){
+inline Reason model_get_reason_of_lit(Literal lit, Model model){
     return kv_A(model.vinfo,var(lit)).r;
 }
 
 inline bool model_lit_is_decision(Literal lit, Model model){
-    return get_reason_of_lit(lit,model).is_unit_clause() && model_get_lit_dl(lit,model) > 0;
+    return is_unit_clause(model_get_reason_of_lit(lit,model)) && model_get_lit_dl(lit,model) > 0;
 }
 
 inline unsigned int model_size(Model model){
