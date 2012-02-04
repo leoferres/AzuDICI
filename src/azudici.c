@@ -794,9 +794,9 @@ void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l){
 void  azuDICI_increaseScore(AzuDICI* ad, Literal l){
   bool normalized;
   if(ad->strat.decideOverLits)
-    normalized = maxHeap_increase_score_in( lit_as_uint(l), ad->scoreBonus);
+    normalized = maxHeap_increase_score_in(ad->heap, lit_as_uint(l), ad->scoreBonus);
   else
-    normalized = maxHeap_increase_score_in( var(lit), ad->scoreBonus);
+    normalized = maxHeap_increase_score_in(ad->heap, var(lit), ad->scoreBonus);
 
   //if scoreBonus is too high, values in the heap are normalized 
   //we reset scoreBonus

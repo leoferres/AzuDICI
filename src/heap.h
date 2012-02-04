@@ -9,15 +9,15 @@ typedef struct _maxheap {
 	unsigned int numElems;
 } MaxHeap;
 
-MaxHeap heap_init(unsigned int nElems, MaxHeap mh);
+void maxHeap_init(MaxHeap mh,unsigned int nElems);
 void heap_placeNode(int n, unsigned int pos, MaxHeap mh);
 void heap_percolateUp(unsigned int pos, MaxHeap mh);
 bool heap_nodeIsGreater (int n1, int n2, MaxHeap mh);
 void heap_normalizeScores(MaxHeap mh);
 unsigned int heap_consultMax(MaxHeap mh); //returns 0 if empty
-unsigned int heap_removeMax(MaxHeap mh);
-void heap_insertElement(unsigned int elem, MaxHeap mh); //x may already be in the heap
-bool heap_increaseScoreIn(unsigned int elem, double val, MaxHeap mh); //val needs to be greater than current. Returns true if normalization has taken place.
+unsigned int maxHeap_removeMax(MaxHeap mh);
+void maxHeap_insert_element(MaxHeap mh, unsigned int elem); //x may already be in the heap
+bool maxHeap_increase_score_in(MaxHeap mh, unsigned int elem, double val); //val needs to be greater than current. Returns true if normalization has taken place.
 void heap_resetKeepingValues(MaxHeap mh); //everybody again in the heap with val 0
 unsigned int heap_addNewElement(double val, MaxHeap mh); //adds new element to the heap with value
 bool heap_isCorrect(MaxHeap mh);

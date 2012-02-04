@@ -1,11 +1,8 @@
 #include "heap.h"
 
 /*The constructor of the MaxHeap structure*/
-MaxHeap heap_init(unsigned int nElems){
-    
-    /*we create a MaxHeap structure.*/
-    MaxHeap mh; 
-    
+MaxHeap maxHeap_init(MaxHeap mh, unsigned int nElems){
+       
     /*We initialize and set the size of the maxHeap vector*/
     kv_init(mh.maxHeap); 
     kv_resize(unsigned int,mh.maxHeap,nElems+1);
@@ -34,7 +31,6 @@ MaxHeap heap_init(unsigned int nElems){
     
     mh.maxHeapLast = nElems;
     
-    return mh;
 }
 
 /*Returns the highest element in the heap. If empty returns 0.*/
@@ -43,7 +39,7 @@ unsigned int heap_consultMax(MaxHeap mh){
     else return kv_A(mh.maxHeap,1);
 }
 
-unsigned int heap_removeMax(MaxHeap mh){
+unsigned int maxHeap_removeMax(MaxHeap mh){
     unsigned int resultVar;
     unsigned int pos=1, childPos=2;
     int node, childNode, rchildNode;
@@ -78,7 +74,7 @@ unsigned int heap_addNewElement(double val,MaxHeap mh){
     kv_push(double,mh.act,val);
     kv_push(unsigned int,mh.heapPositions,0);
     dassert(kv_A(mh.heapPositions,mh.numElems)==0);
-    heap_insertElement(mh.numElems,mh);
+    maxHeap_insert_element(mh,mh.numElems);
     return mh.numElems;
 }
 
@@ -88,7 +84,7 @@ bool heap_nodeIsGreater(int n1, int n2, MaxHeap mh){
 
 void heap_resetKeepingValues(MaxHeap mh){
     for(unsigned int elem=1;elem<=mh.numElems;elem++){
-        if(kv_A(mh.heapPositions,elem)==0) heap_insertElement(elem);
+        if(kv_A(mh.heapPositions,elem)==0) maxHeap_insert_element(mh,elem);
     }
 }
 
@@ -132,7 +128,7 @@ void heap_percolateUp(unsigned int pos, MaxHeap mh){
     heap_placeNode(node,pos,mh);
 }
 
-void heap_insertElement(unsigned int elem, MaxHeap mh){
+void maxHeap_insert_element(MaxHeap mh, unsigned int elem){
     if(kv_A(mh.heapPositions,elem)!=0) return;
     unsigned int pos = ++mh.maxHeapLast;
     kv_A(mh.maxHeap,pos)=elem;
@@ -149,7 +145,7 @@ void heap_normalizeScores(MaxHeap mh){
     }
 }
 
-bool heap_increaseScoreIn (unsigned int elem, double val, MaxHeap mh){
+bool maxHeap_increase_score_in (MaxHeap mh, unsigned int elem, double val){
     bool toReturn = false;
     dassert(val>=0);
     double newScore = kv_A(mh.act,elem)+val;
