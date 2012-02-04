@@ -1,3 +1,6 @@
+#ifndef _STATS_H_
+#define _STATS_H_
+
 typedef struct _statistics{
   unsigned int numConflictsSinceClauseCleanup;
   unsigned int numConflictsSinceLastRestart;
@@ -13,3 +16,4 @@ typedef struct _statistics{
 
 void stats_init(Stats st);
 
+#endif

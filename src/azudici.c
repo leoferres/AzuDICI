@@ -12,16 +12,17 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
 
   strategy_init(ad->strat, wId);  //strategy init according to wId
 
-  ad->wId                = wId;
-  ad->cdb                = generalClauseDB;
+  ad->wId                 = wId;
+  ad->cdb                 = generalClauseDB;
   ts_vec_size( dbSize, db->uDB );
-  ad->lastUnitAdded      = dbSize;
+  ad->lastUnitAdded       = dbSize;
   ts_vec_size( dbSize, db->nDB );
-  ad->lastNaryAdded      = dbSize;
-  ad->randomNumberIndex  = 0;
-  ad->dlToBackjump       = 0;
-  ad->dlToBackjumpPos    = 0;
-  ad->scoreBonus         = strat.initialScoreBonus;  
+  ad->lastNaryAdded       = dbSize;
+  ad->randomNumberIndex   = 0;
+  ad->dlToBackjump        = 0;
+  ad->dlToBackjumpPos     = 0;
+  ad->scoreBonus          = strat.initialScoreBonus;
+  ad->currentRestartLimit = strat.initialRestartLimit;
 
   //lastBinariesAdded
   kv_init( ad->lastBinariesAdded );
@@ -441,16 +442,17 @@ void azuDICI_set_true_uip(AzuDICI* ad){
 }
 
 void azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
-  if(conditionCleanup){
+  /*  if(){
 
-  }
+      }*/
 }
 
 void azuDICI_restart_if_adequate(AzuDICI* ad){
-  if(conditionRestart){
+  if( stats.numConflictSinceLastRestart >= ad->currentRestartLimit ){
     ad->stats.numRestarts++;
     ad->stats.numDLZeroLitsSinceLastRestart = 0;
     ad->stats.numConflictsSinceLastRestart  = 0;
+    ad->currentRestartLimit = strategy_get_next_restart_limit(ad->strat, ad->currentRestartLimit);
     azudDICI_backjump_to_dl(ad,  0 );
   }
 }

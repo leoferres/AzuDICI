@@ -2,7 +2,6 @@
 #define _AZUDICI_H_
 
 #include "clausedb.h"
-//#include "threadclausedb.h" //to be implemented
 
 typedef struct _azuDICI{
   unsigned int        wId;
@@ -29,6 +28,7 @@ typedef struct _azuDICI{
   MaxHeap             heap;
   Stats               stats; //To implement
   Strategy            strat; //To implement
+  unsigned int        currentRestartLimit;
 } AzuDICI;
 
 /*Reserva de memoria para las estructuras de AzuDICI*/
