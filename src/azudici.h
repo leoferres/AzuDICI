@@ -36,7 +36,7 @@ typedef struct _azuDICI{
 } AzuDICI;
 
 /*Reserva de memoria para las estructuras de AzuDICI*/
-AzuDICI* azuDICI_init(ClauseDB* generalClauseDB);
+AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wID);
 
 /*solve methods*/
 unsigned int azuDICI_solve(AzuDICI* ad);
@@ -58,7 +58,7 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l);
 Clause azuDICI_get_clause_from_reason(Reason r); //¿in clause.c?
-void azuDICI_increase_activity(Reason r, Literal l); //¿in clause.c?
+void azuDICI_increase_activity(Reason r); //¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
 void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
 //unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Literal l, Reason r);

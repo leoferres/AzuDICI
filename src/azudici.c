@@ -14,15 +14,15 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
 
   ad->wId                 = wId;
   ad->cdb                 = generalClauseDB;
-  ts_vec_size( dbSize, db->uDB );
+  ts_vec_size( dbSize, ad->cdb->uDB );
   ad->lastUnitAdded       = dbSize;
-  ts_vec_size( dbSize, db->nDB );
+  ts_vec_size( dbSize, ad->cdb->nDB );
   ad->lastNaryAdded       = dbSize;
   ad->randomNumberIndex   = 0;
   ad->dlToBackjump        = 0;
   ad->dlToBackjumpPos     = 0;
-  ad->scoreBonus          = strat.initialScoreBonus;
-  ad->currentRestartLimit = strat.initialRestartLimit;
+  ad->scoreBonus          = ad->strat.initialScoreBonus;
+  ad->currentRestartLimit = ad->strat.initialRestartLimit;
 
   //lastBinariesAdded
   kv_init( ad->lastBinariesAdded );
@@ -51,21 +51,21 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   }
 
   //conflict clause
-  kv_init(conflict.lits);
-  kv_resize(Literal, conflict.lits, ad->db->numVars);
-  conflict.size = 0;
+  kv_init(ad->conflict.lits);
+  kv_resize(Literal, ad->conflict.lits, ad->db->numVars);
+  ad->conflict.size = 0;
 
   //lemma clause
-  kv_init(lemma.lits);
-  kv_resize(Literal, lemma.lits, ad->db->numVars);
-  lemma.size = 0;
+  kv_init(ad->lemma.lits);
+  kv_resize(Literal, ad->lemma.lits, ad->db->numVars);
+  ad->lemma.size = 0;
 
   //shortenned lemma clause
-  kv_init(lemmaToLearn.lits);
-  kv_resize(Literal, lemmaToLearn.lits, ad->db->numVars);
-  lemmaToLearn.size = 0;
+  kv_init(ad->lemmaToLearn.lits);
+  kv_resize(Literal, ad->lemmaToLearn.lits, ad->db->numVars);
+  ad->lemmaToLearn.size = 0;
 
-  model_init(ad->model);  //model
+  ad->model=model_init(ad->cdb->numVars);  //model
 
   //heap size depend on the strategy
   if(ad->strat.decideOverLits)
@@ -96,7 +96,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
     }
     
     azuDICI_restart_if_adequate(ad);
-    if( !azuDICI_cleanup_if_adequate(ad) ) return 20;
+    if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
     
     dec = azuDICI_get_next_decision(ad);
     if (dec == 0)  return 10;
@@ -142,9 +142,9 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
 
   ad->lemma.size = 0;
   
-  uint i, numLitsThisDLPending=0;
+  unsigned int i, numLitsThisDLPending=0;
   Literal lit, poppedLit=0;
-  uint index=0;
+  unsigned int index=0;
   Clause cl = ad->conflict;
   Reason r;
   
@@ -165,7 +165,7 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
 	} else if ( !kv_A(ad->varMarks, var(lit) ) && model_get_lit_dl(lit,ad->model) > 0 ) {
 	  kv_A(ad->varMarks, var(lit)) = true;  // Note: we ignore dl-zero lits
 	  ad->lemma.size++;
-	  kv_A(ad->emma.lits, ad->lemma.size) = lit; // lower-dl-lit marked->already in lemma
+	  kv_A(ad->lemma.lits, ad->lemma.size) = lit; // lower-dl-lit marked->already in lemma
 	}
       }
     }
@@ -179,7 +179,7 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
 
     r = model_get_reason_of_lit(poppedLit , ad->model);
     azuDICI_increase_activity(r);
-    cl = azuDICI_get_clause_from_reason(r, poppedLit);
+    cl = azuDICI_get_clause_from_reason(r);
 
     if ( numLitsThisDLPending == 1) {
       break;  // i.e., only 1 lit this dl pending: this last lit is the 1UIP.
@@ -192,8 +192,8 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
   kv_A(ad->lemma.lits,0) = -poppedLit; //THe 1UIP is the first lit in the lemma
   ad->lemma.size++; 
 
-  for (i=0;i<numLitsInLemma;i++) {
-    kv_A( ad->varMarks, var(kv_A(ad->lemma,i)) ) = false;
+  for (i=0;i<ad->lemma.size;i++) {
+    kv_A( ad->varMarks, var(kv_A(ad->lemma.lits,i)) ) = false;
   }
 
 }
@@ -208,10 +208,10 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
    * redundant.  Otherwise the start variable is redundant and will
    * eventually be removed from the learned clause.
    */
-  Clause cl = NULL;
-  uint j, lastMarkedInLemma, testingIndex;
+  Clause cl;
+  unsigned int j, lastMarkedInLemma, testingIndex;
   Literal litOfLemma, testingLit;
-  uint i, lowestDL;
+  unsigned int i, lowestDL;
   Var v;
   bool litIsRedundant;
   Reason r;
@@ -221,11 +221,11 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
  
   //First of all, mark all lits in original lemma.
   for (i=0;i<ad->lemma.size;i++) 
-    kv_A( varMarks, kv_A(ad->lemma.lits,i) )=true;
+    kv_A( ad->varMarks, kv_A(ad->lemma.lits,i) )=true;
 
   //Order lemma's lit from most recent to oldest (from highest dl to lowest)
   azuDICI_sort_lits_according_to_DL_from_index(ad->model, ad->lemma,1);
-  lowestDL = model_get_lit_dl(kv_A(ad->lemma, ad->size-1), ad->model);
+  lowestDL = model_get_lit_dl(kv_A(ad->lemma.lits, ad->size-1), ad->model);
 
   ad->dlToBackjump = 0; 
   ad->dlToBackjumpPos=0; 
@@ -255,11 +255,11 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
       //add literals of lit's reason to test
       lastMarkedInLemma = ad->lemma.size;
       for( j=0 ; j<cl.size ; j++ ){
-	v = var( kv_A(cl->lits, j));
+	v = var( kv_A(cl.lits, j));
 	if(kv_A(ad->varMarks, v)) continue;
 
 	kv_A(ad->varMarks, v) = true;
-	kv_A(ad->lemma, lastMarkedInLemma++) = kv_A(cl->lits,j);
+	kv_A(ad->lemma.lits, lastMarkedInLemma++) = kv_A(cl->lits,j);
       }
 
       //test added literals and subsequent ones....
@@ -275,7 +275,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 	}
       
 	r = model_get_reason_of_lit(-testingLit,ad->model);
-	cl = azuDICI_get_clause_from_reason(r, -testingLit);
+	cl = azuDICI_get_clause_from_reason(r);
 
 	//cl = clauseReasonOfLit(testingLit.negation());
 	//If testing lit passes test, add its reason's literals to test
@@ -284,7 +284,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 	  if(kv_A(ad->varMarks,v)) continue;
 	
 	  kv_A(ad->varMarks,v) = true;
-	  kv_A(ad->lemma,lastMarkedInLemma++) = kv_A(cl.lits, j);
+	  kv_A(ad->lemma.lits,lastMarkedInLemma++) = kv_A(cl.lits, j);
 	}
 	testingIndex++;
       }
@@ -301,7 +301,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 
     //Add (or not) litOfLemma to lemmaToLearn
     if(litIsRedundant){
-      kv_A(ad->lemma,i)=0;
+      kv_A(ad->lemma.lits,i)=0;
       kv_A(ad->varMarks,var(litOfLemma))=false;
     }else{
       kv_A(ad->lemmaToLearn.lits, ad->lemmaToLearn.size) = litOfLemma;
@@ -324,7 +324,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 
   //  stats.totalRemovedLits += (numLitsInLemma - numLitsInLemmaToLearn);
 
-  for (i=0;i<numLitsInLemmaToLearn;i++){
+  for (i=0;i<ad->lemmaToLearn.size;i++){
     kv_A(ad->varMarks, var(kv_A(ad->lemmaToLearn.lits,i)) )=false;
   }
 
@@ -341,7 +341,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
 
   switch(ad->lemmaToLearn.size){
   case 1:
-    insert_unitary_clause(ad->cdb, ad->lemmaToLearn, false);
+    insert_unitary_clause(ad->cdb, &ad->lemmaToLearn, false);
     ad->rUIP.size     = 1;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = NULL;
@@ -350,21 +350,21 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     break;
 
   case 2:
-    Literal l1,l2;
+    ;Literal l1,l2;
     l1 = kv_A(ad->lemmaToLearn.lits,0);
     l2 = kv_A(ad->lemmaToLearn.lits,1);
     kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack for same search
     kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack for same search
 
-    insert_binary_clause(ad->cdb, ad->lemmaToLearn, false);
+    insert_binary_clause(ad->cdb, &ad->lemmaToLearn, false);
     ad->rUIP.size     = 2;
-    ad->rUIP.binLit   = kv_A(ad->lemmaToLearn,1);
+    ad->rUIP.binLit   = kv_A(ad->lemmaToLearn.lits,1);
     ad->rUIP.tClPtr   = NULL;
     ad->rUIP.thNClPtr = NULL;
     break;
 
   case 3:
-    Lit *ptr = insert_ternary_clause(ad->cdb, ad->lemmaToLearn, false);
+    ;Literal *ptr = insert_ternary_clause(ad->cdb, ad->lemmaToLearn, false);
     ad->rUIP.size     = 3;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = ptr;
@@ -372,13 +372,13 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     break;
 
   default:
-    Literal uip    = kv_A(ad->lemmaToLearn.lits,0);
+    ;Literal uip    = kv_A(ad->lemmaToLearn.lits,0);
     Literal hdlLit = kv_A(ad->lemmaToLearn.lits,1);
 
     dassert(ad->lemmaToLearn.size>3);
     //here, lemmaToLearn will be sorted
     unsigned int indexInDB = 
-      insert_nary_clause(ad->cdb, ad->lemmaToLearn, false);
+      insert_nary_clause(ad->cdb, &ad->lemmaToLearn, false);
 
     /*put in lemmaToLearn[0] the uip */
     //highest decision level is ad->dlToBackjump   
@@ -393,7 +393,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
 
     /*put in lemmaToLearn[1] literal with highest DL*/
     //highest decision level is ad->dlToBackjump   
-    Literal aux;
+    //Literal aux;
     for(int i=1; i < ad->lemmaToLearn.size; i++){
       if( kv_A(ad->lemmaToLearn.lits,i) == hdlLit ){
 	dassert(model_get_lit_dl(kv_A(ad->lemmaToLearn.lits,i),ad->model) == ad->dlToBackjump);
@@ -404,7 +404,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     }
 
     ThNClause *ptr = 
-      azuDICI_insert_th_clause(ad->thcdb, ad->lemmaToLearn, false, indexInDB);
+      azuDICI_insert_th_clause(ad, ad->lemmaToLearn, false, indexInDB);
 
     ad->rUIP.size     = ad->lemmaToLearn.size;
     ad->rUIP.binLit   = 0;
@@ -416,13 +416,13 @@ void azuDICI_learn_lemma(AzuDICI* ad){
 
 void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl){
   Literal lit;
-  uint dL1 = ad->model.decision_lvl;
+  unsigned int dL1 = ad->model.decision_lvl;
 
   if (dl==0) ad->stats.numConflictsSinceLastDLZero=0;
   while ( dL1>dl ){
     lit = model_pop_and_set_undef(ad->model);
     while ( lit != 0 ) {
-      azuDICI_notify_unassigned_lit(lit);
+      azuDICI_notify_unassigned_lit(ad,lit);
       lit=model_pop_and_set_undef(ad->model);
     }
     dL1--;
@@ -448,12 +448,12 @@ void azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 }
 
 void azuDICI_restart_if_adequate(AzuDICI* ad){
-  if( stats.numConflictSinceLastRestart >= ad->currentRestartLimit ){
+  if( ad->stats.numConflictsSinceLastRestart >= ad->currentRestartLimit ){
     ad->stats.numRestarts++;
-    ad->stats.numDLZeroLitsSinceLastRestart = 0;
+    ad->stats.numDlZeroLitsSinceLastRestart = 0;
     ad->stats.numConflictsSinceLastRestart  = 0;
     ad->currentRestartLimit = strategy_get_next_restart_limit(ad->strat, ad->currentRestartLimit);
-    azudDICI_backjump_to_dl(ad,  0 );
+    azuDICI_backjump_to_dl(ad,  0 );
   }
 }
 
@@ -462,18 +462,19 @@ Literal  azuDICI_decide(AzuDICI* ad){
   Literal l;
 
   if ( (ad->model.decision_lvl < ad->strat.DLBelowWhichRandomDecisions) &&
-       !(ad->stats.numDecisions % strat.fractionRandomDecisions) ){
+       !(ad->stats.numDecisions % ad->strat.fractionRandomDecisions) ){
     unsigned int rNumber= ad->cdb->randomNumbers[ad->randomNumberIndex++];
-    v = (uint) ( (double)rNumber/RAND_MAX * ad->cdb.numVars ) + 1;
+    v = (unsigned int) ( (double)rNumber/RAND_MAX * ad->cdb.numVars ) + 1;
     for( i=1;i<1000;i++ ) {
-      if (model.is_undef_var(v,ad->model)) break;
-      v = (v+1) % ad->cdb.numVars +1;
+      if (model_is_undef_var(v,ad->model)) break;
+      v = (v+1) % ad->cdb->numVars +1;
     }
     if ( !model_is_undef_var(v,ad->model) ) v=0;
   }
 
   if (ad->strat.decideOverLits){
     if(v){
+      unsigned int pol;
       pol= ad->cdb->randomNumbers[ad->randomNumberIndex++];
       if( pol > (RAND_MAX/2) ) l=v;
       else l = -v;

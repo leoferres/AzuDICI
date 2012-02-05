@@ -17,6 +17,6 @@ typedef struct _strategy{
 }Strategy;
 
 void strategy_init(Strategy strat, int workerId);
-unsigned int strategy_get_next_restart_limit(unsigned int currentRestartNumber);
+unsigned int strategy_get_next_restart_limit(Strategy strat, unsigned int currentRestartNumber);
 
 #endif
