@@ -1,17 +1,12 @@
-#ifndef _STATS_H_
-#define _STATS_H_
-
 #include "stats.h"
 
 void stats_init(Stats st){
-  numConflictsSinceClauseCleanup = 0;
-  numConflictsSinceLastRestart   = 0;
-  numConflictsSinceLastDLZero    = 0;
-  numConflicts                   = 0;
-  numDLZeroLits                  = 0;
-  numDlZeroLitsSinceLastRestart  = 0;
-  numRestarts                    = 0;
-  numDecisions                   = 0;
+  st.numConflictsSinceClauseCleanup = 0;
+  st.numConflictsSinceLastRestart   = 0;
+  st.numConflictsSinceLastDLZero    = 0;
+  st.numConflicts                   = 0;
+  st.numDLZeroLits                  = 0;
+  st.numDlZeroLitsSinceLastRestart  = 0;
+  st.numRestarts                    = 0;
+  st.numDecisions                   = 0;
 }
-
-#endif

@@ -10,6 +10,7 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "version.h"
 #include "worker.h"
 #include "parser.c"
@@ -98,7 +99,7 @@ int main (int argc, char *argv[]) {
   /**********************************/
 
   /*Initialize Clause DataBase and read clauses*/
-  ClauseDB* cdb = init_clause_database(nVars);
+  ClauseDB* cdb = init_clause_database(nVars,nworkers);
   input_read_clauses(cdb, inputFileName);
   /***************************************/
 
@@ -110,7 +111,7 @@ int main (int argc, char *argv[]) {
   for (int i = 0; i < nworkers; i++) {
     ts_vec_ith_ma(w,workers,i);
     w->id=i;
-    w->solver = azuDICI_init (cdb);
+    w->solver = azuDICI_init (cdb,w->id);
   }
   /**************/
 

@@ -46,7 +46,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad);
 void azuDICI_learn_lemma(AzuDICI* ad);
 void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl);
 void azuDICI_set_true_uip(AzuDICI* ad);
-void azuDICI_clause_cleanup_if_adequate(AzuDICI* ad); //to implement
+bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad); //to implement
 void azuDICI_restart_if_adequate(AzuDICI* ad); //to implement
 Literal  azuDICI_decide(AzuDICI* ad);
 void  azuDICI_increaseScore(AzuDICI* ad, Literal lit);
@@ -57,7 +57,7 @@ void azuDICI_init_thcdb(AzuDICI* ad); //to implement
 bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l);
-Clause azuDICI_get_clause_from_reason(Reason r); //¿in clause.c?
+Clause azuDICI_get_clause_from_reason(Reason r, Literal l); //¿in clause.c?
 void azuDICI_increase_activity(Reason r); //¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
 void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);

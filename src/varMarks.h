@@ -3,13 +3,14 @@
 #include "kvec.h"
 #include "common.h"
 #include <stdio.h>
+#include "azudici.h"
 
 typedef struct _varMarks{
     kvec_t(bool) marked;
     unsigned int n_vars;
 } VarMarks;
 
-inline VarMarks init_VarMarks(unsigned int num_vars){
+VarMarks init_VarMarks(unsigned int num_vars){
     VarMarks varMarks;
     kv_init(varMarks.marked);
     kv_resize(bool,varMarks.marked,num_vars+1);
@@ -19,13 +20,13 @@ inline VarMarks init_VarMarks(unsigned int num_vars){
     }
 }
 
-inline void add_new_var(VarMarks varMarks){
+void add_new_var(VarMarks varMarks){
     varMarks.n_vars++;
     kv_push(bool,varMarks.marked,false);
     dassert(kv_size(varMarks.marked)==(varMarks.n_vars)+1);
 }
 
-inline void ensure_all_unmarked(VarMarks varMarks){
+void ensure_all_unmarked(VarMarks varMarks){
     bool there_are_marks = false;
     for(Var v=1; v<= varMarks.n_vars;++v){
         if(kv_A(varMarks.marked,v)){
@@ -38,23 +39,23 @@ inline void ensure_all_unmarked(VarMarks varMarks){
     dassert(!there_are_marks);
 }
 
-inline bool is_marked(Var v, VarMarks varMarks){
+bool is_marked(Var v, AzuDICI* ad){
     if(DEBUG){
-        if(!(1<=v && v<=varMarks.n_vars)){
+        if(!(1<=v && v<=ad->cdb->numVars)){
             printf("Asking for var %i\n",v);
-            printf("And n_vars is %i\n",varMarks.n_vars);
+            printf("And n_vars is %i\n",ad->cdb->numVars);
         }
     }
-    dassert(1<=v && v<=varMarks.n_vars);
-    return kv_A(varMarks.marked,v);
+    dassert(1<=v && v<=ad->cdb->numVars);
+    return kv_A(ad->varMarks,v);
 }
 
-inline void set_marked(Var v, VarMarks varMarks){
+void set_marked(Var v, VarMarks varMarks){
     dassert(1<=v && v<=varMarks.n_vars);
     kv_A(varMarks.marked,v)=true;
 }
 
-inline void set_unmarked(Var v, VarMarks varMarks){
+void set_unmarked(Var v, VarMarks varMarks){
     dassert(1<=v && v<=varMarks.n_vars);
     kv_A(varMarks.marked,v)=false;
 }

@@ -1,11 +1,11 @@
 #include "model.h"
 #include "common.h"
 
-inline void push(Literal lit, Model model){
+void push(Literal lit, Model model){
     kv_push(Literal,model.model_stack,lit);
 }
 
-inline Model model_init(unsigned int num_vars){
+Model model_init(unsigned int num_vars){
     Model model;
     model.n_vars = num_vars;
     model.n_lits = num_vars*2+2;
@@ -27,7 +27,7 @@ inline Model model_init(unsigned int num_vars){
     return model;
 }
 
-inline void print(Model model){
+void print(Model model){
   int i;
   Literal lit;
   for(i=kv_size(model.model_stack)-1;i>0;i--) {
@@ -44,16 +44,17 @@ inline void print(Model model){
     printf("=============== bottom of stack ==============\n\n");     
 }
 
-inline Literal get_next_marked_literal(VarMarks var_marks, Model model){
+/* Not used
+inline Literal get_next_marked_literal(Model model){
   Literal lit;
   int i = kv_size(model.model_stack);
   do {
     lit = kv_A(model.model_stack,i);
    dassert(lit != model.dlMarker);
    i--;
-  } while(!is_marked(var(lit),var_marks));
+  } while(!is_marked(var(lit)));
   return(lit);
-}
+}*/
 
 /*  
  * true  is ......01   
@@ -61,40 +62,40 @@ inline Literal get_next_marked_literal(VarMarks var_marks, Model model){
  * undef is ......11
 */
 
-inline bool model_is_true(Literal lit, Model model){
+bool model_is_true(Literal lit, Model model){
     return (kv_A(model.assignment,lit_as_uint(lit)) & 0x03)==1;
 }
 
-inline bool model_is_false(Literal lit, Model model){
+bool model_is_false(Literal lit, Model model){
     dassert(var(lit)<=model.n_vars);
     return !(kv_A(model.assignment,lit_as_uint(lit)) & 0x03);
 }
 
-inline bool model_is_undef(Literal lit, Model model){
+bool model_is_undef(Literal lit, Model model){
     return (kv_A(model.assignment,lit_as_uint(lit)) & 0x02);
 }
 
-inline bool model_is_true_or_undef(Literal lit, Model model){
+bool model_is_true_or_undef(Literal lit, Model model){
     return (kv_A(model.assignment,lit_as_uint(lit)) & 0x03);
 }
 
-inline bool model_is_undef_var(Var v, Model model){
+bool model_is_undef_var(Var v, Model model){
     return (kv_A(model.assignment,v) & 0x0202);
 }
 
-inline void set_true_in_assignment(Literal lit, Model model){
+void set_true_in_assignment(Literal lit, Model model){
     model.vassignment[var(lit)] &= lit_is_positive(lit)?0xFDFC:0xFCFD; //D=1101 c=1100
 }
 
-inline void set_undef_in_assignment(Literal lit, Model model){
+void set_undef_in_assignment(Literal lit, Model model){
     model.vassignment[var(lit)] |= 0x0303;
 }
 
-inline void init_in_assignment(Var var, Model model){
+void init_in_assignment(Var var, Model model){
     model.vassignment[var] = 0x0303;
 }
 
-inline void model_set_true_w_reason(Literal lit, Reason r, Model model){
+void model_set_true_w_reason(Literal lit, Reason r, Model model){
     dassert(model_is_undef(lit,model));
     push(lit,model);
     set_true_in_assignment(lit,model);
@@ -105,7 +106,7 @@ inline void model_set_true_w_reason(Literal lit, Reason r, Model model){
     vi->last_phase=lit_is_positive(lit);
 }
 
-inline void model_set_true_decision(Model model, Literal lit){
+void model_set_true_decision(Model model, Literal lit){
     dassert(model_is_undef(lit,model));
     model.decision_lvl++;
     model.last2propagated++;
@@ -115,23 +116,23 @@ inline void model_set_true_decision(Model model, Literal lit){
     model_set_true_w_reason(lit,no_reason(),model);
 }
 
-inline bool model_lit_is_of_current_dl(Literal lit, Model model){
+bool model_lit_is_of_current_dl(Literal lit, Model model){
     return kv_A(model.vinfo,var(lit)).decision_lvl==model.decision_lvl;
 }
 
-inline unsigned int model_get_lit_dl(Literal lit, Model model){
+unsigned int model_get_lit_dl(Literal lit, Model model){
     return kv_A(model.vinfo,var(lit)).decision_lvl;
 }
 
-inline unsigned int model_get_lit_height(Literal lit, Model model){
+unsigned int model_get_lit_height(Literal lit, Model model){
     return kv_A(model.vinfo,var(lit)).model_height;
 }
 
-inline bool tPropagated(Literal lit, Model model){
+bool tPropagated(Literal lit, Model model){
     return (int)(kv_A(model.vinfo,var(lit)).model_height)<=model.last3propagated;
 }
 
-inline Literal model_pop_and_set_undef(Model model){
+Literal model_pop_and_set_undef(Model model){
     Literal lit;
     lit=kv_pop(model.model_stack);
     if(lit==model.dlMarker){
@@ -145,44 +146,44 @@ inline Literal model_pop_and_set_undef(Model model){
     return(lit);
 }
 
-inline Literal model_next_lit_for_2_prop(Model model){
+Literal model_next_lit_for_2_prop(Model model){
     if(model.last2propagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.last2propagated++;
     return(kv_A(model.model_stack,model.last2propagated));
 }
 
-inline Literal model_next_lit_for_n_prop(Model model){
+Literal model_next_lit_for_n_prop(Model model){
     if(model.lastNpropagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.lastNpropagated++;
     return(kv_A(model.model_stack,model.lastNpropagated));
 }
 
-inline Literal model_next_lit_for_3_prop(Model model){
+Literal model_next_lit_for_3_prop(Model model){
     if(model.last3propagated==kv_size(model.model_stack)-1) return(zero_lit());
     model.last3propagated++;
     return(kv_A(model.model_stack,model.last3propagated));
 }
 
-inline void set_last_TPropagated(unsigned int num_unused_lits, Model model){
+void set_last_TPropagated(unsigned int num_unused_lits, Model model){
     model.last3propagated=num_unused_lits-1;
 }
 
-inline bool model_get_last_phase(Var v, Model model){
+bool model_get_last_phase(Var v, Model model){
     return kv_A(model.vinfo,v).last_phase;
 }
 
-inline void set_last_phase(Var v, bool phase, Model model){
+void set_last_phase(Var v, bool phase, Model model){
     kv_A(model.vinfo,v).last_phase=phase;
 }
 
-inline Reason model_get_reason_of_lit(Literal lit, Model model){
+Reason model_get_reason_of_lit(Literal lit, Model model){
     return kv_A(model.vinfo,var(lit)).r;
 }
 
-inline bool model_lit_is_decision(Literal lit, Model model){
+bool model_lit_is_decision(Literal lit, Model model){
     return is_unit_clause(model_get_reason_of_lit(lit,model)) && model_get_lit_dl(lit,model) > 0;
 }
 
-inline unsigned int model_size(Model model){
+unsigned int model_size(Model model){
     return(kv_size(model.model_stack)-1-model.decision_lvl);
 }

@@ -1,7 +1,8 @@
 #include "heap.h"
+#include "common.h"
 
 /*The constructor of the MaxHeap structure*/
-MaxHeap maxHeap_init(MaxHeap mh, unsigned int nElems){
+void maxHeap_init(MaxHeap mh, unsigned int nElems){
        
     /*We initialize and set the size of the maxHeap vector*/
     kv_init(mh.maxHeap); 
@@ -39,7 +40,7 @@ unsigned int heap_consultMax(MaxHeap mh){
     else return kv_A(mh.maxHeap,1);
 }
 
-unsigned int maxHeap_removeMax(MaxHeap mh){
+unsigned int maxHeap_remove_max(MaxHeap mh){
     unsigned int resultVar;
     unsigned int pos=1, childPos=2;
     int node, childNode, rchildNode;

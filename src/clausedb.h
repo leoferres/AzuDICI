@@ -25,15 +25,15 @@ typedef struct _cdb {
 } ClauseDB;
 
 /**/
-ClauseDB* init_clause_database(unsigned int numVars);
+ClauseDB* init_clause_database(unsigned int numVars, unsigned int nWorkers);
 
 /**/
 unsigned int add_input_literal(ClauseDB* cdb, Literal lit);
 void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal);
 void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal);
 Literal* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId);
-unsigned int insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId);
+unsigned int insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId);
 void cleanup_database(ClauseDB* cdb);
-void vec_literal_sort(Clause* cl, unsigned int size);
+void vec_literal_sort(Literal* lits, unsigned int size);
 
 #endif /* _CLAUSEDB_H_ */

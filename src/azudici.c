@@ -3,6 +3,7 @@
 
 #include "clausedb.h"
 #include "azudici.h"
+#include "model.h"
 
 AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   int i;
@@ -52,17 +53,17 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
 
   //conflict clause
   kv_init(ad->conflict.lits);
-  kv_resize(Literal, ad->conflict.lits, ad->db->numVars);
+  kv_resize(Literal, ad->conflict.lits, ad->cdb->numVars);
   ad->conflict.size = 0;
 
   //lemma clause
   kv_init(ad->lemma.lits);
-  kv_resize(Literal, ad->lemma.lits, ad->db->numVars);
+  kv_resize(Literal, ad->lemma.lits, ad->cdb->numVars);
   ad->lemma.size = 0;
 
   //shortenned lemma clause
   kv_init(ad->lemmaToLearn.lits);
-  kv_resize(Literal, ad->lemmaToLearn.lits, ad->db->numVars);
+  kv_resize(Literal, ad->lemmaToLearn.lits, ad->cdb->numVars);
   ad->lemmaToLearn.size = 0;
 
   ad->model=model_init(ad->cdb->numVars);  //model
@@ -98,7 +99,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
     azuDICI_restart_if_adequate(ad);
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
     
-    dec = azuDICI_get_next_decision(ad);
+    dec = azuDICI_decide(ad);
     if (dec == 0)  return 10;
     model_set_true_decision( ad->model, dec ); //decisionLevel should be increased
   } 
@@ -179,7 +180,7 @@ void azuDICI_conflict_analysis(AzuDICI* ad){
 
     r = model_get_reason_of_lit(poppedLit , ad->model);
     azuDICI_increase_activity(r);
-    cl = azuDICI_get_clause_from_reason(r);
+    cl = azuDICI_get_clause_from_reason(r,poppedLit);
 
     if ( numLitsThisDLPending == 1) {
       break;  // i.e., only 1 lit this dl pending: this last lit is the 1UIP.
@@ -225,7 +226,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 
   //Order lemma's lit from most recent to oldest (from highest dl to lowest)
   azuDICI_sort_lits_according_to_DL_from_index(ad->model, ad->lemma,1);
-  lowestDL = model_get_lit_dl(kv_A(ad->lemma.lits, ad->size-1), ad->model);
+  lowestDL = model_get_lit_dl(kv_A(ad->lemma.lits, ad->lemma.size-1), ad->model);
 
   ad->dlToBackjump = 0; 
   ad->dlToBackjumpPos=0; 
@@ -240,7 +241,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     litIsRedundant=true;
 
     litOfLemma = kv_A(ad->lemma.lits,i);
-    dassert( varMarks.isMarked(var(litOfLemma)) );
+    dassert( is_marked(var(litOfLemma),ad) );
 
     //Begins test to see if literal is redundant
     if( model_lit_is_decision(litOfLemma,ad->model) || i==0 ){
@@ -249,8 +250,8 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     }else{
       //We add reasons' lits at the end of the lemma
       //      r = model.reasonOfLit(litOfLemma.negation());
-      r = model_get_reason_of_lit(poppedLit,ad->model);
-      cl = azuDICI_get_clause_from_reason(r, poppedLit);
+      r = model_get_reason_of_lit(litOfLemma,ad->model);
+      cl = azuDICI_get_clause_from_reason(r,litOfLemma);
 
       //add literals of lit's reason to test
       lastMarkedInLemma = ad->lemma.size;
@@ -259,7 +260,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 	if(kv_A(ad->varMarks, v)) continue;
 
 	kv_A(ad->varMarks, v) = true;
-	kv_A(ad->lemma.lits, lastMarkedInLemma++) = kv_A(cl->lits,j);
+	kv_A(ad->lemma.lits, lastMarkedInLemma++) = kv_A(cl.lits,j);
       }
 
       //test added literals and subsequent ones....
@@ -275,7 +276,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
 	}
       
 	r = model_get_reason_of_lit(-testingLit,ad->model);
-	cl = azuDICI_get_clause_from_reason(r);
+	cl = azuDICI_get_clause_from_reason(r,-testingLit);
 
 	//cl = clauseReasonOfLit(testingLit.negation());
 	//If testing lit passes test, add its reason's literals to test
@@ -364,7 +365,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     break;
 
   case 3:
-    ;Literal *ptr = insert_ternary_clause(ad->cdb, ad->lemmaToLearn, false);
+    ;Literal *ptr = insert_ternary_clause(ad->cdb, &ad->lemmaToLearn, false,ad->wId);
     ad->rUIP.size     = 3;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = ptr;
@@ -378,7 +379,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     dassert(ad->lemmaToLearn.size>3);
     //here, lemmaToLearn will be sorted
     unsigned int indexInDB = 
-      insert_nary_clause(ad->cdb, &ad->lemmaToLearn, false);
+      insert_nary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->wId);
 
     /*put in lemmaToLearn[0] the uip */
     //highest decision level is ad->dlToBackjump   
@@ -403,13 +404,13 @@ void azuDICI_learn_lemma(AzuDICI* ad){
       }
     }
 
-    ThNClause *ptr = 
+    ThNClause *ptr2 = 
       azuDICI_insert_th_clause(ad, ad->lemmaToLearn, false, indexInDB);
 
     ad->rUIP.size     = ad->lemmaToLearn.size;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = NULL;
-    ad->rUIP.thNClPtr = ptr;
+    ad->rUIP.thNClPtr = ptr2;
     //Nclause
   }
 }
@@ -441,10 +442,11 @@ void azuDICI_set_true_uip(AzuDICI* ad){
   ad->conflict.size = 0;
 }
 
-void azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
+bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
   /*  if(){
 
       }*/
+    return true;
 }
 
 void azuDICI_restart_if_adequate(AzuDICI* ad){
@@ -464,7 +466,7 @@ Literal  azuDICI_decide(AzuDICI* ad){
   if ( (ad->model.decision_lvl < ad->strat.DLBelowWhichRandomDecisions) &&
        !(ad->stats.numDecisions % ad->strat.fractionRandomDecisions) ){
     unsigned int rNumber= ad->cdb->randomNumbers[ad->randomNumberIndex++];
-    v = (unsigned int) ( (double)rNumber/RAND_MAX * ad->cdb.numVars ) + 1;
+    v = (unsigned int) ( (double)rNumber/RAND_MAX * ad->cdb->numVars ) + 1;
     for( i=1;i<1000;i++ ) {
       if (model_is_undef_var(v,ad->model)) break;
       v = (v+1) % ad->cdb->numVars +1;
@@ -511,8 +513,8 @@ Literal  azuDICI_decide(AzuDICI* ad){
     if( model_get_last_phase(v, ad->model) ) return v;
     else return -v;
   } else if( ad->strat.phaseSelectionAlwaysPositive ){
-    return v
-      }  else if( strat.phaseSelectionAlwaysNegative ){
+    return v;
+      }  else if( ad->strat.phaseSelectionAlwaysNegative ){
     return -v;
   }
   
@@ -523,7 +525,6 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList, litIndex;
   litIndex = lit_as_uint(l);
-  ts_vec_t(Literal) list = kv_A(ad->cdb->bDB,litIndex);
   sizeOfList = kv_A(ad->lastBinariesAdded,litIndex); //hack for same search
   //  ts_vec_size(sizeOfList, list);
   Reason r;
@@ -532,13 +533,13 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   r.thNClPtr = NULL;
 
   for(int i=0;i<sizeOfList;i++){
-    ts_vec_ith(lToSetTrue, list, i);
+    ts_vec_ith(lToSetTrue, kv_A(ad->cdb->bDB,litIndex), i);
     if (model_is_undef(lToSetTrue,ad->model)){
       r.binLit = -l;
       model_set_true_w_reason(lToSetTrue,r,ad->model);
       if(ad->model.decision_lvl ==0){
 	ad->stats.numDLZeroLits++;
-	ad->stats.numDLZeroLitsSinceLastRestart++;
+	ad->stats.numDlZeroLitsSinceLastRestart++;
       }
     }else if(model_is_false(lToSetTrue,ad->model)){ //Conflict
       ad->conflict.size = 2;
@@ -557,16 +558,15 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList;
   unsigned int litIndex = lit_as_uint(-l);
-  ts_vec_t(unsigned int) list = kv_A(ad->cdb->tDB,litIndex);
-  ts_vec_size(sizeOfList, list);
+  ts_vec_size(sizeOfList, kv_A(ad->cdb->ternaryWatches, litIndex));
   Reason r;
   r.size = 3;
   r.binLit = 0;
   r.thNClPtr = NULL;
   TClause ternaryClause;
   Literal l1,l2,l3;
-  for(i=0;i<sizeOfList;i++){
-    ts_vec_ith(indexInTDB, list, i);
+  for(int i=0;i<sizeOfList;i++){
+    ts_vec_ith(indexInTDB, kv_A(ad->cdb->ternaryWatches, litIndex), i);
     ts_vec_ith(ternaryClause,ad->cdb->tDB,indexInTDB);
     if(ternaryClause.flags[ad->wId]){ //Only propagate with self-learned clauses
       l1 = ternaryClause.lits[0];
@@ -589,7 +589,7 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
 	model_set_true_w_reason(lToSetTrue,r,ad->model);
 	if(ad->model.decision_lvl ==0){
 	  ad->stats.numDLZeroLits++;
-	  ad->stats.numDLZeroLitsSinceLastRestart++;
+	  ad->stats.numDlZeroLitsSinceLastRestart++;
 	}
       }else if(model_is_false(lToSetTrue,ad->model)){ //Conflict
 	ad->conflict.size = 3;
@@ -625,7 +625,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       first=false;
       otherLit = watchedClause->lwatch1;
     }
-    sizeOfClause = kv_size(watchedClause->lits);
+    sizeOfClause = kv_size(watchedClause->lits[0]);
 
     if(model_is_true(otherLit,ad->model)){
       //Update watchedLiteral and previouslyWatchedLiteral
@@ -643,7 +643,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     //if other watched is not true, try to reselect.
     foundForReselection=false;
     for(i=0;i<sizeOfClause;i++){
-      toReselect = kv_A(watchedClause->lits, i);
+      toReselect = kv_A(watchedClause->lits[0], i);
       if( toReselect!=-l && toReselect != otherLit && 
 	  model_is_true_or_undef(toReselect,ad->model)){ //found to reselect
 	foundForReselection =true;
@@ -663,7 +663,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	watchedClause->lwatch2 = toReselect;
 	//what stores this direction, is overwritten 
 	*ptrToWatchedClauseAddr = watchedClause->nextWatched2; 
-	watchedClause->nextWatched2 = kv_A(ad->watches,lit_as_uint(toReselect))
+	watchedClause->nextWatched2 = kv_A(ad->watches,lit_as_uint(toReselect));
       }
       //update previouslyWatchedClause
       kv_A(ad->watches, lit_as_uint(toReselect)) = watchedClause;
@@ -677,7 +677,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	model_set_true_w_reason(otherLit,r,ad->model);
 	if(ad->model.decision_lvl == 0){
 	  ad->stats.numDLZeroLits++;
-	  ad->stats.numDLZeroLitsSinceLastRestart++;
+	  ad->stats.numDlZeroLitsSinceLastRestart++;
 	}
 	//update watchedClause and pointer to it.
 	if(first){
@@ -692,7 +692,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	watchedClause->activity++;
 	ad->conflict.size = sizeOfClause;
 	for(i=0;i<sizeOfClause;i++){
-	  kv_A(ad->conflict.lits,i) = kv_A(watchedClause->lits,i);
+	  kv_A(ad->conflict.lits,i) = kv_A(watchedClause->lits[0],i);
 	}
 	return false;
       }    
@@ -718,8 +718,8 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
   threadClause.nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(-l2));
 
   NClause clInDB;
-  ts_vec_ith(clInDB, ad->cdb.nDB, indexInDB);
-  threadClause.lits      = &clInDB.lits;
+  ts_vec_ith(clInDB, ad->cdb->nDB, indexInDB);
+  threadClause.lits = &clInDB.lits; // REVISION !
   //  threadClause.posInDB      = posInDB; Do we need this, rethink?
 
   kv_push(ThNClause, ad->thcdb, threadClause);
@@ -775,11 +775,11 @@ Clause azuDICI_get_clause_from_reason(Reason r, Literal l){
     kv_A(cl.lits,1) = tclause->lits[2];
     break;
   default:
-    ThNClause *nclause;
+    ;ThNClause *nclause;
     nclause = r.thNClPtr;
     cl.size = r.size;
     for(int i=0; i<r.size;i++){
-      kv_A(cl.lits,i) = kv_A(nclause->lits,i);
+      kv_A(cl.lits,i) = kv_A(nclause->lits[0],i);
     }
   }
   return cl;
@@ -797,7 +797,7 @@ void  azuDICI_increaseScore(AzuDICI* ad, Literal l){
   if(ad->strat.decideOverLits)
     normalized = maxHeap_increase_score_in(ad->heap, lit_as_uint(l), ad->scoreBonus);
   else
-    normalized = maxHeap_increase_score_in(ad->heap, var(lit), ad->scoreBonus);
+    normalized = maxHeap_increase_score_in(ad->heap, var(l), ad->scoreBonus);
 
   //if scoreBonus is too high, values in the heap are normalized 
   //we reset scoreBonus
@@ -812,21 +812,21 @@ void azuDICI_init_thcdb(AzuDICI* ad){
   Literal l1, l2;
 
   localClause.activity = 0;
-  for(int i=0 i<sizeNDB; i++){
-    ts_ith(nclause, ad->cdb->nDB, i);
-    l1 = kvec_A(nclause.lits,0);
-    l2 = kvec_A(nclause.lits,1);
+  for(int i=0; i<sizeNDB; i++){
+    ts_vec_ith(nclause, ad->cdb->nDB, i);
+    l1 = kv_A(nclause.lits,0);
+    l2 = kv_A(nclause.lits,1);
     localClause.lwatch1 = l1;
     localClause.lwatch2 = l2;
-    localClause.nextWatched1 = (void*)kvec_A(ad->watches, lit_as_uint(l1));
-    localClause.nextWatched2 = (void*)kvec_A(ad->watches, lit_as_uint(l2));
-    localClause.lits = nclause.lits;
+    localClause.nextWatched1 = (void*)kv_A(ad->watches, lit_as_uint(l1));
+    localClause.nextWatched2 = (void*)kv_A(ad->watches, lit_as_uint(l2));
+    localClause.lits = &nclause.lits;
     localClause.posInDB = i;
 
-    kvec_push(ThNClause, ad->thcdb, localClause);
+    kv_push(ThNClause, ad->thcdb, localClause);
 
-    kvec_A(ad->watches, lit_as_uint(l1)) = &(kvec_A(ad->thcdb, kvec_size(ad->thcdb)-1));
-    kvec_A(ad->watches, lit_as_uint(l2)) = &(kvec_A(ad->thcdb, kvec_size(ad->thcdb)-1));
+    kv_A(ad->watches, lit_as_uint(l1)) = &(kv_A(ad->thcdb, kv_size(ad->thcdb)-1));
+    kv_A(ad->watches, lit_as_uint(l2)) = &(kv_A(ad->thcdb, kv_size(ad->thcdb)-1));
 
   }
 }
@@ -846,10 +846,10 @@ bool azuDICI_set_true_units(AzuDICI *ad){
     ts_vec_ith(unitToSetTrue, ad->cdb->uDB,i);
 
     if (model_is_undef(unitToSetTrue,ad->model)){
-      r.binLit = -l;
+      r.binLit = -unitToSetTrue;
       model_set_true_w_reason(unitToSetTrue,r,ad->model);
       ad->stats.numDLZeroLits++;
-      ad->stats.numDLZeroLitsSinceLastRestart++;      
+      ad->stats.numDlZeroLitsSinceLastRestart++;      
     }else if(model_is_false(unitToSetTrue,ad->model)){
       return false;
     }    
