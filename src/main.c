@@ -8,19 +8,24 @@
  *
  *******************************************************************************/
 
+#include <unistd.h>
 #include <stdio.h>
 #include "version.h"
 #include "worker.h"
 #include "parser.c"
 
+
 char* usage="Usage: ad <dimacs file>";
+unsigned int nworkers; //the number of Threads
 
 static void * work (void * voidptr) {
   Worker *worker = voidptr;
   int wid = worker->id;
   dassert (0 <= wid && wid < nworkers);
   //msg (wid, 1, "running");
-  dassert ( &ts_vec_ith(workers,wid) == worker );
+  Worker dassertW;
+  ts_vec_ith(dassertW,workers,wid);
+  dassert ( &dassertW == worker ); 
  
   worker->res = azuDICI_solve ( worker->solver );
 
@@ -51,13 +56,36 @@ int main (int argc, char *argv[]) {
     }
 
   char* inputFileName;
-  unsigned int nThreads;
-  /*
-
-    parse parameters
-
-
-   */
+  
+  
+/* Starting parse parameters */
+ int c;
+ extern char *optarg;
+ extern int optopt, opterr;
+ opterr = 0;
+  while ((c = getopt(argc, argv, "t:f:")) != -1){
+        switch (c) {
+            case 't':
+                nworkers = optarg[0] - '0';
+                break;
+            case 'f':
+                inputFileName = optarg;
+                break;
+            case '?':
+                if (optopt == 'c')
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                else if (isprint(optopt))
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                else
+                    fprintf(stderr,
+                        "Unknown option character `\\x%x'.\n",
+                        optopt);
+                return 1;
+            default:
+                abort();
+        }
+  }
+  /*Ending parse parameters*/
 
   unsigned int nVars;
   unsigned int nClauses;

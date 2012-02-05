@@ -3,12 +3,12 @@
 # Linker: ld
 
 CC=gcc
-CFLAGS=-Wall -lpthread -lm -std=c99 -Wextra
+CFLAGS=-Wall -pthread -lm -std=c99 -Wextra
 
 all: ad
 
 ad:
-	$(CC) $(CFLAGS) src/main.c -o ad
+	$(CC) $(CFLAGS) src/main.c -lz -o ad
 
 clean:
 	rm -f ad
