@@ -2,7 +2,7 @@
 #define _CLAUSEDB_H_
 
 #include "clause.h"
-//#include "binlist.h"
+#include "mergeSort.h"
 
 #define MAX_RANDOM_NUMBERS 10000000
 

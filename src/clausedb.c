@@ -2,7 +2,6 @@
 #define _CLAUSEDB_C_
 
 #include "clausedb.h"
-#include "mergeSort.h"
 
 Clause inputClause;
 unsigned int nInsertedClauses;

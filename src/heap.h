@@ -3,6 +3,8 @@
 
 #include "kvec.h"
 #include <stdbool.h>
+#include "common.h"
+#include <float.h>
 
 typedef struct _maxheap {
 	kvec_t(unsigned int) maxHeap;

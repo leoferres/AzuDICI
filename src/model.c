@@ -1,5 +1,4 @@
 #include "model.h"
-#include "common.h"
 
 void push(Literal lit, Model model){
     kv_push(Literal,model.model_stack,lit);

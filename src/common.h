@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <assert.h>
-#include "literal.h"
 
 /*debug assert*/
 #define DEBUG 1
@@ -9,7 +8,3 @@
 #else
 #define dassert(n);
 #endif
-
-typedef unsigned int Var;
-
-Var var(Literal l);

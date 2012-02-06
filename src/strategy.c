@@ -2,7 +2,6 @@
 #define _STRATEGY_C_
 
 #include "strategy.h"
-#include "math.h"
 
 #define is_zero_or_power_of_two_2(x)  ( !(((x)-1) & (x)) )
 

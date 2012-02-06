@@ -1,9 +1,7 @@
 #ifndef _AZUDICI_C_
 #define _AZUDICI_C_
 
-#include "clausedb.h"
 #include "azudici.h"
-#include "model.h"
 
 AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   int i;

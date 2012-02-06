@@ -1,5 +1,4 @@
 #include "heap.h"
-#include "common.h"
 
 /*The constructor of the MaxHeap structure*/
 void maxHeap_init(MaxHeap mh, unsigned int nElems){

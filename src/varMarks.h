@@ -4,6 +4,7 @@
 #include "common.h"
 #include <stdio.h>
 #include "azudici.h"
+#include "var.h"
 
 typedef struct _varMarks{
     kvec_t(bool) marked;

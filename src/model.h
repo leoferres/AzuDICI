@@ -4,6 +4,8 @@
 #include "varinfo.h"
 #include "heap.h"
 #include "varMarks.h"
+#include "common.h"
+#include "var.h"
 
 typedef struct _model {
         kvec_t(Literal) model_stack; /* Keeps track of the state of the model */ 
