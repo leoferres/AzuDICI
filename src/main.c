@@ -21,13 +21,13 @@ char* usage="Usage: ad <dimacs file>";
 unsigned int nworkers; //the number of Threads
 
 static void * work (void * voidptr) {
-  Worker *worker = voidptr;
+  Worker *worker = (Worker *)voidptr;
   int wid = worker->id;
   dassert (0 <= wid && wid < nworkers);
   //msg (wid, 1, "running");
-  Worker dassertW;
-  ts_vec_ith(dassertW,workers,wid);
-  dassert ( &dassertW == worker ); 
+  Worker *dassertW;
+  ts_vec_ith_ma(dassertW,workers,wid);
+  dassert ( dassertW == worker ); 
  
   worker->res = azuDICI_solve ( worker->solver );
 
@@ -38,7 +38,6 @@ static void * work (void * voidptr) {
   done = 1;
   if (pthread_mutex_unlock (&donemutex)) 
     printf ("failed to unlock 'done' mutex in worker");
-
   return worker->res ? worker : 0;
 }
 
@@ -61,7 +60,7 @@ int main (int argc, char *argv[]) {
   
   
 /* Starting parse parameters */
-  
+
  int c;
  opterr = 0;
   while ((c = getopt(argc, argv, "t:f:")) != -1){
@@ -86,9 +85,11 @@ int main (int argc, char *argv[]) {
                 abort();
         }
   }
-   
+
   /*Ending parse parameters*/
   
+  //inputFileName="../../cores-benchmarks/hoons-vbmc-s04-06.cnf.gz";
+  //nworkers = 1;
   unsigned int nVars;
   unsigned int nClauses;
   gzFile in;
@@ -126,7 +127,10 @@ int main (int argc, char *argv[]) {
     //    msg (-1, 2, "started worker %d", i);
   }
   /**************************/
-
-
+  for(int i=0;i<nworkers;i++){
+      ts_vec_ith_ma(w,workers,i);
+      pthread_join(w->thread, NULL);
+  }
+  
   return 0;
 }

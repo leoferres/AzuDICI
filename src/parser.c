@@ -65,7 +65,6 @@ void input_read_clauses (ClauseDB* cdb, char* inputFileName){
 	add_input_literal(cdb,-variable);
     }    
   }
-
   gzclose(in); 
 }
 

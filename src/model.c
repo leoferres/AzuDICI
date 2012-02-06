@@ -14,8 +14,9 @@ Model model_init(unsigned int num_vars){
     model.last3propagated = -1;
     model.lastNpropagated = -1;
     kv_init(model.vinfo);
+    kv_init(model.assignment);
     kv_resize(VarInfo,model.vinfo,model.n_vars+1);
-    kv_resize(char,model.assignment,model.n_lits);
+    kv_resize(char,model.assignment,model.n_lits+2);
     model.vassignment = ((short unsigned *)((char *)model.assignment.a));
     model.dlMarker = zero_lit();
     model.decision_lvl = 0;
