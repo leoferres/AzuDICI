@@ -1,6 +1,7 @@
 #ifndef _CLAUSEDB_H_
 #define _CLAUSEDB_H_
 
+#include <stdlib.h>
 #include "clause.h"
 #include "mergeSort.h"
 

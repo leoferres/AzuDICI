@@ -1,3 +1,6 @@
+#ifndef MERGESORT_C
+#define MERGESORT_C
+
 #include "mergeSort.h"
 
 
@@ -55,3 +58,5 @@ struct sort_node *merge(struct sort_node *head_one, struct sort_node *head_two) 
 
  return head_three;
 }
+
+#endif

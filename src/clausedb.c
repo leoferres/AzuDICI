@@ -257,13 +257,16 @@ Literal* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int w
 
     /*In case the clause already exists, modify flags if it's learned*/
     if (index != -1) {
+        TClause *tmpPtr;
         dassert(index >= 0);
         if (!isOriginal) {
             ts_vec_ith(ternary, cdb->tDB, index);
             ternary.flags[wId] = true;
-            ts_vec_set_ith(TClause,cdb->tDB,index,ternary);
+            ts_vec_set_ith(TClause,cdb->tDB,index,ternary);            
+            ts_vec_ith_ma(tmpPtr,cdb->tDB,index);
         }
-        return ternary.lits;
+        /*Return a pointer to the actual ternary inserted clause*/
+        return &tmpPtr->lits[0];
     }
     /********************************************************/
 
@@ -302,7 +305,10 @@ Literal* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int w
     if (isOriginal) cdb->numInputClauses++;
     cdb->numTernaries++;
     cdb->numClauses++;
-    return ternary.lits; //check if this indeed is the direction of the literals
+    /*Return a pointer to the actual ternary inserted clause*/
+    TClause *tmpPtr;         
+    ts_vec_ith_ma(tmpPtr,cdb->tDB,indexOfNewClause);
+    return &tmpPtr->lits[0];
     //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
     /************************************************/
     pthread_rwlock_unlock(&insert_ternary_clause_lock);

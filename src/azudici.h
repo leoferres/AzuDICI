@@ -6,6 +6,7 @@
 #include "heap.h"
 #include "strategy.h"
 #include "stats.h"
+#include "literal.h"
 
 typedef struct _azuDICI{
   unsigned int        wId;

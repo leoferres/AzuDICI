@@ -1,7 +1,7 @@
 #include "literal.h"
 
 unsigned int uint_as_lit(Literal l) {
-  dassert(l!=0);
+  //dassert(l!=0);
   if(l%2) return -l/2;
   else return (l/2);  
 }

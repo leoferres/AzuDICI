@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "version.h"
 #include "worker.h"
 #include "parser.c"
@@ -61,8 +62,6 @@ int main (int argc, char *argv[]) {
   
 /* Starting parse parameters */
  int c;
- extern char *optarg;
- extern int optopt, opterr;
  opterr = 0;
   while ((c = getopt(argc, argv, "t:f:")) != -1){
         switch (c) {

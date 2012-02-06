@@ -102,14 +102,14 @@ bool heap_isCorrect(MaxHeap mh){
         if(2*i<=mh.maxHeapLast){
             if(kv_A(mh.act,kv_A(mh.maxHeap,i)) < kv_A(mh.act,kv_A(mh.maxHeap,2*i))){
                 printf("Problem between pos %i and %i\n",i,2*i);
-                printf("They have activities %d and %d\n",kv_A(mh.act,kv_A(mh.maxHeap,i)),kv_A(mh.act,kv_A(mh.maxHeap,2*i)));
+                printf("They have activities %f and %f\n",kv_A(mh.act,kv_A(mh.maxHeap,i)),kv_A(mh.act,kv_A(mh.maxHeap,2*i)));
                 return false;
             }
         }
         if(2*i+1<mh.maxHeapLast){
             if(kv_A(mh.act,kv_A(mh.maxHeap,i)) < kv_A(mh.act,kv_A(mh.maxHeap,2*i+1))){
                 printf("Problem between pos %i and %i\n",i,2*i+1);
-                printf("They have activities %d and %d\n",kv_A(mh.act,kv_A(mh.maxHeap,i)),kv_A(mh.act,kv_A(mh.maxHeap,2*i+1)));
+                printf("They have activities %f and %f\n",kv_A(mh.act,kv_A(mh.maxHeap,i)),kv_A(mh.act,kv_A(mh.maxHeap,2*i+1)));
                 return false;
             }
         }

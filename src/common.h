@@ -1,11 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <stdbool.h>
 #include <assert.h>
-
-#include "var.h"
-#include "literal.h"
 
 /*debug assert*/
 #define DEBUG 1

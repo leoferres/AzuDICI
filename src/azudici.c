@@ -715,9 +715,9 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
   threadClause.nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(-l1)); 
   threadClause.nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(-l2));
 
-  NClause clInDB;
-  ts_vec_ith(clInDB, ad->cdb->nDB, indexInDB);
-  threadClause.lits = &clInDB.lits; // REVISION !
+  NClause *clInDB;
+  ts_vec_ith_ma(clInDB, ad->cdb->nDB, indexInDB);
+  threadClause.lits = &clInDB->lits; // REVISION !
   //  threadClause.posInDB      = posInDB; Do we need this, rethink?
 
   kv_push(ThNClause, ad->thcdb, threadClause);

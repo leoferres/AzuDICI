@@ -1,6 +1,7 @@
 #ifndef _HEAP_H_
 #define _HEAP_H_
 
+#include <stdio.h>
 #include "kvec.h"
 #include <stdbool.h>
 #include "common.h"

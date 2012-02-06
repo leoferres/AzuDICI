@@ -1,7 +1,7 @@
 #ifndef _STRATEGY_H_
 #define _STRATEGY_H_
 #include <stdbool.h>
-#include "math.h"
+#include <math.h>
 
 typedef struct _strategy{
   double initialScoreBonus;

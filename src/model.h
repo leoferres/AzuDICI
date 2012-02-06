@@ -1,6 +1,7 @@
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
+#include <stdio.h>
 #include "varinfo.h"
 #include "heap.h"
 #include "common.h"
