@@ -719,7 +719,7 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, bool isOriginal, uns
 
   NClause *clInDB;
   ts_vec_ith_ma(clInDB, ad->cdb->nDB, indexInDB);
-  threadClause.lits = &clInDB->lits; // REVISION !
+  threadClause.lits = &clInDB->lits;
   //  threadClause.posInDB      = posInDB; Do we need this, rethink?
 
   kv_push(ThNClause, ad->thcdb, threadClause);
