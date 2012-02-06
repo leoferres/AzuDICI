@@ -4,7 +4,7 @@
 
 CC=gcc
 CFLAGS=-Wall -pthread -lm -std=c99 -Wextra
-CFILES=src/azudici.c src/clause.c src/clausedb.c src/common.c src/heap.c src/literal.c src/main.c src/model.c src/parser.c src/stats.c src/strategy.c src/test.c
+CFILES=src/azudici.c src/clause.c src/clausedb.c src/var.c src/heap.c src/literal.c src/main.c src/model.c src/parser.c src/stats.c src/strategy.c src/test.c
 
 all: ad
 

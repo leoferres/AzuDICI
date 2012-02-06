@@ -3,7 +3,6 @@
 
 #include "varinfo.h"
 #include "heap.h"
-#include "varMarks.h"
 #include "common.h"
 #include "var.h"
 
@@ -49,7 +48,7 @@ bool model_lit_is_decision (Literal lit, Model model);
 //inline void add_new_var (Model model ); //not implemented
 bool tPropagated(Literal lit, Model model);
 void print(Model model);
-Literal get_next_marked_literal(VarMarks var_marks, Model model);
+//Literal get_next_marked_literal(VarMarks var_marks, Model model); not used
 unsigned int model_size(Model model);
 
 #endif /* _MODEL_H_ */

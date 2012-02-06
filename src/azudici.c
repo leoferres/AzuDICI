@@ -239,7 +239,7 @@ void azuDICI_lemma_shortening(AzuDICI* ad){
     litIsRedundant=true;
 
     litOfLemma = kv_A(ad->lemma.lits,i);
-    dassert( is_marked(var(litOfLemma),ad) );
+    dassert (kv_A(ad->varMarks,var(litOfLemma)));
 
     //Begins test to see if literal is redundant
     if( model_lit_is_decision(litOfLemma,ad->model) || i==0 ){

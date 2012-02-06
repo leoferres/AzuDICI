@@ -43,9 +43,9 @@
 #include <pthread.h>
 #include "kvec.h"
 
-pthread_rwlock_t lock_vector_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
-kvec_t(pthread_rwlock_t) ts_vec_locks;
-bool init_flag = false;
+extern pthread_rwlock_t lock_vector_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
+extern kvec_t(pthread_rwlock_t) ts_vec_locks;
+extern bool init_flag = false;
 
 
 #define ts_vec_roundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))

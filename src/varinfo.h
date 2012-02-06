@@ -1,3 +1,6 @@
+#ifndef _VARINFO_H_
+#define _VARINFO_H_
+
 #include "stdbool.h"
 #include "clause.h"
 
@@ -8,3 +11,5 @@ typedef struct _vinfo {
   bool last_phase;
   bool propagated;
 } VarInfo;
+
+#endif

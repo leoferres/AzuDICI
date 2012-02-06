@@ -1,4 +1,4 @@
-#include "common.h"
+#include "var.h"
 
 Var var(Literal l) {
     if(l<0){
