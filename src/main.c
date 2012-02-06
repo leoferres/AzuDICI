@@ -89,8 +89,6 @@ int main (int argc, char *argv[]) {
    
   /*Ending parse parameters*/
   
-  inputFileName="../../cores-benchmarks/hoons-vbmc-s04-06.cnf.gz";
-  nworkers = 1;
   unsigned int nVars;
   unsigned int nClauses;
   gzFile in;
