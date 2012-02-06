@@ -583,7 +583,9 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
 
       dassert(lToSetTrue>0);
       if (model_is_undef(lToSetTrue,ad->model)){
-	r.tClPtr = ternaryClause.lits; //check if this works
+        TClause *tmpPtr;
+        ts_vec_ith_ma(tmpPtr,ad->cdb->tDB,indexInTDB);
+	r.tClPtr = &tmpPtr->lits[0]; //check if this works
 	model_set_true_w_reason(lToSetTrue,r,ad->model);
 	if(ad->model.decision_lvl ==0){
 	  ad->stats.numDLZeroLits++;

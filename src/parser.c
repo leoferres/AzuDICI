@@ -42,7 +42,7 @@ void input_read_clauses (ClauseDB* cdb, char* inputFileName){
   in = gzopen(inputFileName, "rb");
   input_read_header(in, &nVars,&nClauses);
   dassert(nVars==cdb->numVars);
-  dassert(nClauses==cdb->numInputClauses);
+  // dassert(nClauses==cdb->numInputClauses); REVISION: Wrong dassert, there are no input clauses in the DB yet
 
   bool fileEnd=false;
   while(!fileEnd) { // each iteration of this loop reads one (possibly signed) int

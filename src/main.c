@@ -51,16 +51,17 @@ int main (int argc, char *argv[]) {
   printf ("(c) 2012 R. Asin, L. Ferres, and J. Olate (alphabetical!)\n");
 
   printf ("To report errors: <leoferres@gmail.com>\n");
-
-  if (argc!=2) {
+  
+  if (argc<2) {
     printf ("%s\n",usage);
-    return -1;
+    //return -1;
     }
 
   char* inputFileName;
   
   
 /* Starting parse parameters */
+  
  int c;
  opterr = 0;
   while ((c = getopt(argc, argv, "t:f:")) != -1){
@@ -85,8 +86,11 @@ int main (int argc, char *argv[]) {
                 abort();
         }
   }
+   
   /*Ending parse parameters*/
-
+  
+  inputFileName="../../cores-benchmarks/hoons-vbmc-s04-06.cnf.gz";
+  nworkers = 1;
   unsigned int nVars;
   unsigned int nClauses;
   gzFile in;
