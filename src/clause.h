@@ -25,8 +25,8 @@ typedef struct _clause {
 } Clause; /*Can be unit, binary, ternary or nary*/
 
 typedef struct _naryThreadClause{
-  //unsigned int     size; //we have this info in the vector of literals
-  double             activity; 
+  unsigned int       size; //we have this info in the vector of literals
+  unsigned int       activity; 
   Literal            lwatch1;
   Literal            lwatch2;
   void*              nextWatched1;

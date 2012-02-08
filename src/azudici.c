@@ -890,13 +890,14 @@ void azuDICI_init_thcdb(AzuDICI* ad){
   ThNClause localClause;
   Literal l1, l2;
 
-  localClause.activity = 0;
+  //localClause.activity = 0;
   for(int i=0; i<sizeNDB; i++){
     //    ts_vec_ith(nclause, ad->cdb->nDB, i);
     ts_vec_ith_ma(nclause, ad->cdb->nDB, i);
     l1 = kv_A(nclause->lits,0);
     l2 = kv_A(nclause->lits,1);
     //    printf("In new n clause watching %d, %d \n", l1, l2);
+    localClause.activity = 0;
     localClause.lwatch1 = l1;
     localClause.lwatch2 = l2;
     localClause.nextWatched1 = (void*)kv_A(ad->watches, lit_as_uint(l1));
