@@ -26,6 +26,7 @@ typedef struct _azuDICI{
   Clause              conflict;
   Clause              lemma;
   Clause              lemmaToLearn; //The shortened lemma
+  Clause              reasonToResolve;
   Reason              rUIP;
   ClauseDB            *cdb;
 
@@ -58,7 +59,7 @@ void azuDICI_init_thcdb(AzuDICI* ad); //to implement
 bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l);
-Clause azuDICI_get_clause_from_reason(Reason r, Literal l); //¿in clause.c?
+void azuDICI_get_clause_from_reason(Clause *cl, Reason r, Literal l); //¿in clause.c?
 void azuDICI_increase_activity(Reason r); //¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
 void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
@@ -66,5 +67,6 @@ void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
 ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, bool isOriginal, unsigned int indexInDB);
 bool azuDICI_set_true_units(AzuDICI *ad);
 void azuDICI_init_thcdb(AzuDICI* ad);
+void azuDICI_print_clause(AzuDICI* ad, Clause cl);
 
 #endif /* _AZUDICI_H_ */

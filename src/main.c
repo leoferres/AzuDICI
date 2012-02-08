@@ -31,6 +31,12 @@ static void * work (void * voidptr) {
  
   worker->res = azuDICI_solve ( worker->solver );
 
+  if(worker->res == 10){
+    printf("SAT\n");
+  }else if(worker->res==20){
+    printf("UNSAT\n");
+  }
+
 
   // msg (wid, 1, "result %d", worker->res);
   if (pthread_mutex_lock (&donemutex))
@@ -97,12 +103,16 @@ int main (int argc, char *argv[]) {
   /*Read number of vars and clauses from the input CNF file*/
   in = gzopen(inputFileName, "rb");
   input_read_header(in, &nVars, &nClauses);
+  printf("Header read with nVars %d and nClauses %d\n",nVars, nClauses);
   gzclose(in);
   /**********************************/
 
   /*Initialize Clause DataBase and read clauses*/
+  printf("About to init clause deb\n");
   ClauseDB* cdb = init_clause_database(nVars,nworkers);
+  printf("Clause db initialized\n");
   input_read_clauses(cdb, inputFileName);
+  printf("Clause db loaded\n");
   /***************************************/
 
   /*Initialize workers and assign each thread a new AzuDICI solver*/

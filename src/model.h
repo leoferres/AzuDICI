@@ -13,8 +13,7 @@ typedef struct _model {
         kvec_t(char) assignment; /*truth value of each literal*/
         unsigned int decision_lvl;
         kvec_t(VarInfo) vinfo; /*keeps track of each variable*/
-        MaxHeap maxheap;
-        short unsigned int *vassignment;
+  //        short unsigned int *vassignment;
         Literal dlMarker;
         unsigned int n_vars;
         unsigned int n_lits;
@@ -41,15 +40,11 @@ bool model_is_undef_var(Var v, Model *model);
 Literal  model_next_lit_for_2_prop(Model *model);
 Literal  model_next_lit_for_n_prop(Model *model);
 Literal  model_next_lit_for_3_prop(Model *model);
-void set_last_TPropagated(unsigned int num_unused_lits, Model *model);
 bool model_get_last_phase(Var v, Model *model);
 void set_last_phase(Var v, bool phase, Model *model);
 Reason model_get_reason_of_lit (Literal lit, Model *model);
 bool model_lit_is_decision (Literal lit, Model *model);
-//inline void add_new_var (Model model ); //not implemented
-bool tPropagated(Literal lit, Model *model);
 void print(Model model);
-//Literal get_next_marked_literal(VarMarks var_marks, Model model); not used
 unsigned int model_size(Model *model);
 
 #endif /* _MODEL_H_ */

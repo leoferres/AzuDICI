@@ -14,6 +14,6 @@ typedef struct _statistics{
   unsigned int numDecisions;
 }Stats;
 
-void stats_init(Stats st);
+void stats_init(Stats *st);
 
 #endif

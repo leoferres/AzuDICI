@@ -26,13 +26,13 @@ typedef struct _clause {
 
 typedef struct _naryThreadClause{
   //unsigned int     size; //we have this info in the vector of literals
-  double           activity; 
-  Literal          lwatch1;
-  Literal          lwatch2;
-  void*            nextWatched1;
-  void*            nextWatched2;
-  kvec_t(Literal)* lits;
-  unsigned int     posInDB; //maybe this is not needed
+  double             activity; 
+  Literal            lwatch1;
+  Literal            lwatch2;
+  void*              nextWatched1;
+  void*              nextWatched2;
+  kvec_t(Literal)*   lits;
+  unsigned int       posInDB; //needed for clause cleanup
 }ThNClause;
 
 typedef struct _reasonStruct{

@@ -1,0 +1,25 @@
+SAT_RACE 2008_TS1	manol-pipe-c7idw.cnf.gz         40.8[s]		UNSAT
+SAT_RACE_2008_final	manol-pipe-g10bid_i		429.3[s]	UNSAT
+SAT_RACE_2008_TS2	goldb-heqc-i8mul.cnf		334.4[s]	UNSAT
+SAT_RACE_2008_final	goldb-heqc-alu4mul.cnf.gz	93[s]		UNSAT
+SAT_RACE_2008_final	ibm-2002-31_1r3-k30.cnf.gz	64.9[s]		UNSAT
+SAT_RACE_2008_final	ibm-2002-24r3-k100		165.0[s]	UNSAT
+SAT_RACE_2008_TS1	narai-vpn-10s.cnf		403[s]		UNSAT
+SAT_RACE_2008_final	anbul-dated-5-15-u		84.1[s]		UNSAT
+SAT_RACE_2008_final	fuhs-aprove-16			85.4[s]		UNSAT
+SAT_RACE_2008_final	simon-s02-f2clk-50.cnf.gz	112[s]		UNSAT
+
+SAT_RACE_2008_final	ibm-2004-23-k80.cnf.gz		255.9[s]	SAT
+SAT_RACE_2008_final	ibm-2002-20r-k75.cnf.gz		133.7[s]	SAT
+SAT_RACE_2008_final	mizh-md5-47-4.cnf.gz		114.1[s]	SAT
+SAT_RACE_2008_final	mizh-sha0-36-4.cnf.gz		156.3[s]	SAT
+SAT_RACE_2008_TS1	grieu-vmpc-s05-27r.cnf.gz	97.6[s]		SAT
+SAT_RACE_2008_final	simon-s02b-r4b1k1.2		336.1[s]	SAT
+SAT_RACE_2008_final	velev-npe-1.0-9dlx-b71		89.4[s]		SAT
+SAT_RACE_2008_final	post-c32s-gcdm16-22.cnf.gz 	86.3[s] 	SAT
+SAT_RACE_2008_final	anbul-part-10-15-s.cnf.gz	870.1[s]	SAT
+SAT_RACE_2008_final	schup-l2s-motst-2-k315.cnf.gz	101.[s]		SAT
+
+
+
+

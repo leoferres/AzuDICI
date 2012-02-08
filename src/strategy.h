@@ -18,7 +18,7 @@ typedef struct _strategy{
   unsigned int lubyNumbersMultiplier;
 }Strategy;
 
-void strategy_init(Strategy strat, int workerId);
-unsigned int strategy_get_next_restart_limit(Strategy strat, unsigned int currentRestartNumber);
+void strategy_init(Strategy *strat, int workerId);
+unsigned int strategy_get_next_restart_limit(Strategy *strat, unsigned int currentRestartNumber);
 
 #endif

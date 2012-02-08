@@ -6,14 +6,17 @@ void maxHeap_init(MaxHeap *mh, unsigned int nElems){
     /*We initialize and set the size of the maxHeap vector*/
     kv_init(mh->maxHeap); 
     kv_resize(unsigned int,mh->maxHeap,nElems+1);
+    kv_size(mh->maxHeap)=nElems+1;
     
     /*We initialize and set the size of the act vector*/
     kv_init(mh->act);
     kv_resize(double,mh->act,nElems+1);
+    kv_size(mh->act)=nElems+1;
     
     /*We initialize and set the size of the heaPositions vector*/        
     kv_init(mh->heapPositions);
     kv_resize(unsigned int,mh->heapPositions,nElems+1);
+    kv_size(mh->heapPositions)=nElems+1;
     
     /*Initialize variables*/
     mh->maxHeapLast=0;
@@ -23,7 +26,7 @@ void maxHeap_init(MaxHeap *mh, unsigned int nElems){
     kv_A(mh->maxHeap,0)=0;
     
     /*Set rest of elements of vectors*/
-    for(unsigned int elem=1;elem<nElems;elem++){
+    for(unsigned int elem=1;elem<=nElems;elem++){
         kv_A(mh->maxHeap,elem)=elem;
         kv_A(mh->act,elem)=0;
         kv_A(mh->heapPositions,elem)=elem;
