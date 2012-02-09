@@ -3,8 +3,8 @@
 
 \usepackage{graphicx}
 \usepackage{url}
-
-\usepackage{amsmath}
+\usepackage{algorithm2e}
+\usepackage{amsmath,amssymb}
 
 \begin{document}
 
@@ -15,8 +15,10 @@
 %\titlebanner{DRAFT---Do not distribute}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
-
+ \newcommand{\assign}{$\,$:=$\;$}
 \newcommand{\barc}{Barelogic$^S$}
+\newcommand{\pling}{{\tt plingeling}}
+
 \title{Performance of Parallel SAT Solvers}
 \titlerunning{Parallel SAT}
 \toctitle{Parallel SAT}
@@ -24,8 +26,8 @@
 
 \author{Roberto As\'in Ach\'a\inst{1} \and Juan Olate \inst{2} \and Leo Ferres \inst{2}}
 
-\institute{Departamento de Ingenier\'ia Civil Inform\'atica\\
-  Facultad de Ingenier\'ia\\ Universidad Cat\'olica de la Sant\'isima
+\institute{Department of Computer Engineering\\
+  Faculty of Engineering\\ Universidad Cat\'olica de la Sant\'isima
   Concepci\'on, Chile\\ \email{rasin@ucsc.cl} \and Department of
   Computer Science\\Faculty of Engineering\\Universidad de
   Concepci\'on, Chile\\ \email{\{lferres|juanolate\}@udec.cl}}
@@ -41,7 +43,7 @@ This is the text of the abstract.
 
 In this paper, we study issues of scalability of parallel solvers of
 the satisfiability (SAT) problem on hierarchical-memory multicore
-(SMP) systems.
+(SMP) systems. We find this topic important for three reasons.
 
 Since at least 2009, parallel SAT solvers (henceforth, pSATs) have
 been performing at the top of the SAT Competition (in 2011, all three
@@ -51,11 +53,10 @@ single competition
 track\footnote{\url{http://www.satcompetition.org/}}, which signals
 the widespread interest in pSATs by the research and industrial
 communities. This appeal stems in part because of the inherent
-properties of parallel algorithms, but also because of the need of 
-the community to do better in other application domain and be able to 
-handle even larger and more complex CNF formulas in smaller times 
-taking advantage of modern hardware. 
-
+interesting properties of parallel algorithms, but also because of the
+need of the community to do better in other application domains and be
+able to handle even larger and more complex CNF formulas in smaller
+times taking advantage of modern hardware.
 
 Meanwhile, instead of increasing clock performance, chip manufacturers
 are investing heavily on multicore architectures to improve
@@ -63,10 +64,10 @@ performance and lower power consumption (AMD released the 8-core
 Opteron 3260 EE in late 2011, and Intel will do the same with the Xeon
 E5-2650, and its low power version, the Xeon E5-2650L early this
 year). As Herb Sutter once put it, ``the free lunch is over''
-\cite{FreeLunchIsOver}, and it effectively means that software in
-general will not be getting any faster as years go by simply
+\cite{FreeLunchIsOver}, and this has effectively meant that software
+in general will not be getting any faster as years go by simply
 relying on faster processors, but by relying on how software scales in
-over multicore systems.
+multicore systems.
 
 Finally, modern memory architectures are not flat
 Processor$\leftrightarrow$RAM architectures, but a hierarchy of
@@ -109,13 +110,13 @@ different chips, but in the same machine.
   \label{fig:decay}
 \end{figure}
 
-In order to find the culprit of the performance decay, we have
+In order to find the reason of the performance decay, we have
 developed a simple portfolio-based SAT solver that allows us to
 replicate the behavior of \pling, and then also experiment with
 alternative scenarios in order to take measures towards the
 improvement of its performance.
 
-In Section^\ref{} we.....
+In Section \ref{} we.....
 
 \section{Preliminaries}
 \label{sec:preliminaries}
@@ -199,20 +200,64 @@ of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 
 As can be seen ..... explain and link concepts of the algorithm.
 
-For a complete review of this algorithm as well as proofs over its termination and soundness we refer to \cite{NiewuenhuissACM}
+For a complete review of this algorithm as well as proofs over its
+termination and soundness we refer to \cite{Nieuwenhuisetal2006JACM}
 
 
 \subsection{Parallel SAT solvers}
 
-Here, talk about Portfolio approach plingeling ManySAT and SATzilla. About shared clausedbs between threads, talk about miraXT (although it is not a portfolio-approach-based solver) and its strategy and the other paper found by Leo.
+Here, talk about Portfolio approach plingeling ManySAT and
+SATzilla. About shared clausedbs between threads, talk about miraXT
+(although it is not a portfolio-approach-based solver) and its
+strategy and the other paper found by Leo.
+
+
+\subsection{Memory hierarchy}
+\label{sec:memhier}
+
 
 \section{Cache performance in Plingeling}
 
+For replication purposes, it is important to thoroughly characterize
+the machine we are using to run the tests. All experiments were
+carried out on a dual-processor 6-core Intel Xeon CPU (E5645) running
+at 2.40GHz, for a total of 12 physical cores at
+28.8GHz. Hyperthreading was disabled. Figure \ref{fig:topology} shows
+the memory hierarchy of the testing computer. To save space, we only
+show one of the chips (Socket P\#0), the other is identical.
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[scale=.5]{topology.pdf}
+  \caption{The memory hierarchy of the testing computer}
+  \label{fig:topology}
+\end{figure}
+
+Each core has one processor unit (PU), with separate L1d (32KB) and L2
+(256KB) caches. (The strange numbers of Cores and PUs have to do with
+how the Linux Kernel sees them logically.) They share a 12MB L3
+cache. Main memory is 6GB. The computer runs Linux 3.0.0-15-server, in
+64-bit mode. The details of the caches are as follows:
+
+\small
+\begin{verbatim}
+  L1 Data:        32K 8-way with 64 byte lines
+  L2 Unified:     256K 8-way with 64 byte lines
+  L3 Unified:     12288K 16-way with 64 byte lines
+\end{verbatim}
+\normalsize
+
 Talk about the experiments and justify what we want to find.
+
+
 
 \section{Azudici}
 \label{sec:azudici}
-Introduction to azudici and it's main characteristics. A very simple CDCL sat solver based in plingeling, barcelogic and miraXT with the aim to find out if sharing the clauseDB between threads helps avoiding a great performance degradation.
+
+Introduction to azudici and it's main characteristics. A very simple
+CDCL sat solver based in plingeling, barcelogic and miraXT with the
+aim to find out if sharing the clauseDB between threads helps avoiding
+a great performance degradation.
 
 \section{Cache Performance in Azudici}
 
@@ -224,19 +269,23 @@ Talk about miraXT and the other paper found by Leo.
 
 \section{Conclusions and Future Work}
 
-Let's hope to say that implementation efforts for programming a portfolio approach-based sat-solver with shared clauseDB between thread pays off when leading with cache problems.
+Let's hope to say that implementation efforts for programming a
+portfolio approach-based sat-solver with shared clauseDB between
+thread pays off when leading with cache problems.
 
-Future work is to continue with the development of azudici, incorporating in it further enhancements like formula preprocessing, variable elimination, etc, etc, etc.
+Future work is to continue with the development of  azudici,
+incorporating in it further enhancements like formula preprocessing,
+variable elimination, etc, etc, etc.
 
-\appendix
-\section{Appendix Title}
+\section*{Acknowledgments}
 
-Acknowledgements to Barcelogic group for sharing the code of a past Barcelogic SAT-solver and their support. 
+Acknowledgements to Barcelogic group for sharing the code of a past
+Barcelogic SAT-solver and their support.
 
 % We recommend abbrvnat bibliography style.
-\bibliographystyle{abbrvnat}
+\bibliographystyle{splncs}
 
 % The bibliography should be embedded for final submission.
-\bibliography{bitap}
+\bibliography{sat}
 
 \end{document}
