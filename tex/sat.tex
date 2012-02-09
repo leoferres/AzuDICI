@@ -169,9 +169,12 @@ simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 
-
 \IncMargin{1em}
 \begin{algorithm}
+\SetKwData{Conflict}{conflict}
+\SetKwData{Dl}{dl}
+\SetKwData{Lemma}{lemma}
+\SetKwData{Dec}{dec}
   \SetKwData{Cost}{cost}\SetKwData{J}{j}\SetKwData{Core}{core}
   \SetKwData{Result}{res}\SetKwData{BV}{BV}
   \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
@@ -182,21 +185,23 @@ of variables and clauses. In \ref{} we sketch the CDCL algorithm.
   \J \assign 1\;
   $F_w$ \assign $F$\;
   \While{true}{
-    \While{ \Conflict \assign PROPAGATE() }( 
-      \lIf{ DECISION\_LEVEL == 0 }( \Return UNSAT\;)
+    \While{ \Conflict \assign PROPAGATE() } 
+      \lIf{ DECISION\_LEVEL == 0 } \Return UNSAT\;
       \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
-      \Lemma \assing LEMMA\_SHORTENING(\Lemma)\;
+      \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
       LEMMA\_LEARNING(\Lemma)\;
       \Dl \assign LARGEST\_DL(\Lemma)\;
       BACKJUMP(\Dl)\;
     }
-    
   \Dec \assign DECIDE()\;
-    \lIf{ \Dec = 0 }(\Return SAT\;)
+    \lIf{ \Dec = 0 }\Return SAT\;
     DECIDE( \Dec )\;
   }
-  \caption{CDCL algorithm}\label{alg:CDCL}
-\end{algorithm}\DecMargin{1em}
+
+  \caption{CDCL algorithm}
+\label{alg:CDCL}
+\end{algorithm}
+\DecMargin{1em}
 
 As can be seen ..... explain and link concepts of the algorithm.
 
@@ -286,6 +291,6 @@ Barcelogic SAT-solver and their support.
 \bibliographystyle{splncs}
 
 % The bibliography should be embedded for final submission.
-\bibliography{sat}
+\bibliography{bibfile}
 
 \end{document}
