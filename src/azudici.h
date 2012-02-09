@@ -35,6 +35,7 @@ typedef struct _azuDICI{
   Stats               stats; //To implement
   Strategy            strat; //To implement
   unsigned int        currentRestartLimit;
+  unsigned int        currentCleanupLimit;
 
 } AzuDICI;
 
@@ -69,5 +70,6 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, bool isOri
 bool azuDICI_set_true_units(AzuDICI *ad);
 void azuDICI_init_thcdb(AzuDICI* ad);
 void azuDICI_print_clause(AzuDICI* ad, Clause cl);
+void azuDICI_compact_and_watch_thdb(AzuDICI* ad);
 
 #endif /* _AZUDICI_H_ */

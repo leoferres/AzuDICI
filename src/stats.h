@@ -2,7 +2,7 @@
 #define _STATS_H_
 
 typedef struct _statistics{
-  unsigned int numConflictsSinceClauseCleanup;
+  unsigned int numConflictsSinceLastCleanup;
   unsigned int numConflictsSinceLastRestart;
   unsigned int numConflictsSinceLastDLZero;
   unsigned int numConflicts;
@@ -10,6 +10,7 @@ typedef struct _statistics{
 
   unsigned int numDlZeroLitsSinceLastRestart;
   unsigned int numRestarts;
+  unsigned int numCleanups;
 
   unsigned int numDecisions;
 }Stats;

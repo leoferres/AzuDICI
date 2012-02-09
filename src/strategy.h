@@ -14,6 +14,10 @@ typedef struct _strategy{
   bool phaseSelectionAlwaysPositive;
   bool phaseSelectionAlwaysNegative;
 
+  unsigned int initialCleanupLimit;
+  double       cleanupMultiplier;
+  unsigned int activityThreshold;
+
   unsigned int initialRestartLimit;
   unsigned int lubyNumbersMultiplier;
 }Strategy;

@@ -17,6 +17,11 @@ void strategy_init( Strategy *strat, int workerId){
     strat->phaseSelectionLastPhase       = true;
     strat->phaseSelectionAlwaysPositive  = false;
     strat->phaseSelectionAlwaysNegative  = false; 
+
+    strat->initialCleanupLimit           = 15000;
+    strat->cleanupMultiplier             = 1.05; 
+    strat->activityThreshold             = 1;
+
     strat->lubyNumbersMultiplier         = 75;
     strat->initialRestartLimit           = strat->lubyNumbersMultiplier;
   }
