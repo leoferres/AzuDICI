@@ -199,26 +199,39 @@ of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 
 As can be seen ..... explain and link concepts of the algorithm.
 
-For a complete review of this algorithm as well as proofs over its termination and soundness we refer to \cite{Niewuenhuiss. }
+For a complete review of this algorithm as well as proofs over its termination and soundness we refer to \cite{NiewuenhuissACM}
 
 
 \subsection{Parallel SAT solvers}
 
+Here, talk about Portfolio approach plingeling ManySAT and SATzilla. About shared clausedbs between threads, talk about miraXT (although it is not a portfolio-approach-based solver) and its strategy and the other paper found by Leo.
+
 \section{Cache performance in Plingeling}
+
+Talk about the experiments and justify what we want to find.
+
 \section{Azudici}
 \label{sec:azudici}
+Introduction to azudici and it's main characteristics. A very simple CDCL sat solver based in plingeling, barcelogic and miraXT with the aim to find out if sharing the clauseDB between threads helps avoiding a great performance degradation.
 
 \section{Cache Performance in Azudici}
 
+Experiments with AZUDICI
+
 \section{Related Work}
 
+Talk about miraXT and the other paper found by Leo.
+
 \section{Conclusions and Future Work}
+
+Let's hope to say that implementation efforts for programming a portfolio approach-based sat-solver with shared clauseDB between thread pays off when leading with cache problems.
+
+Future work is to continue with the development of azudici, incorporating in it further enhancements like formula preprocessing, variable elimination, etc, etc, etc.
+
 \appendix
 \section{Appendix Title}
 
-This is the text of the appendix, if you need one.
-
-Acknowledgments, if needed.
+Acknowledgements to Barcelogic group for sharing the code of a past Barcelogic SAT-solver and their support. 
 
 % We recommend abbrvnat bibliography style.
 \bibliographystyle{abbrvnat}

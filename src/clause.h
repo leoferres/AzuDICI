@@ -25,7 +25,7 @@ typedef struct _clause {
 } Clause; /*Can be unit, binary, ternary or nary*/
 
 typedef struct _naryThreadClause{
-  unsigned int       size; //we have this info in the vector of literals
+  //unsigned int       size; //we have this info in the vector of literals
   unsigned int       activity; 
   Literal            lwatch1;
   Literal            lwatch2;
@@ -37,7 +37,7 @@ typedef struct _naryThreadClause{
 
 typedef struct _reasonStruct{
   unsigned int     size;
-  unsigned long int reason;
+  //  unsigned int     reason;
   Literal          binLit;
   TClause*         tClPtr;
   ThNClause*       thNClPtr; //this we need to update activity of clause

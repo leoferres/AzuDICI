@@ -12,10 +12,12 @@ void model_init(unsigned int num_vars, Model *model){
     model->last2propagated = -1;
     model->last3propagated = -1;
     model->lastNpropagated = -1;
+
     kv_init(model->vinfo);
-    kv_init(model->assignment);
     kv_resize(VarInfo,model->vinfo,model->n_vars+1);
     kv_size(model->vinfo)=model->n_vars+1;
+
+    kv_init(model->assignment);
     kv_resize(char,model->assignment,model->n_lits+1);
     kv_size(model->assignment)=model->n_lits+1;
     //    model->vassignment = ((short unsigned *)((char *)model->assignment.a));
@@ -101,10 +103,11 @@ void init_in_assignment(Var var, Model *model){
 }
 
 void model_set_true_w_reason(Literal lit, Reason r, Model *model){
-  printf("Setting true w reason lit %d\n",lit);
+  //printf("Setting true w reason lit %d\n",lit);
   dassert(model_is_undef(lit,model));
   push(lit,model);
   set_true_in_assignment(lit,model);
+
   VarInfo *vi       = &kv_A(model->vinfo,var(lit));
   vi->r             = r;
   vi->decision_lvl  = model->decision_lvl;
@@ -113,7 +116,7 @@ void model_set_true_w_reason(Literal lit, Reason r, Model *model){
 }
 
 void model_set_true_decision(Model *model, Literal lit){
-  printf("Setting true as decision lit %d\n",lit);
+  //printf("Setting true as decision lit %d\n",lit);
     dassert(model_is_undef(lit,model));
     model->decision_lvl++;
     model->last2propagated++;
@@ -124,7 +127,7 @@ void model_set_true_decision(Model *model, Literal lit){
 }
 
 bool model_lit_is_of_current_dl(Literal lit, Model *model){
-    return kv_A(model->vinfo,var(lit)).decision_lvl==model->decision_lvl;
+  return (kv_A(model->vinfo,var(lit)).decision_lvl == model->decision_lvl);
 }
 
 unsigned int model_get_lit_dl(Literal lit, Model *model){
@@ -177,7 +180,7 @@ void set_last_phase(Var v, bool phase, Model *model){
 }
 
 Reason model_get_reason_of_lit(Literal lit, Model *model){
-    return kv_A(model->vinfo,var(lit)).r;
+    return kv_A(model->vinfo, var(lit)).r;
 }
 
 bool model_lit_is_decision(Literal lit, Model *model){

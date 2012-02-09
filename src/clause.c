@@ -2,10 +2,10 @@
 
 Reason no_reason(){
     Reason r;
-    r.reason=1;
+    r.size=1;
     return r;
 }
 
 bool is_unit_clause(Reason r){
-    return r.reason==1;
+    return r.size==1;
 }
