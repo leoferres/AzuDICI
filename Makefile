@@ -4,7 +4,7 @@
 
 CC=gcc
 WARNING=-Wclobbered -Wempty-body -Wignored-qualifiers -Wmissing-field-initializers -Wmissing-parameter-type -Wold-style-declaration -Woverride-init -Wtype-limits -Wuninitialized -Wunused-parameter -Wunused-but-set-parameter
-CFLAGS=-Wall -pthread -std=gnu99 $(WARNING) -g
+CFLAGS=-Wall -pthread -std=gnu99 $(WARNING) -g -O3
 CFILES=src/azudici.c src/clause.c src/clausedb.c src/mergeSort.c src/var.c src/heap.c src/literal.c src/model.c src/stats.c src/strategy.c
 
 all: ad

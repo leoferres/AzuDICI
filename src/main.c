@@ -137,6 +137,10 @@ int main (int argc, char *argv[]) {
     //    msg (-1, 2, "started worker %d", i);
   }
   /**************************/
+
+      printf("|                                        GENERAL STATS                                     |                   CLEANUP STATS                                 |\n");
+      printf("|WID|   nDecisions  |     nProps    |nConflicts|   units  |    bins  | ternaries| nary_Cls | newUnits |  newBins | newTrnrs |delTrueCls|   nDels  | nRealDels|\n");
+
   for(int i=0;i<nworkers;i++){
       ts_vec_ith_ma(w,workers,i);
       pthread_join(w->thread, NULL);

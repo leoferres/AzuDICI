@@ -10,4 +10,5 @@ void stats_init(Stats *st){
   st->numDlZeroLitsSinceLastRestart  = 0;
   st->numRestarts                    = 0;
   st->numDecisions                   = 0;
+  st->numProps                       = 0;
 }

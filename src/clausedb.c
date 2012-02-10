@@ -30,12 +30,22 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   cdb->numVars         = nVars;
   cdb->numWorkers      = nWorkers;
 
-  cdb->numClauses      = 0;
-  cdb->numUnits        = 0;
-  cdb->numBinaries     = 0;
-  cdb->numTernaries    = 0;
-  cdb->numNClauses     = 0;
-  cdb->numInputClauses = 0;
+  cdb->numClauses           = 0;
+  cdb->numUnits             = 0;
+  cdb->numOriginalUnits     = 0;
+  cdb->numBinaries          = 0;
+  cdb->numOriginalBinaries  = 0;
+  cdb->numTernaries         = 0;
+  cdb->numOriginalTernaries = 0;
+  cdb->numNClauses          = 0;
+  cdb->numOriginalNClauses  = 0;
+  cdb->numInputClauses      = 0;
+
+  /* ts_vec_init(cdb->numOriginalBinaries); */
+  /* ts_vec_resize(unsigned int, cdb->numOriginalBinaries, 2*(nVars+1)); */
+  /* for(int i=0;i<2*(nVars+1);i++){ */
+  /*   ts_vec_set_ith(unsigned int, cdb->numOriginalBinaries, i, 0); */
+  /* } */
 
   /*Init Unitary clauses database*/
   //  printf("Init unit db\n");
@@ -57,19 +67,19 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*Init Ternary clauses database*/
   //  printf("Init ternary db\n");
   ts_vec_init(cdb->tDB); //init vector with 0 element
-  ts_vec_resize(TClause, cdb->tDB, 30000000); //no more than 10000000 ternaries
+  ts_vec_resize(TClause, cdb->tDB, MAX_TERNARY_CLAUSES); //reserve memory so that references don't change
   /*******************************/
 
   /*******************************/
   //  printf("Init n db\n");
   ts_vec_init(cdb->nDB); //init vector with 0 elements
-  ts_vec_resize(NClause, cdb->nDB, 30000000); //no more than 10000000 nclauses
+  ts_vec_resize(NClause, cdb->nDB, MAX_NARY_CLAUSES); //reserve memory so that references don't change
   /*******************************/
 
   /*Init 3watches structures*/
   kv_init( cdb->ternaryWatches );
   //  printf("Init 3 watches structure\n");
-  kv_resize(ts_vec_t(unsigned int), cdb->ternaryWatches,  2*(nVars+1) );
+  kv_resize(ts_vec_t(TClause*), cdb->ternaryWatches,  2*(nVars+1) );
   kv_size(cdb->ternaryWatches) = 2*(nVars+1);
   //  printf("vector resized\n");
   for(int i=0;i<2*(nVars+1);i++){
@@ -108,67 +118,80 @@ void vec_literal_sort(Clause* cl, unsigned int size){
 /*Adding an input literal (from file) to the input clause*/
 unsigned int add_input_literal(ClauseDB* cdb, Literal l){
   /*checking if the clause is complete.
-   A literal with value 0 indicates this.*/
-    if(l==0){
+    A literal with value 0 indicates this.*/
+  if(l==0){
     switch(inputClause.size){
     case 0:
       return 20; //empty clause in original formula
     case 1:
-      insert_unitary_clause(cdb, &inputClause, true);
+      insert_unitary_clause(cdb, &inputClause, true, 0);
       //printf("Unit Clause read\n");
       break;
     case 2:
       //printf("About to add bin Clause\n");
-      insert_binary_clause(cdb, &inputClause, true);
+      insert_binary_clause(cdb, &inputClause, true, 0, 0);
       //printf("Binary Clause read\n");
       break;
     case 3:
       //printf("About to add Ternary Clause\n");
-      insert_ternary_clause(cdb, &inputClause,true,0);
+      ;TClause* ptrToTernary = NULL;
+      insert_ternary_clause(cdb, &inputClause,true, 0, &ptrToTernary, 0);
       //printf("Ternary Clause read\n");
       break;
     default:
+      ;NClause* ptrToNary = NULL;
       //printf("About to add N Clause\n");
-      insert_nary_clause(cdb, &inputClause, true,0);
+      insert_nary_clause(cdb, &inputClause, true, 0, &ptrToNary, 0);
       //printf("N Clause read\n");
     }    
     //new clause will be read
     //printf("Clause read\n");
     inputClause.size = 0;
   }else{
-        /*if the clause is not complete, we add the literal to it*/
+    /*if the clause is not complete, we add the literal to it*/
     kv_A(inputClause.lits,inputClause.size) = l;
     inputClause.size++;
   }
+  return 0;
 }
 
 /*Inserting, in the clause database, an input clause that only has one literal*/
-void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal){
-  //pthread_rwlock_wrlock(&insert_unitary_clause_lock);
+void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int lastThUnit){
+  //  printf("Before unit lock\n");
+  pthread_rwlock_wrlock(&insert_unitary_clause_lock);
+  //  printf("After unit lock\n");
   dassert(cl->size == 1);
-  int i;
-  bool alreadyAdded=false;
-  Literal unitInList;
+  bool alreadyInList=false;
   int listSize;
   ts_vec_size(listSize, cdb->uDB);
   dassert(listSize == cdb->numUnits);
 
-  /*Checking if the literal is already in the uDB (unitary clause database).*/
-  /* for(i=0; i < cdb->numUnits; i++){
-    ts_vec_ith(unitInList, cdb->uDB, i);
-    if( kv_A(cl->lits,0) == unitInList ) {
-      alreadyAdded=true;
-      break;
+  /*************Hack for same search*************/
+  //We assume each thread learns the next ternary in the same order
+  if(!isOriginal){
+    if(listSize > lastThUnit){
+      Literal unitInList;
+      alreadyInList = true;
+      /*FOR DEBUG*/
+      /* ts_vec_ith(unitInList,cdb->uDB,lastThUnit); */
+      /* dassert(unitInList == kv_A(cl->lits,0)); */
+      /***********/
     }
-    }*/
+  }
+  /*********************************************/
+
+
   /*If it isn't already in the uDB, add it*/
-  if(!alreadyAdded){
+  if(!alreadyInList){
     ts_vec_push_back( Literal, cdb->uDB, kv_A(cl->lits,0) );
-    if(isOriginal) cdb->numInputClauses++;
+    if(isOriginal) {
+      cdb->numInputClauses++;
+      cdb->numOriginalUnits++;
+    }
     cdb->numUnits++;
     cdb->numClauses++;
   }
-  //pthread_rwlock_unlock(&insert_unitary_clause_lock);
+  pthread_rwlock_unlock(&insert_unitary_clause_lock);
 }
 
 
@@ -181,45 +204,70 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal){
    to literal ~x1. This way we have an implication vector for all literals. 
    Associating x1 with x2 means that if x2 were to be true, then x1 must also be true.
    Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
-void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal){
-  //pthread_rwlock_wrlock(&insert_binary_clause_lock);
+void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1, unsigned int thLast2){
+  //  printf("Before binary lock\n");
+  pthread_rwlock_wrlock(&insert_binary_clause_lock);
+  //  printf("After binary lock\n");
   //we will have problems here for keeping the same search for each thread
-  int i;
   dassert(cl->size == 2);
   /*We are storing implications, so we want to know the negation of each literal
    that belongs to the binary clause*/
   Literal l1,l2;
   l1 = kv_A(cl->lits,0);
   l2 = kv_A(cl->lits,1);
+
   unsigned int not_l1,not_l2;
   not_l1 = lit_as_uint(-l1);
   not_l2 = lit_as_uint(-l2);
 
-  /*Search to see if element is already in list*/
-  bool alreadyInList=false;
-  /*Literal lInList;  
-  int listSize;
-  ts_vec_size(listSize, kv_A(cdb->bDB, not_l1));
-  for(i=0;i<listSize;i++){
-    ts_vec_ith(lInList,kv_A(cdb->bDB, not_l1),i);
-    if(lInList == l2){
-      alreadyInList=true;
+  bool alreadyInList = false;
+
+  /*************Hack for same search*************/
+  //We assume each thread learns the next binary in the same order
+  if(!isOriginal){
+    int listSize;
+    Literal otherLit;
+    ts_vec_size(listSize, kv_A(cdb->bDB, not_l1));
+    if(listSize > thLast1){
+      alreadyInList = true;
+      /*FOR DEBUG*/
+      /* ts_vec_ith(otherLit, kv_A(cdb->bDB, not_l1), thLast1); */
+      /* dassert(otherLit == l2); */
+      /* ts_vec_ith(otherLit, kv_A(cdb->bDB, not_l2), thLast2); */
+      /* dassert(otherLit == l1); */
+      /**********/
     }
-    }*/
+  }
   /*********************************************/
 
   /*Insert and update, if not previously inserted*/
   if(!alreadyInList){
+    unsigned int lastLit1Lst, lastLit2Lst;
     ts_vec_push_back(Literal,kv_A(cdb->bDB, not_l1),l2);
+    ts_vec_size(lastLit1Lst,kv_A(cdb->bDB, not_l1));
+    lastLit1Lst--;
     //If it is not in list, it's not in the other list either
     ts_vec_push_back(Literal, kv_A(cdb->bDB, not_l2),l1);
+    ts_vec_size(lastLit2Lst,kv_A(cdb->bDB, not_l2));
+    lastLit2Lst--;
     //update clauseDB stats
-    if(isOriginal) cdb->numInputClauses++;
+    if(isOriginal){
+      /* unsigned int nOrLit1, nOrLit2; */
+      /* ts_vec_ith(nOrLit1, cdb->numBinaries, not_l1); */
+      /* ts_vec_ith(nOrLit2, cdb->numBinaries, not_l2); */
+      /* nOrLit1++; */
+      /* nOrLit2++; */
+      /* ts_vec_set_ith(nOrLit1, cdb->numBinaries, not_l1); */
+      /* ts_vec_set_ith(nOrLit2, cdb->numBinaries, not_l2); */
+      cdb->numOriginalBinaries++;
+      cdb->numInputClauses++;
+    }
+
     cdb->numBinaries++;
     cdb->numClauses++;
   }
   /********************************************/
-  //pthread_rwlock_unlock(&insert_binary_clause_lock);
+  pthread_rwlock_unlock(&insert_binary_clause_lock);
 }
 
 /*Function for sorting literals in a vector.
@@ -256,179 +304,151 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal){
 
 /************MAKE THIS THREAD SAFE**********/
 /* To insert a clause with 3 literals into the tDB*/
-Literal* insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId) {
-  //printf("Before lock\n");
-  //pthread_rwlock_wrlock(&insert_ternary_clause_lock);
-    //printf("After lock\n");
-    dassert(cl->size == 3);
-    int i, j;
-    int index = -1;
+void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, TClause** ptrToTernary, unsigned int lastThTernary) {
+  //  printf("Before ternary lock\n");
+  pthread_rwlock_wrlock(&insert_ternary_clause_lock);
+  //  printf("After ternary lock\n");
+  dassert(cl->size == 3);
+  int i;
+  vec_literal_sort(cl, cl->size);
+
+  bool alreadyInList = false;
+  int listSize;
+  ts_vec_size(listSize, cdb->tDB);
+
+  //Init flags
+  /*************Hack for same search*************/
+  //We assume each thread learns the next ternary in the same order
+  if(!isOriginal){
+    if(listSize > lastThTernary){
+      alreadyInList = true;
+      ts_vec_ith_ma(*ptrToTernary,cdb->tDB,lastThTernary);
+      dassert((*ptrToTernary)->flags[wId]==false);
+      (*ptrToTernary)->flags[wId]=true; 
+      /*FOR DEBUG*/
+      /* for (i = 0; i < 3; i++) { */
+      /* 	dassert((*ptrToTernary)->lits[i] == kv_A(cl->lits, i)); */
+      /* } */
+      /***********/
+    }
+  }
+  /*********************************************/
+
+  if(!alreadyInList){
     TClause ternary;
-
-    vec_literal_sort(cl, cl->size);
-
-    //printf("Clause %d v %d v %d will be inserted in that order\n",kv_A(cl->lits,0),kv_A(cl->lits,1), kv_A(cl->lits,2) );
-
-    /*Check if alreadyAdded if not original*/
-    /*int listSize;
-    ts_vec_size(listSize, cdb->tDB);
-    dassert(cdb->numTernaries == listSize);
-    if (!isOriginal){
-      for (i = 0; i < cdb->numTernaries; i++) {
-        ts_vec_ith(ternary, cdb->tDB, i);
-        index = i;
-        for (j = 0; j < 3; j++) {
-	  if (ternary.lits[j] != kv_A(cl->lits, j)) {
-	    index = -1;
-	    break;
-	  }
-        }
-        if (index != -1) break;
-	}*/
-      /*********************/
-
-      /*In case the clause already exists, modify flags if it's learned*/
-      /*if (index != -1) {
-        TClause *tmpPtr;
-        dassert(index >= 0);
-        if (!isOriginal) {
-	  ts_vec_ith(ternary, cdb->tDB, index);
-	  ternary.flags[wId] = true;
-	  ts_vec_set_ith(TClause,cdb->tDB,index,ternary);            
-	  ts_vec_ith_ma(tmpPtr,cdb->tDB,index);
-	  }*/
-        /*Return a pointer to the actual ternary inserted clause*/
-        /*return &tmpPtr->lits[0];
-	  }*/
-      /********************************************************/
-    /*}*/
-
-    /*In case it doesn't exist, insert it and watch*/
-    //Init flags
-
     if (isOriginal) {
-        for (i = 0; i < cdb->numWorkers; i++) {
-            ternary.flags[i] = true;
-        }
+      for (i = 0; i < cdb->numWorkers; i++) {
+	ternary.flags[i] = true;
+      }
     } else {
-        for (i = 0; i < cdb->numWorkers; i++) {
-            if (i == wId) ternary.flags[i] = true;
-            else ternary.flags[i] = false;
-        }
+      for (i = 0; i < cdb->numWorkers; i++) {
+	if (i == wId) ternary.flags[i] = true;
+	else ternary.flags[i] = false;
+      }
     }
 
     //Insert literals
     for (i = 0; i < 3; i++) {
-        ternary.lits[i] = kv_A(cl->lits, i);
+      ternary.lits[i] = kv_A(cl->lits, i);
     }
     //update clauseDB
     ts_vec_push_back(TClause, cdb->tDB, ternary);
 
     /*add this clause position in tDB to each literal watches*/
     unsigned int litIndex;
-    unsigned int indexOfNewClause;
-    ts_vec_size(indexOfNewClause, cdb->tDB);
-    indexOfNewClause--;
 
+    /*Return a pointer to the actual ternary inserted clause*/
+    ts_vec_ith_ma(*ptrToTernary,cdb->tDB,listSize);
+    
     for (i = 0; i < 3; i++) {
-        litIndex = lit_as_uint(ternary.lits[i]);
-        ts_vec_push_back(unsigned int, kv_A(cdb->ternaryWatches, litIndex), indexOfNewClause);
+      litIndex = lit_as_uint(ternary.lits[i]);
+      ts_vec_push_back(TClause*, kv_A(cdb->ternaryWatches, litIndex), *ptrToTernary);
     }
-
-    if (isOriginal) cdb->numInputClauses++;
+    if (isOriginal){
+      cdb->numInputClauses++;
+      cdb->numOriginalTernaries++;
+    }
     cdb->numTernaries++;
     cdb->numClauses++;
-    /*Return a pointer to the actual ternary inserted clause*/
-    TClause *tmpPtr;         
-    ts_vec_ith_ma(tmpPtr,cdb->tDB,indexOfNewClause);
-    return &tmpPtr->lits[0];
-    //  dassert(ts_vec_size(TClause, cdb->tDB)==cdb->numTernaries);
+    dassert( listSize+1 == cdb->numTernaries );
     /************************************************/
-    //pthread_rwlock_unlock(&insert_ternary_clause_lock);
+  }
+  pthread_rwlock_unlock(&insert_ternary_clause_lock);
 }
 
-
 /****MAKE THIS THREAD SAFE**********/
-unsigned int insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId){
-  //pthread_rwlock_wrlock(&insert_nary_clause_lock);
+void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId, NClause** ptrToNClause, unsigned int lastThNary){
+  //  printf("Before nary lock\n");
+  pthread_rwlock_wrlock(&insert_nary_clause_lock);
+  //  printf("After nary lock\n");
   //we will have problems here for keeping the same search for each thread
   dassert(cl->size > 3);
-  int i,j;
-  int index=-1;
-  NClause nclause;
+  int i;
+  bool alreadyInList = false;
+
   //  vec_literal_sort(cl->lits.a,cl->size);
   vec_literal_sort(cl,cl->size);
-  /*Check if alreadyAdded*/
-  /*int listSize;
+  int listSize;
   ts_vec_size(listSize, cdb->nDB);
-  dassert( cdb->numNClauses == listSize );
-  if (!isOriginal){
-    for( i=0; i<cdb->numNClauses; i++ ){
-      ts_vec_ith( nclause, cdb->nDB, i );
-      
-      if(kv_size(nclause.lits) == cl->size){
-	index=i;
-	for( j=0; j<cl->size; j++ ){
-	  if( kv_A(nclause.lits,j) != kv_A(cl->lits,j) ){
-	    index = -1;
-	    break;
-	  }
-	}
-      }
-      
-      if(index>0) break; //if clause found, do not look anymore
-      }*/
-    /*********************/
 
-    /*In case the clause already exists, modify flags if it's learned*/
-    /*if(index!=-1){
-      if(!isOriginal){
-	ts_vec_ith( nclause, cdb->nDB, index );
-	nclause.flags[wId] = true;
-	ts_vec_set_ith(NClause,cdb->nDB,index,nclause);
-      }
-      return index; //this is returned for watches in threads
-      }*/
-    /******************************************************************/
-  /*}*/
+  /*************Hack for same search*************/
+  //We assume each thread learns the next ternary in the same order
+  if(!isOriginal){
+    if(listSize > lastThNary){
+      alreadyInList = true;
+      ts_vec_ith_ma(*ptrToNClause,cdb->nDB,lastThNary);
+      dassert((*ptrToNClause)->flags[wId]==false);
 
-  /***********In case it doesn't exist, insert it***/
-  //Init flags
-
-  if(isOriginal){
-    for( i=0; i<cdb->numWorkers; i++ ){
-      nclause.flags[i] = true;
-    }
-  }else{
-    for( i=0; i<cdb->numWorkers; i++ ){
-      if(i==wId) nclause.flags[i] = true;
-      else nclause.flags[i] = false;
+      (*ptrToNClause)->flags[wId]=true;
+      dassert( kv_size((*ptrToNClause)->lits) == cl->size );
+      /*FOR DEBUG*/
+      /* for (i = 0; i < cl->size; i++) { */
+      /* 	dassert(kv_A((*ptrToNClause)->lits,i) == kv_A(cl->lits, i)); */
+      /* } */
+      /***********/
     }
   }
+  /*********************************************/
 
-  //Insert literals
-  kv_init(nclause.lits);
-  kv_resize(Literal, nclause.lits, cl->size);
-  kv_size(nclause.lits) = cl->size;
-  for(i=0;i<cl->size;i++){
-    kv_A( nclause.lits, i ) = kv_A( cl->lits, i );
+  if(!alreadyInList){
+    NClause nclause;
+    if(isOriginal){
+      for( i=0; i<cdb->numWorkers; i++ ){
+	nclause.flags[i] = true;
+      }
+    }else{
+      for( i=0; i<cdb->numWorkers; i++ ){
+	if(i==wId) nclause.flags[i] = true;
+	else nclause.flags[i] = false;
+      }
+    }
+    
+    //Insert literals
+    kv_init(nclause.lits);
+    kv_resize(Literal, nclause.lits, cl->size);
+    kv_size(nclause.lits) = cl->size;
+    for(i=0;i<cl->size;i++){
+      kv_A( nclause.lits, i ) = kv_A( cl->lits, i );
+    }
+    nclause.is_original = isOriginal;
+    //  printf("nclause literals added\n");
+    
+    //update clauseDB
+    ts_vec_push_back(NClause, cdb->nDB, nclause);
+    ts_vec_ith_ma(*ptrToNClause, cdb->nDB, listSize);
+    
+    //    printf("Pointer to NClause is %d\n", *ptrToNClause);
+    if(isOriginal){
+      cdb->numInputClauses++;
+      cdb->numOriginalNClauses++;
+    }
+
+    cdb->numNClauses++;
+    cdb->numClauses++;
+    dassert( listSize+1 == cdb->numNClauses );
+    /**************************************************/
   }
-  nclause.is_original = isOriginal;
-  //  printf("nclause literals added\n");
-
-  //update clauseDB
-  ts_vec_push_back(NClause, cdb->nDB, nclause);
-
-  if(isOriginal) cdb->numInputClauses++;
-  cdb->numNClauses++;
-  cdb->numClauses++;
-  //  dassert(ts_vec_size(NClause, cdb->nDB)==cdb->numNClauses);
-  unsigned int nDBSize;
-  ts_vec_size(nDBSize,cdb->nDB);
-  dassert(nDBSize == cdb->numNClauses);
-  return cdb->numNClauses-1;
-  /**************************************************/
-  //pthread_rwlock_wrlock(&insert_nary_clause_lock);
+   pthread_rwlock_unlock(&insert_nary_clause_lock);
 }
 
 #endif /* _CLAUSEDB_C_ */

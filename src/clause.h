@@ -4,7 +4,6 @@
 #include "common.h"
 #include "literal.h"
 #include "kvec.h"
-#include "ts_vec.h"
 
 typedef struct _naryclause { /*half a cacheline per ternary clause*/ 
   //  unsigned int    size; //we don't need size, we have it in kvec_t(Literals)

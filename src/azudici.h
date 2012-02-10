@@ -12,6 +12,8 @@ typedef struct _azuDICI{
   unsigned int        wId;
   unsigned int        lastUnitAdded;    //will be used in later versions
   unsigned int        lastNaryAdded;    //will be used in later versions
+  unsigned int        lastTernaryAdded;
+  unsigned int        lastBinaryAdded;
   unsigned int        randomNumberIndex;
   unsigned int        dlToBackjump;
   unsigned int        dlToBackjumpPos;
@@ -66,7 +68,7 @@ void azuDICI_increase_activity(Reason r); //¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
 void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
 //unsigned int azuDICI_set_true_propagation(AzuDICI* ad, Literal l, Reason r);
-ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, bool isOriginal, unsigned int indexInDB);
+ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause lemmaToLearn, NClause *ptrToNClause);
 bool azuDICI_set_true_units(AzuDICI *ad);
 void azuDICI_init_thcdb(AzuDICI* ad);
 void azuDICI_print_clause(AzuDICI* ad, Clause cl);

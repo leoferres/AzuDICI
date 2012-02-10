@@ -12,7 +12,8 @@ typedef struct _statistics{
   unsigned int numRestarts;
   unsigned int numCleanups;
 
-  unsigned int numDecisions;
+  unsigned long int numDecisions;
+  unsigned long int numProps;
 }Stats;
 
 void stats_init(Stats *st);

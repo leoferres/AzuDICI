@@ -11,4 +11,9 @@
 #define dassert(n);
 #endif
 
+/* typedef struct _pair_of_ints{ */
+/*   unsigned int first; */
+/*   unsigned int second; */
+/* }UintPair; */
+
 #endif
