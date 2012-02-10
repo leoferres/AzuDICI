@@ -113,6 +113,7 @@ int main (int argc, char *argv[]) {
   printf("Clause db initialized\n");
   input_read_clauses(cdb, inputFileName);
   printf("Clause db loaded\n");
+  clause_database_resize_vectors(cdb);
   /***************************************/
 
   /*Initialize workers and assign each thread a new AzuDICI solver*/

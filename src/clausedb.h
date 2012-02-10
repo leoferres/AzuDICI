@@ -45,6 +45,7 @@ void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, 
 void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId, NClause** ptrToNary, unsigned int lastThNary);
 void cleanup_database(ClauseDB* cdb);
 void vec_literal_sort(Clause *cl, unsigned int size);
+void clause_database_resize_vectors(ClauseDB* cdb);
 //void vec_literal_sort(Litera *lits, unsigned int size);
 
 #endif /* _CLAUSEDB_H_ */

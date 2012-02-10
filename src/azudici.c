@@ -506,8 +506,8 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     //highest decision level is ad->dlToBackjump   
     for(int i=1; i < ad->lemmaToLearn.size; i++){
       if( kv_A(ad->lemmaToLearn.lits,i) == uip ){
-	kv_A(ad->lemmaToLearn.lits,0) = uip;
 	kv_A(ad->lemmaToLearn.lits,i) = kv_A(ad->lemmaToLearn.lits,0);
+	kv_A(ad->lemmaToLearn.lits,0) = uip;
 	break;
       }
     }
@@ -586,7 +586,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     Clause tentativeTernaryOrBinary;
     kv_init(tentativeTernaryOrBinary.lits);
     kv_resize(Literal, tentativeTernaryOrBinary.lits, ad->cdb->numVars);
-    ThNClause cl;
+    ThNClause *cl;
     TClause *ptrToTernary;
     NClause *generalCl;
     bool delete;
@@ -606,21 +606,22 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     }
 
     for(i=0;i<kv_size(ad->thcdb);i++){
-      cl = kv_A(ad->thcdb, i);
+      cl = &kv_A(ad->thcdb, i);
       delete = true;
-      ts_vec_ith_ma(generalCl, ad->cdb->nDB, cl.posInDB);
+      ts_vec_ith_ma(generalCl, ad->cdb->nDB, cl->posInDB);
       if( generalCl->is_original ||
- 	  cl.activity >= ad->strat.activityThreshold ){ //keep it
+ 	  cl->activity >= ad->strat.activityThreshold  ||
+	  kv_size(cl->lits[0])<=4){ //keep it
 	delete = false;
  	tentativeTernaryOrBinary.size=0;
- 	for(j=0; j<kv_size(*cl.lits); j++){
- 	  if(model_is_true(kv_A(*(cl.lits),j), &ad->model)){
+ 	for(j=0; j<kv_size(cl->lits[0]); j++){
+ 	  if(model_is_true(kv_A(cl->lits[0],j), &ad->model)){
 	    numDeletes++;
 	    numTrueClauses++;
  	    delete = true; //it is true at dl 0, no need to have it.
  	    break;
- 	  }else if(model_is_undef(kv_A(*(cl.lits),j), &ad->model)){
- 	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) = kv_A(*(cl.lits),j);	    
+ 	  }else if(model_is_undef(kv_A(cl->lits[0],j), &ad->model)){
+ 	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) = kv_A(cl->lits[0],j);	    
  	  }
  	}
 
@@ -664,7 +665,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 
       if(delete){
  	generalCl->flags[ad->wId]=false; //logical delete
-	cl.posInDB = -1; //that's how we will know if is deleted
+	cl->posInDB = -1; //that's how we will know if is deleted
       }
     }
 

@@ -61,6 +61,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
     ts_vec_init(kv_A(cdb->bDB,i));
+    ts_vec_resize(Literal, kv_A(cdb->bDB,i), 100 );
   }
   /******************************/
 
@@ -84,6 +85,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   //  printf("vector resized\n");
   for(int i=0;i<2*(nVars+1);i++){
     ts_vec_init( kv_A(cdb->ternaryWatches,i) );
+    ts_vec_resize(Literal, kv_A(cdb->ternaryWatches,i), 100 );
   }
   /*************************/
 
@@ -449,6 +451,25 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
     /**************************************************/
   }
    pthread_rwlock_unlock(&insert_nary_clause_lock);
+}
+
+void clause_database_resize_vectors(ClauseDB* cdb){
+
+  unsigned int currentSize;
+  /*Init each of the binary clause database elements*/
+  for(int i=0;i<2*(cdb->numVars+1);i++){
+    ts_vec_max(currentSize,kv_A(cdb->bDB,i));
+    ts_vec_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
+  }
+  /******************************/
+
+  //  printf("vector resized\n");
+  for(int i=0;i<2*(cdb->numVars+1);i++){
+    ts_vec_max(currentSize,kv_A(cdb->ternaryWatches,i));
+    ts_vec_resize(TClause*, kv_A(cdb->ternaryWatches,i), 4*currentSize );
+  }
+  /*************************/
+
 }
 
 #endif /* _CLAUSEDB_C_ */
