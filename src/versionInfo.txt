@@ -1,0 +1,8 @@
+This version is "Chapuza", which characteristics are:
+
+NClauseDB: Shared
+ThNClauseDB: Has 2 cached literals.
+BinaryClauseDB: Shared
+TernaryClauseDB: No special structures for ternary clauses.
+
+Important notes: For binary lists and nclause index vector, the size is fixed and may generate problems, specially in the case of binary lists.
