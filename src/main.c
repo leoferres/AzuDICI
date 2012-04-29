@@ -107,6 +107,7 @@ int main (int argc, char *argv[]) {
   gzFile in;
 
   /*Read number of vars and clauses from the input CNF file*/
+  printf("About to read header of file %s\n",inputFileName);
   in = gzopen(inputFileName, "rb");
   input_read_header(in, &nVars, &nClauses);
   printf("Header read with nVars %d and nClauses %d\n",nVars, nClauses);

@@ -758,7 +758,7 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
       dassert(model_is_undef(l1,&ad->model));
       cl.lwatch2 = l2;
       dassert(model_is_undef(l2,&ad->model));
-      cl.cachedLit = l3;
+      //cl.cachedLit = l3;
       dassert(l1!=l2);
       dassert(l2!=l3);
       dassert(l1!=l3);
@@ -1002,11 +1002,11 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     //printf("\n");
     
     foundForReselection=false;
-    if(model_is_true_or_undef(watchedClause->cachedLit, &ad->model)){
-      toReselect = watchedClause->cachedLit;
-      foundForReselection = true;
-      dassert(model_is_false(-l,&ad->model));
-    }
+    //if(model_is_true_or_undef(watchedClause->cachedLit, &ad->model)){
+    //toReselect = watchedClause->cachedLit;
+    //foundForReselection = true;
+    //dassert(model_is_false(-l,&ad->model));
+    //}
 
     if(!foundForReselection){
       sizeOfClause = watchedClause->lits[0];
@@ -1026,7 +1026,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       dassert(model_is_false(-l,&ad->model));
       dassert(model_is_true_or_undef(toReselect,&ad->model));
       dassert(!model_is_false(toReselect, &ad->model));
-      watchedClause->cachedLit = -l;
+      //watchedClause->cachedLit = -l;
 
       if ( first ) {
 	watchedClause->lwatch1 = toReselect;
@@ -1107,7 +1107,7 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, NClause* ptrToNClaus
   threadClause.lwatch1   = l1;
   //if cl is learned lemma, ensure this is the highes dl literal
   threadClause.lwatch2   = l2;
-  threadClause.cachedLit = l3;
+  //threadClause.cachedLit = l3;
 
   dassert(l1!=l2);
   dassert(l2!=l3);
@@ -1249,12 +1249,12 @@ void azuDICI_init_thcdb(AzuDICI* ad){
     //remember lits[0] is size
     l1 = nclause->lits[1];
     l2 = nclause->lits[2];
-    l3 = nclause->lits[3];
+    //l3 = nclause->lits[3];
     //    printf("In new n clause watching %d, %d \n", l1, l2);
     localClause.activity = 0;
     localClause.lwatch1 = l1;
     localClause.lwatch2 = l2;
-    localClause.cachedLit = l3;
+    //localClause.cachedLit = l3;
     localClause.nextWatched1 = (void*)kv_A(ad->watches, lit_as_uint(l1));
     localClause.nextWatched2 = (void*)kv_A(ad->watches, lit_as_uint(l2));
     localClause.lits = nclause->lits;

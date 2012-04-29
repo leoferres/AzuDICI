@@ -28,7 +28,7 @@ typedef struct _naryThreadClause{ //32 bytes per thnClause
   Literal            lwatch1;
   Literal            lwatch2;
   //unsigned int       size;
-  Literal            cachedLit; //we have this info in the vector of literals
+  Literal            cachedLit; //This won't be used
   void*              nextWatched1;
   void*              nextWatched2;
   Literal*           lits;
