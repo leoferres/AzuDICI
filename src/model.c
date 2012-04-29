@@ -25,6 +25,7 @@ void model_init(unsigned int num_vars, Model *model){
     model->decision_lvl = 0;
     for(unsigned int v=0;v<=model->n_vars;v++){
         init_in_assignment(v,model);
+	kv_A(model->vinfo,v).last_phase = false;
     }
     kv_size(model->model_stack)=0;
 }

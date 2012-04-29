@@ -38,7 +38,7 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   kv_size(ad->lastBinariesAdded) = 2*(ad->cdb->numVars+1);
   int listSize;
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
-    ts_vec_size( listSize, kv_A(ad->cdb->bDB, i) );
+    listSize = kv_size(kv_A(ad->cdb->bDB, i) );
     kv_A(ad->lastBinariesAdded, i) = listSize;
   }
 
@@ -97,7 +97,7 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
 
 unsigned int azuDICI_solve(AzuDICI* ad){
   //setTrue at dl 0 all unit clauses
-  //printf("Solve called\n");
+  //printf("Solve called for worker %d\n",ad->wId);
   if( !azuDICI_set_true_units(ad) ) return 20;
   //printf("Units set true\n");
   Literal dec;
@@ -124,6 +124,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
     
     //printf("Decide\n");
     dec = azuDICI_decide(ad);
+    //printf("Worker %d decision is %d\n",ad->wId,dec);
     if (dec == 0){
 
       /*FOR DEBUG*/
@@ -143,7 +144,6 @@ unsigned int azuDICI_solve(AzuDICI* ad){
 
 bool azuDICI_propagate( AzuDICI* ad ){
   Literal lit;  // from highest priority to lowest
-  //printf("Propagate called\n");
   lit=1;
   while ( lit != 0 ) {
     lit = model_next_lit_for_2_prop( &ad->model);
@@ -153,12 +153,12 @@ bool azuDICI_propagate( AzuDICI* ad ){
       else continue; 
     } 
     
-    lit = model_next_lit_for_3_prop( &ad->model);
-    //printf("3 prop with lit %d\n",lit);
-    if ( lit != 0 ) {  
-      if( !azuDICI_propagate_w_ternaries(ad, lit)) return false;
-      else continue; 
-    } 
+    /* lit = model_next_lit_for_3_prop( &ad->model); */
+    /* //printf("3 prop with lit %d\n",lit); */
+    /* if ( lit != 0 ) {   */
+    /*   if( !azuDICI_propagate_w_ternaries(ad, lit)) return false; */
+    /*   else continue;  */
+    /* }  */
     
     lit = model_next_lit_for_n_prop( &ad->model);
     //printf("n prop with lit %d\n",lit);
@@ -456,45 +456,47 @@ void azuDICI_learn_lemma(AzuDICI* ad){
     ad->rUIP.thNClPtr = NULL;
     break;
 
-  case 3:
-    //printf("learning 3 clause\n");
-    l1 = kv_A(ad->lemmaToLearn.lits,0);
-    l2 = kv_A(ad->lemmaToLearn.lits,1);
-    l3 = kv_A(ad->lemmaToLearn.lits,2);
+  /* case 3: */
+  /*   //printf("learning 3 clause\n"); */
+  /*   l1 = kv_A(ad->lemmaToLearn.lits,0); */
+  /*   l2 = kv_A(ad->lemmaToLearn.lits,1); */
+  /*   l3 = kv_A(ad->lemmaToLearn.lits,2); */
 
-    TClause *ptrToTernary = NULL;
-    insert_ternary_clause(ad->cdb, &ad->lemmaToLearn, false,ad->wId, &ptrToTernary, ad->lastTernaryAdded++);
+  /*   TClause *ptrToTernary = NULL; */
+  /*   insert_ternary_clause(ad->cdb, &ad->lemmaToLearn, false,ad->wId, &ptrToTernary, ad->lastTernaryAdded++); */
 
-    /*FOR DEBUG*/
-    /* TClause *clInDB; */
-    /* ts_vec_ith_ma(clInDB, ad->cdb->tDB, ad->lastTernaryAdded-1); */
-    /* dassert(clInDB == ptrToTernary); */
-    /**********/
+  /*   /\*FOR DEBUG*\/ */
+  /*   /\* TClause *clInDB; *\/ */
+  /*   /\* ts_vec_ith_ma(clInDB, ad->cdb->tDB, ad->lastTernaryAdded-1); *\/ */
+  /*   /\* dassert(clInDB == ptrToTernary); *\/ */
+  /*   /\**********\/ */
 
-    //printf("Inserted\n");
-    ad->rUIP.size     = 3;
-    ad->rUIP.binLit   = 0;
-    ad->rUIP.tClPtr   = ptrToTernary;
-    ad->rUIP.thNClPtr = NULL;
+  /*   //printf("Inserted\n"); */
+  /*   ad->rUIP.size     = 3; */
+  /*   ad->rUIP.binLit   = 0; */
+  /*   ad->rUIP.tClPtr   = ptrToTernary; */
+  /*   ad->rUIP.thNClPtr = NULL; */
 
-    dassert(model_is_undef(l1,&ad->model));
-    dassert(model_get_lit_dl(l2,&ad->model)>=model_get_lit_dl(l3,&ad->model));
-    dassert(model_get_lit_height(l2,&ad->model)>model_get_lit_height(l3,&ad->model));
+  /*   dassert(model_is_undef(l1,&ad->model)); */
+  /*   dassert(model_get_lit_dl(l2,&ad->model)>=model_get_lit_dl(l3,&ad->model)); */
+  /*   dassert(model_get_lit_height(l2,&ad->model)>model_get_lit_height(l3,&ad->model)); */
 
-    kv_A(ad->lemmaToLearn.lits,0) = l1;
-    kv_A(ad->lemmaToLearn.lits,1) = l2;
-    kv_A(ad->lemmaToLearn.lits,2) = l3;
-    break;
+  /*   kv_A(ad->lemmaToLearn.lits,0) = l1; */
+  /*   kv_A(ad->lemmaToLearn.lits,1) = l2; */
+  /*   kv_A(ad->lemmaToLearn.lits,2) = l3; */
+  /*   break; */
 
   default:
     //printf("learning n clause\n");
     ;Literal uip    = kv_A(ad->lemmaToLearn.lits,0);
     Literal hdlLit = kv_A(ad->lemmaToLearn.lits,1);
 
-    dassert(ad->lemmaToLearn.size>3);
+    dassert(ad->lemmaToLearn.size>=3);
     //here, lemmaToLearn will be sorted
     NClause* ptrToNClause = NULL;
-    insert_nary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->wId, &ptrToNClause, ad->lastNaryAdded++);
+    //printf("Worker %d, Learning lemma:",ad->wId);azuDICI_print_clause(ad, ad->lemmaToLearn);
+    insert_nary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->wId, &ptrToNClause, ad->lastNaryAdded);
+    ad->lastNaryAdded++;
 
     /*FOR DEBUG*/
     /* NClause *clInDB; */
@@ -608,24 +610,26 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     for(i=0;i<kv_size(ad->thcdb);i++){
       cl = &kv_A(ad->thcdb, i);
       delete = true;
-      ts_vec_ith_ma(generalCl, ad->cdb->nDB, cl->posInDB);
+      generalCl = &kv_A(ad->cdb->nDB, cl->posInDB);
       if( generalCl->is_original ||
- 	  cl->activity >= ad->strat.activityThreshold  ||
-	  kv_size(cl->lits[0])<=4){ //keep it
+ 	  cl->activity >= ad->strat.activityThreshold || cl->lits[0] <=4 ){ //keep it //remember cl->lits[0] stores size
 	delete = false;
+
  	tentativeTernaryOrBinary.size=0;
- 	for(j=0; j<kv_size(cl->lits[0]); j++){
- 	  if(model_is_true(kv_A(cl->lits[0],j), &ad->model)){
+ 	for(j=0; j<cl->lits[0]; j++){
+ 	  if(model_is_true(cl->lits[j+1], &ad->model)){
 	    numDeletes++;
 	    numTrueClauses++;
  	    delete = true; //it is true at dl 0, no need to have it.
  	    break;
- 	  }else if(model_is_undef(kv_A(cl->lits[0],j), &ad->model)){
- 	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) = kv_A(cl->lits[0],j);	    
+ 	  }else if(model_is_undef(cl->lits[j+1], &ad->model)){
+ 	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size) 
+	      = cl->lits[j+1];
+	    tentativeTernaryOrBinary.size++;
  	  }
  	}
 
- 	if( !delete && tentativeTernaryOrBinary.size <= 3 ){ //new unit, binary or ternary
+ 	if( !delete && tentativeTernaryOrBinary.size <= 2 ){ //new unit, binary or ternary
 	  numDeletes++;
  	  delete = true;
 	  if(tentativeTernaryOrBinary.size == 1 ){
@@ -652,11 +656,12 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
  	    //if(lastBinariesAdded[lit_as_uint(tentativeTernaryOrBinary.lits[0])]==pair.first-1 &&  pair.second){
 	    //lastBinariesAdded[lit_as_uint(tentativeTernaryOrBinary.lits[0])]++;
 	    //lastBinariesAdded[lit_as_uint(tentativeTernaryOrBinary.lits[0])]++;
- 	  }else{
-	    numTernaries++;
-	    dassert(tentativeTernaryOrBinary.size == 3);
- 	    insert_ternary_clause(ad->cdb, &tentativeTernaryOrBinary, false, ad->wId, &ptrToTernary, ad->lastTernaryAdded++); //clause will be activated with wId
  	  }
+	  /* else{ */
+	  /*   numTernaries++; */
+	  /*   dassert(tentativeTernaryOrBinary.size == 3); */
+ 	  /*   insert_ternary_clause(ad->cdb, &tentativeTernaryOrBinary, false, ad->wId, &ptrToTernary, ad->lastTernaryAdded++); //clause will be activated with wId */
+ 	  /* } */
  	}
       }else{
 	numDeletes++;
@@ -700,15 +705,64 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 
 void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   uint lastValidPos=0;
-  Literal l1, l2;
+  Literal l1, l2, l3;
   ThNClause cl;
-  for(int i=0;i<kv_size(ad->thcdb);i++){
+  int i,j, posFoundLast;
+  for(i=0;i<kv_size(ad->thcdb);i++){
     cl = kv_A(ad->thcdb, i);
     if(cl.posInDB!=-1){//If kept, normalize activities
       cl.activity = cl.activity/2;
-      //watch same two literals that were being watched
-      l1 = cl.lwatch1;
-      l2 = cl.lwatch2;
+
+      //remember cl.lits[0] stores size of nclause
+      //select two undef lits to watch
+      /*FOR DEBUG*/
+      unsigned int countUndefs=0;
+      for(j=0;j<cl.lits[0];j++){
+	l1 = cl.lits[j+1];
+	dassert(!model_is_true(l1,&ad->model));
+	if( model_is_undef(l1, &ad->model)){
+	  countUndefs++;
+	}
+      }
+      dassert(countUndefs>=3);
+      /************/
+
+      for(j=0;j<cl.lits[0];j++){
+	l1 = cl.lits[j+1];
+	dassert(!model_is_true(l1,&ad->model));
+	if( model_is_undef(l1, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
+
+      for(j=posFoundLast+1; j < cl.lits[0];j++){
+	l2 = cl.lits[j+1];
+	dassert(!model_is_true(l2,&ad->model));
+	if( model_is_undef(l2, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
+
+      for(j=posFoundLast+1; j < cl.lits[0];j++){
+	l3 = cl.lits[j+1];
+	dassert(!model_is_true(l3,&ad->model));
+	if( model_is_undef(l3, &ad->model)){
+	    break;
+	}
+      }
+      dassert(j!=cl.lits[0]);
+
+      cl.lwatch1 = l1;
+      dassert(model_is_undef(l1,&ad->model));
+      cl.lwatch2 = l2;
+      dassert(model_is_undef(l2,&ad->model));
+      cl.cachedLit = l3;
+      dassert(l1!=l2);
+      dassert(l2!=l3);
+      dassert(l1!=l3);
+
       //pointer to general db keeps being valid. so lits and posInDB, don't change
       cl.nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
       cl.nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(l2));
@@ -754,14 +808,16 @@ Literal  azuDICI_decide(AzuDICI* ad){
 
   //printf("random decision is %d\n",v);
 
-  if (ad->strat.decideOverLits){
+  /*  if (ad->strat.decideOverLits){
     if(v!=0){
       unsigned int pol;
       pol= ad->cdb->randomNumbers[ad->randomNumberIndex++];
-      if( pol > (RAND_MAX/2) ) l=v;
+      printf("Worker %d, pol is %d\n",ad->wId, pol);
+      printf("v is %d\n",ad->wId, pol);
+      if( pol >= (RAND_MAX/2) ) l=v;
       else l = -v;
     }
-  }
+    }*/
 
 
   if(ad->strat.decideOverLits){
@@ -814,7 +870,7 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   r.thNClPtr = NULL;
 
   for(int i=0;i<sizeOfList;i++){
-    ts_vec_ith(lToSetTrue, kv_A(ad->cdb->bDB,litIndex), i);
+    lToSetTrue= kv_A(kv_A(ad->cdb->bDB,litIndex), i);
     if (model_is_undef(lToSetTrue,&ad->model)){
       r.size   = 2;
       r.binLit = -l;
@@ -841,7 +897,7 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList;
   unsigned int litIndex = lit_as_uint(-l);
-  ts_vec_size(sizeOfList, kv_A(ad->cdb->ternaryWatches, litIndex));
+  sizeOfList =kv_size(kv_A(ad->cdb->ternaryWatches, litIndex));
   Reason r;
   r.size = 3;
   r.binLit = 0;
@@ -849,7 +905,7 @@ bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
   TClause *ternaryClause;
   Literal l1,l2,l3;
   for(int i=0;i<sizeOfList;i++){
-    ts_vec_ith(ternaryClause, kv_A(ad->cdb->ternaryWatches, litIndex), i);
+    ternaryClause = kv_A(kv_A(ad->cdb->ternaryWatches, litIndex), i);
     //    ts_vec_ith_ma(ternaryClause,ad->cdb->tDB,indexInTDB);
     if(ternaryClause->flags[ad->wId]){ //Only propagate with self-learned clauses
       l1 = ternaryClause->lits[0];
@@ -923,7 +979,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       otherLit = watchedClause->lwatch1;
     }
 
-    if(model_is_true(otherLit,&ad->model)){
+    if(model_is_true(otherLit,&ad->model) ){
       //Update watchedLiteral and previouslyWatchedLiteral
       if(first){
 	ptrToWatchedClauseAddr =(ThNClause**)&(watchedClause->nextWatched1);
@@ -933,12 +989,12 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	//watchedClause = watchedClause->nextWatched2; see below, is the same
       }
       watchedClause = *ptrToWatchedClauseAddr;
+      //__builtin_prefetch (watchedClause->lits->a, 0, 0);
       //printf("Watched clause is %d\n",watchedClause);
       continue;
     }
 
-    //if other watched is not true, try to reselect.
-    sizeOfClause = kv_size(watchedClause->lits[0]);
+      //if other watched is not true, try to reselect.
     //printf("with clause with size %d: ",sizeOfClause);
     //for(i=0;i<sizeOfClause;i++){
     //printf("%d ", kv_A(watchedClause->lits[0],i));
@@ -946,14 +1002,22 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     //printf("\n");
     
     foundForReselection=false;
-    for(i=0;i<sizeOfClause;i++){
-      toReselect = kv_A(watchedClause->lits[0], i);
-      //printf("toReselect is %d\n",toReselect);
-      if( (toReselect!=-l && toReselect!=otherLit) && 
-	  model_is_true_or_undef(toReselect,&ad->model)){ //found to reselect
-	dassert(!model_is_false(toReselect, &ad->model));
-	foundForReselection =true;
-	break;
+    if(model_is_true_or_undef(watchedClause->cachedLit, &ad->model)){
+      toReselect = watchedClause->cachedLit;
+      foundForReselection = true;
+      dassert(model_is_false(-l,&ad->model));
+    }
+
+    if(!foundForReselection){
+      sizeOfClause = watchedClause->lits[0];
+      for(i=0;i<sizeOfClause;i++){
+	toReselect = watchedClause->lits[i+1];
+	//printf("toReselect is %d\n",toReselect);
+	if( (toReselect!=-l && toReselect!=otherLit) && 
+	    model_is_true_or_undef(toReselect,&ad->model)){ //found to reselect
+	  foundForReselection =true;
+	  break;
+	}
       }
     }
   
@@ -961,6 +1025,9 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     if( foundForReselection ){  //Found lit to reselect
       dassert(model_is_false(-l,&ad->model));
       dassert(model_is_true_or_undef(toReselect,&ad->model));
+      dassert(!model_is_false(toReselect, &ad->model));
+      watchedClause->cachedLit = -l;
+
       if ( first ) {
 	watchedClause->lwatch1 = toReselect;
 	//what stores this direction, is overwritten 
@@ -979,6 +1046,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       //update previouslyWatchedClause
       kv_A(ad->watches, lit_as_uint(toReselect)) = watchedClause;
       watchedClause = *ptrToWatchedClauseAddr;
+      //__builtin_prefetch (watchedClause->lits->a, 0, 0);
       //printf("Watched clause is %d\n",watchedClause);
       continue;
     }else{//Propagate otherLit or conflict
@@ -1011,13 +1079,14 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	  ptrToWatchedClauseAddr = (ThNClause**)&(watchedClause->nextWatched2);
 	}
 	watchedClause = *ptrToWatchedClauseAddr;
+	//__builtin_prefetch (watchedClause->lits->a, 0, 0);
 	continue;
       }else if(model_is_false(otherLit,&ad->model)){ //Conflict
 	//Remember to update activity
 	watchedClause->activity++;
 	ad->conflict.size = sizeOfClause;
 	for(i=0;i<sizeOfClause;i++){
-	  kv_A(ad->conflict.lits,i) = kv_A(watchedClause->lits[0],i);
+	  kv_A(ad->conflict.lits,i) = watchedClause->lits[i+1];
 	}
 	return false;
       }    
@@ -1029,14 +1098,20 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 
 ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, NClause* ptrToNClause){
   ThNClause threadClause;
-  Literal l1,l2;
+  Literal l1,l2,l3;
   l1 = kv_A(cl.lits, 0);
   l2 = kv_A(cl.lits, 1);
+  l3 = kv_A(cl.lits, 2);
 
   threadClause.activity  = 0;
   threadClause.lwatch1   = l1;
   //if cl is learned lemma, ensure this is the highes dl literal
   threadClause.lwatch2   = l2;
+  threadClause.cachedLit = l3;
+
+  dassert(l1!=l2);
+  dassert(l2!=l3);
+  dassert(l1!=l3);
 
   //init nextWatches with appropiate information
   threadClause.nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
@@ -1048,7 +1123,7 @@ ThNClause* azuDICI_insert_th_clause(AzuDICI* ad, Clause cl, NClause* ptrToNClaus
   /* dassert(clInDB == ptrToNClause); */
   /**********/
 
-  threadClause.lits         = &(ptrToNClause->lits);
+  threadClause.lits         = ptrToNClause->lits;
   threadClause.posInDB      = ad->lastNaryAdded-1; //We need this for clause cleanup
   /*printf("inserting nclause in local db: ");
   for(int i=0;i<kv_size(threadClause.lits[0]);i++){
@@ -1114,17 +1189,17 @@ void azuDICI_get_clause_from_reason(AzuDICI* ad, Clause *cl, Reason r, Literal l
     kv_A(cl->lits,1) = r.binLit;
     //printf("other lit is %d\n",r.binLit);
     break;
-  case 3:
-    cl->size = 3;
-    TClause *tclause;
-    tclause = r.tClPtr;
-    //printf("Num of ternary clauses is %d\n",ad->cdb->numTernaries);
-    //printf("Ternary pointer got\n");
-    //kv_A(cl->lits,0) = l;
-    kv_A(cl->lits,0) = tclause->lits[0];
-    kv_A(cl->lits,1) = tclause->lits[1];
-    kv_A(cl->lits,2) = tclause->lits[2];
-    break;
+  /* case 3: */
+  /*   cl->size = 3; */
+  /*   TClause *tclause; */
+  /*   tclause = r.tClPtr; */
+  /*   //printf("Num of ternary clauses is %d\n",ad->cdb->numTernaries); */
+  /*   //printf("Ternary pointer got\n"); */
+  /*   //kv_A(cl->lits,0) = l; */
+  /*   kv_A(cl->lits,0) = tclause->lits[0]; */
+  /*   kv_A(cl->lits,1) = tclause->lits[1]; */
+  /*   kv_A(cl->lits,2) = tclause->lits[2]; */
+  /*   break; */
   default:
     //printf("Extracting n reason\n");
     ;ThNClause *nclause;
@@ -1133,9 +1208,10 @@ void azuDICI_get_clause_from_reason(AzuDICI* ad, Clause *cl, Reason r, Literal l
     //printf("Clause size is %d\n",cl->size);
     //printf("Clause is %d\n",nclause);
     dassert(nclause->lits);
+    dassert(nclause->lits[0] == r.size);
     for(int i=0; i<r.size;i++){
       //printf("Extracting lit %d\n",kv_A(nclause->lits[0],i));
-      kv_A(cl->lits,i) = kv_A(nclause->lits[0],i);
+      kv_A(cl->lits,i) = nclause->lits[i+1];
     }
   }
 }
@@ -1161,25 +1237,28 @@ void  azuDICI_increaseScore(AzuDICI* ad, Literal l){
 
 void azuDICI_init_thcdb(AzuDICI* ad){
   unsigned int sizeNDB;
-  ts_vec_size(sizeNDB, ad->cdb->nDB);
+  sizeNDB = kv_size(ad->cdb->nDB);
   NClause *nclause;
   ThNClause localClause;
-  Literal l1, l2;
+  Literal l1, l2, l3;
 
   //localClause.activity = 0;
   for(int i=0; i<sizeNDB; i++){
     //    ts_vec_ith(nclause, ad->cdb->nDB, i);
-    ts_vec_ith_ma(nclause, ad->cdb->nDB, i);
-    l1 = kv_A(nclause->lits,0);
-    l2 = kv_A(nclause->lits,1);
+    nclause = &kv_A(ad->cdb->nDB, i);
+    //remember lits[0] is size
+    l1 = nclause->lits[1];
+    l2 = nclause->lits[2];
+    l3 = nclause->lits[3];
     //    printf("In new n clause watching %d, %d \n", l1, l2);
     localClause.activity = 0;
     localClause.lwatch1 = l1;
     localClause.lwatch2 = l2;
+    localClause.cachedLit = l3;
     localClause.nextWatched1 = (void*)kv_A(ad->watches, lit_as_uint(l1));
     localClause.nextWatched2 = (void*)kv_A(ad->watches, lit_as_uint(l2));
-    localClause.lits = (kvec_t(Literal)*)&(nclause->lits);
-    dassert(kv_size(localClause.lits[0]));
+    localClause.lits = nclause->lits;
+    //    dassert(kv_size(localClause->);
     //    printf("New inserted n clause with size %d\n", kv_size(nclause->lits));
     //    printf("New inserted n clause with size %d\n", kv_size(*(localClause.lits)));
     localClause.posInDB = i;
@@ -1205,7 +1284,8 @@ void azuDICI_init_thcdb(AzuDICI* ad){
 
 bool azuDICI_set_true_units(AzuDICI *ad){
   unsigned int numUnits;
-  ts_vec_size(numUnits, ad->cdb->uDB);
+  numUnits = ad->cdb->numOriginalUnits;
+  //numUnits = ad->cdb->numUnits;
   Literal unitToSetTrue;
   Reason r;
 
@@ -1216,7 +1296,7 @@ bool azuDICI_set_true_units(AzuDICI *ad){
 
   dassert(ad->model.decision_lvl==0);
   for(int i=0;i<numUnits;i++){
-    ts_vec_ith(unitToSetTrue, ad->cdb->uDB,i);
+    unitToSetTrue = kv_A(ad->cdb->uDB,i);
 
     if (model_is_undef(unitToSetTrue,&ad->model)){
       //r.binLit = -unitToSetTrue;

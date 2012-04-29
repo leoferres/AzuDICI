@@ -7,31 +7,32 @@
 #include "ts_vec.h"
 
 #define MAX_RANDOM_NUMBERS     10000000
-#define MAX_TERNARY_CLAUSES    10000000
-#define MAX_NARY_CLAUSES       20000000
-#define MAX_NARYTHREAD_CLAUSES 15000000
+#define MAX_TERNARY_CLAUSES    0
+#define MAX_NARY_CLAUSES       5000000
+#define MAX_NARYTHREAD_CLAUSES 5000000
+#define MIN_MEM_LIT            300
 
 
 typedef struct _cdb {
-  unsigned int           numVars;
-  unsigned int           numWorkers;
-  unsigned int           numClauses;
-  unsigned int           numUnits;
-  unsigned int           numOriginalUnits;
-  unsigned int           numBinaries;
-  unsigned int           numOriginalBinaries;
-  unsigned int           numTernaries;
-  unsigned int           numOriginalTernaries;
-  unsigned int           numNClauses;
-  unsigned int           numOriginalNClauses;
-  unsigned int           numInputClauses;
+  unsigned int               numVars;
+  unsigned int               numWorkers;
+  unsigned int               numClauses;
+  unsigned int               numUnits;
+  unsigned int               numOriginalUnits;
+  unsigned int               numBinaries;
+  unsigned int               numOriginalBinaries;
+  unsigned int               numTernaries;
+  unsigned int               numOriginalTernaries;
+  unsigned int               numNClauses;
+  unsigned int               numOriginalNClauses;
+  unsigned int               numInputClauses;
 
-  unsigned int           randomNumbers[MAX_RANDOM_NUMBERS];
-  ts_vec_t(Literal)      uDB;  //this should be a thread_safe vector of Literals
-  kvec_t(ts_vec_t(Literal))  bDB;  //this is a read only vector of BinaryLists (the lists should be thread safe)
-  ts_vec_t(TClause)        tDB;  //this should be a thread_safe vector of TClause
-  ts_vec_t(NClause)        nDB;  //this should be a thread_safe vector of NClause
-  kvec_t(ts_vec_t(TClause*)) ternaryWatches;
+  unsigned int               randomNumbers[MAX_RANDOM_NUMBERS];
+  kvec_t(Literal)            uDB;  
+  kvec_t(kvec_t(Literal))    bDB; //THIS IS NOT THREAD SAFE
+  kvec_t(TClause)            tDB;
+  kvec_t(NClause)            nDB;
+  kvec_t(kvec_t(TClause*))   ternaryWatches; //THIS IS NOT THREAD SAFE
 } ClauseDB;
 
 /**/

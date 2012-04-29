@@ -10,6 +10,7 @@ typedef struct _vinfo {
   unsigned int model_height;
   bool last_phase;
   bool propagated;
+  char pad[6];
 } VarInfo;
 
 #endif

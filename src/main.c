@@ -37,6 +37,12 @@ static void * work (void * voidptr) {
     printf("UNSAT\n");
   }
 
+ printf("|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
+	 3,worker->solver->wId, 15,worker->solver->stats.numDecisions, 
+	 15,worker->solver->stats.numProps, 10,worker->solver->stats.numConflicts, 
+	 10,worker->solver->lastUnitAdded, 10,worker->solver->lastBinaryAdded, 
+	 10,worker->solver->lastTernaryAdded, 10,worker->solver->lastNaryAdded,
+	 10,0, 10,0, 10,0, 10,0, 10,0, 10,0);
 
   // msg (wid, 1, "result %d", worker->res);
   if (pthread_mutex_lock (&donemutex))
@@ -113,7 +119,6 @@ int main (int argc, char *argv[]) {
   printf("Clause db initialized\n");
   input_read_clauses(cdb, inputFileName);
   printf("Clause db loaded\n");
-  clause_database_resize_vectors(cdb);
   /***************************************/
 
   /*Initialize workers and assign each thread a new AzuDICI solver*/

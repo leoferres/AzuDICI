@@ -49,43 +49,43 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   /*Init Unitary clauses database*/
   //  printf("Init unit db\n");
-  ts_vec_init(cdb->uDB); //init vector with 0 elements
+  kv_init(cdb->uDB); //init vector with 0 elements
   /******************************/
 
   /*Init Binary clauses database*/
   //  printf("Init bin db\n");
   kv_init(cdb->bDB);//init vector 
-  kv_resize(ts_vec_t(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
+  kv_resize(kvec_t(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
   kv_size(cdb->bDB)= 2*(nVars+1);
 
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
-    ts_vec_init(kv_A(cdb->bDB,i));
-    ts_vec_resize(Literal, kv_A(cdb->bDB,i), 100 );
+    kv_init(kv_A(cdb->bDB,i));
+    kv_resize(Literal, kv_A(cdb->bDB,i), MIN_MEM_LIT);
   }
   /******************************/
 
   /*Init Ternary clauses database*/
   //  printf("Init ternary db\n");
-  ts_vec_init(cdb->tDB); //init vector with 0 element
-  ts_vec_resize(TClause, cdb->tDB, MAX_TERNARY_CLAUSES); //reserve memory so that references don't change
+  kv_init(cdb->tDB); //init vector with 0 element
+  kv_resize(TClause, cdb->tDB, MAX_TERNARY_CLAUSES); //reserve memory so that references don't change
   /*******************************/
 
   /*******************************/
   //  printf("Init n db\n");
-  ts_vec_init(cdb->nDB); //init vector with 0 elements
-  ts_vec_resize(NClause, cdb->nDB, MAX_NARY_CLAUSES); //reserve memory so that references don't change
+  kv_init(cdb->nDB); //init vector with 0 elements
+  kv_resize(NClause, cdb->nDB, MAX_NARY_CLAUSES); //reserve memory so that references don't change
   /*******************************/
 
   /*Init 3watches structures*/
   kv_init( cdb->ternaryWatches );
   //  printf("Init 3 watches structure\n");
-  kv_resize(ts_vec_t(TClause*), cdb->ternaryWatches,  2*(nVars+1) );
+  kv_resize(kvec_t(TClause*), cdb->ternaryWatches,  2*(nVars+1) );
   kv_size(cdb->ternaryWatches) = 2*(nVars+1);
   //  printf("vector resized\n");
   for(int i=0;i<2*(nVars+1);i++){
-    ts_vec_init( kv_A(cdb->ternaryWatches,i) );
-    ts_vec_resize(Literal, kv_A(cdb->ternaryWatches,i), 100 );
+    kv_init( kv_A(cdb->ternaryWatches,i) );
+    //kv_resize(TClause*, kv_A(cdb->ternaryWatches,i), MIN_MEM_LIT);
   }
   /*************************/
 
@@ -134,12 +134,12 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
       insert_binary_clause(cdb, &inputClause, true, 0, 0);
       //printf("Binary Clause read\n");
       break;
-    case 3:
+      /*case 3:
       //printf("About to add Ternary Clause\n");
       ;TClause* ptrToTernary = NULL;
       insert_ternary_clause(cdb, &inputClause,true, 0, &ptrToTernary, 0);
       //printf("Ternary Clause read\n");
-      break;
+      break;*/
     default:
       ;NClause* ptrToNary = NULL;
       //printf("About to add N Clause\n");
@@ -164,8 +164,8 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
   //  printf("After unit lock\n");
   dassert(cl->size == 1);
   bool alreadyInList=false;
-  int listSize;
-  ts_vec_size(listSize, cdb->uDB);
+  int listSize = kv_size(cdb->uDB);
+  //  ts_vec_size(listSize, cdb->uDB);
   dassert(listSize == cdb->numUnits);
 
   /*************Hack for same search*************/
@@ -185,7 +185,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
 
   /*If it isn't already in the uDB, add it*/
   if(!alreadyInList){
-    ts_vec_push_back( Literal, cdb->uDB, kv_A(cl->lits,0) );
+    kv_push( Literal, cdb->uDB, kv_A(cl->lits,0) ); //Here vector can be rellocated
     if(isOriginal) {
       cdb->numInputClauses++;
       cdb->numOriginalUnits++;
@@ -229,7 +229,7 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   if(!isOriginal){
     int listSize;
     Literal otherLit;
-    ts_vec_size(listSize, kv_A(cdb->bDB, not_l1));
+    listSize = kv_size(kv_A(cdb->bDB, not_l1));
     if(listSize > thLast1){
       alreadyInList = true;
       /*FOR DEBUG*/
@@ -245,12 +245,12 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   /*Insert and update, if not previously inserted*/
   if(!alreadyInList){
     unsigned int lastLit1Lst, lastLit2Lst;
-    ts_vec_push_back(Literal,kv_A(cdb->bDB, not_l1),l2);
-    ts_vec_size(lastLit1Lst,kv_A(cdb->bDB, not_l1));
+    kv_push(Literal,kv_A(cdb->bDB, not_l1),l2);
+    lastLit1Lst=kv_size(kv_A(cdb->bDB, not_l1));
     lastLit1Lst--;
     //If it is not in list, it's not in the other list either
-    ts_vec_push_back(Literal, kv_A(cdb->bDB, not_l2),l1);
-    ts_vec_size(lastLit2Lst,kv_A(cdb->bDB, not_l2));
+    kv_push(Literal, kv_A(cdb->bDB, not_l2),l1);
+    lastLit2Lst=kv_size(kv_A(cdb->bDB, not_l2));
     lastLit2Lst--;
     //update clauseDB stats
     if(isOriginal){
@@ -307,6 +307,7 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
 /************MAKE THIS THREAD SAFE**********/
 /* To insert a clause with 3 literals into the tDB*/
 void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, TClause** ptrToTernary, unsigned int lastThTernary) {
+  dassert(false);
   //  printf("Before ternary lock\n");
   pthread_rwlock_wrlock(&insert_ternary_clause_lock);
   //  printf("After ternary lock\n");
@@ -316,7 +317,7 @@ void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, 
 
   bool alreadyInList = false;
   int listSize;
-  ts_vec_size(listSize, cdb->tDB);
+  listSize = kv_size(cdb->tDB);
 
   //Init flags
   /*************Hack for same search*************/
@@ -324,7 +325,7 @@ void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, 
   if(!isOriginal){
     if(listSize > lastThTernary){
       alreadyInList = true;
-      ts_vec_ith_ma(*ptrToTernary,cdb->tDB,lastThTernary);
+      *ptrToTernary = &kv_A(cdb->tDB,lastThTernary);
       dassert((*ptrToTernary)->flags[wId]==false);
       (*ptrToTernary)->flags[wId]=true; 
       /*FOR DEBUG*/
@@ -354,17 +355,17 @@ void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, 
       ternary.lits[i] = kv_A(cl->lits, i);
     }
     //update clauseDB
-    ts_vec_push_back(TClause, cdb->tDB, ternary);
+    kv_push(TClause, cdb->tDB, ternary);
 
     /*add this clause position in tDB to each literal watches*/
     unsigned int litIndex;
 
     /*Return a pointer to the actual ternary inserted clause*/
-    ts_vec_ith_ma(*ptrToTernary,cdb->tDB,listSize);
+    *ptrToTernary=&kv_A(cdb->tDB,listSize);
     
     for (i = 0; i < 3; i++) {
       litIndex = lit_as_uint(ternary.lits[i]);
-      ts_vec_push_back(TClause*, kv_A(cdb->ternaryWatches, litIndex), *ptrToTernary);
+      kv_push(TClause*, kv_A(cdb->ternaryWatches, litIndex), *ptrToTernary);
     }
     if (isOriginal){
       cdb->numInputClauses++;
@@ -384,25 +385,30 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   pthread_rwlock_wrlock(&insert_nary_clause_lock);
   //  printf("After nary lock\n");
   //we will have problems here for keeping the same search for each thread
-  dassert(cl->size > 3);
+  dassert(cl->size >= 3);
   int i;
   bool alreadyInList = false;
 
   //  vec_literal_sort(cl->lits.a,cl->size);
   vec_literal_sort(cl,cl->size);
   int listSize;
-  ts_vec_size(listSize, cdb->nDB);
+  listSize =kv_size(cdb->nDB);
 
+  //printf("wId %d trying to insert nclause\n",wId);
+
+  //printf("Last nary is %d\n",lastThNary);
+  //printf("Num Nary clauses is %d\n",cdb->numNClauses);
+  //printf("listSize is %d\n",listSize);
   /*************Hack for same search*************/
   //We assume each thread learns the next ternary in the same order
   if(!isOriginal){
     if(listSize > lastThNary){
       alreadyInList = true;
-      ts_vec_ith_ma(*ptrToNClause,cdb->nDB,lastThNary);
+      *ptrToNClause = &kv_A(cdb->nDB,lastThNary);
       dassert((*ptrToNClause)->flags[wId]==false);
 
       (*ptrToNClause)->flags[wId]=true;
-      dassert( kv_size((*ptrToNClause)->lits) == cl->size );
+      dassert( (*ptrToNClause)->lits[0] == cl->size );
       /*FOR DEBUG*/
       /* for (i = 0; i < cl->size; i++) { */
       /* 	dassert(kv_A((*ptrToNClause)->lits,i) == kv_A(cl->lits, i)); */
@@ -426,18 +432,20 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
     }
     
     //Insert literals
-    kv_init(nclause.lits);
-    kv_resize(Literal, nclause.lits, cl->size);
-    kv_size(nclause.lits) = cl->size;
+    nclause.lits = (Literal*)malloc((cl->size+1)*sizeof(Literal));
+    //nclause.size = cl->size;
+  //kv_resize(Literal, nclause.lits, cl->size);
+  //kv_size(nclause.lits) = cl->size;
+    nclause.lits[0] = cl->size;
     for(i=0;i<cl->size;i++){
-      kv_A( nclause.lits, i ) = kv_A( cl->lits, i );
+      nclause.lits[i+1] = kv_A( cl->lits, i );
     }
     nclause.is_original = isOriginal;
     //  printf("nclause literals added\n");
     
     //update clauseDB
-    ts_vec_push_back(NClause, cdb->nDB, nclause);
-    ts_vec_ith_ma(*ptrToNClause, cdb->nDB, listSize);
+    kv_push(NClause, cdb->nDB, nclause);
+    *ptrToNClause = &kv_A(cdb->nDB, listSize);
     
     //    printf("Pointer to NClause is %d\n", *ptrToNClause);
     if(isOriginal){
@@ -458,16 +466,16 @@ void clause_database_resize_vectors(ClauseDB* cdb){
   unsigned int currentSize;
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(cdb->numVars+1);i++){
-    ts_vec_max(currentSize,kv_A(cdb->bDB,i));
-    ts_vec_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
+    currentSize = kv_max(kv_A(cdb->bDB,i));
+    kv_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
   }
   /******************************/
 
   //  printf("vector resized\n");
-  for(int i=0;i<2*(cdb->numVars+1);i++){
-    ts_vec_max(currentSize,kv_A(cdb->ternaryWatches,i));
-    ts_vec_resize(TClause*, kv_A(cdb->ternaryWatches,i), 4*currentSize );
-  }
+  /* for(int i=0;i<2*(cdb->numVars+1);i++){ */
+  /*   currentSize =kv_max(kv_A(cdb->ternaryWatches,i)); */
+  /*   kv_resize(TClause*, kv_A(cdb->ternaryWatches,i), 4*currentSize ); */
+  /* } */
   /*************************/
 
 }
