@@ -1,7 +1,7 @@
 This version is "Chapuza", which characteristics are:
 
-NClauseDB: Shared
-ThNClauseDB: Has 2 cached literals.
+NClauseDB: Not shared
+ThNClauseDB: Has the thread clauseDB
 BinaryClauseDB: Shared
 TernaryClauseDB: No special structures for ternary clauses.
 

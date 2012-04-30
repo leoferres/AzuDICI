@@ -22,7 +22,7 @@ typedef struct _azuDICI{
 
   kvec_t(unsigned int)  lastBinariesAdded;
   kvec_t(bool)          varMarks;
-  kvec_t(ThNClause)     thcdb; //thread clause data base
+  kvec_t(ThNClause*)    thcdb; //thread clause data base
   kvec_t(ThNClause*)    watches;
 
   Clause              conflict;
