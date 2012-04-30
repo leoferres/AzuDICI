@@ -118,6 +118,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       azuDICI_backjump_to_dl(ad,ad->dlToBackjump);
       //printf("Set true uip\n");
       azuDICI_set_true_uip(ad);
+      //printf("done set true\n");
     }
     azuDICI_restart_if_adequate(ad);
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
@@ -126,13 +127,11 @@ unsigned int azuDICI_solve(AzuDICI* ad){
     dec = azuDICI_decide(ad);
     //printf("Worker %d decision is %d\n",ad->wId,dec);
     if (dec == 0){
-
       /*FOR DEBUG*/
       /* for(int i=1; i<= ad->cdb->numVars; i++){ */
       /* 	dassert(!model_is_undef(i,&ad->model)); */
       /* } */
       /**********/
-
       return 10;
     }
     //printf("Decision is %d\n",dec);
@@ -552,7 +551,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 
     ad->currentCleanupLimit *= ad->strat.cleanupMultiplier;
 
-    //    printf("CLEANUP\n");
+    //printf("CLEANUP\n");
     //Cleanup
     unsigned int i,j;
     Clause tentativeTernaryOrBinary;
@@ -578,10 +577,10 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     }
 
     for(i=0;i<kv_size(ad->thcdb);i++){
-      cl = &kv_A(ad->thcdb, i);
+      cl = kv_A(ad->thcdb, i);
       delete = true;
       //generalCl = &kv_A(ad->cdb->nDB, cl->posInDB);
-      if( cl->is_original ||
+      if( cl->isOriginal ||
  	  cl->activity >= ad->strat.activityThreshold || cl->size <= 3 ){ //keep it
 	delete = false;
 
@@ -593,8 +592,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 	    numTrueClauses++;
  	    delete = true; //it is true at dl 0, no need to have it.
  	    break;
- 	  }else if(model_is_undef(cl->lits[j], &ad->model)){
-	    cl->lits[keptLits++] = cl->lits[j]
+ 	  }else if(model_is_undef(cl->lits[j], &ad->model)){ //keep only false lits
+	    cl->lits[keptLits++] = cl->lits[j];
  	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) 
 	      = cl->lits[j];
 	    //tentativeTernaryOrBinary.size++;
@@ -692,16 +691,16 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
       /*FOR DEBUG*/
       unsigned int countUndefs=0;
       for(j=0;j<cl->size;j++){
-	l1 = cl.lits[0];
-	dassert(!model_is_undef(l1,&ad->model));
+	l1 = cl->lits[j];
+	dassert(model_is_undef(l1,&ad->model));
       }
       /************/
 
       l1 = cl->lits[0];
       l2 = cl->lits[1];
 
-      cl.nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
-      cl.nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(l2));
+      cl->nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
+      cl->nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(l2));
 
       kv_A(ad->thcdb,lastValidPos++) = cl; //copy it to last valid pos in thcdb
 
@@ -956,7 +955,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       dassert(model_is_false(-l,&ad->model));
       dassert(model_is_true_or_undef(toReselect,&ad->model));
       dassert(!model_is_false(toReselect, &ad->model));
-      watchedClause->cachedLit = -l;
+      //watchedClause->cachedLit = -l;
 
       if ( first ) {
 	watchedClause->lits[i] = watchedClause->lits[0];
@@ -1018,7 +1017,7 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
 	watchedClause->activity++;
 	ad->conflict.size = sizeOfClause;
 	for(i=0;i<sizeOfClause;i++){
-	  kv_A(ad->conflict.lits,i) = watchedClause->lits[i+1];
+	  kv_A(ad->conflict.lits,i) = watchedClause->lits[i];
 	}
 	return false;
       }    
@@ -1131,10 +1130,10 @@ void azuDICI_get_clause_from_reason(AzuDICI* ad, Clause *cl, Reason r, Literal l
     //printf("Clause size is %d\n",cl->size);
     //printf("Clause is %d\n",nclause);
     dassert(nclause->lits);
-    dassert(nclause->lits[0] == r.size);
+    dassert(nclause->size == r.size);
     for(int i=0; i<r.size;i++){
       //printf("Extracting lit %d\n",kv_A(nclause->lits[0],i));
-      kv_A(cl->lits,i) = nclause->lits[i+1];
+      kv_A(cl->lits,i) = nclause->lits[i];
     }
   }
 }
