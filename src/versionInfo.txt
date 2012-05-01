@@ -2,7 +2,8 @@ This version is "Chapuza", which characteristics are:
 
 NClauseDB: Not shared
 ThNClauseDB: Has the thread clauseDB
-BinaryClauseDB: Shared
+BinaryClauseDB: Not shared
+Units: Not shared
 TernaryClauseDB: No special structures for ternary clauses.
 
 Important notes: For binary lists and nclause index vector, the size is fixed and may generate problems, specially in the case of binary lists.

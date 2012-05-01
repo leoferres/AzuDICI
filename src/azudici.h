@@ -20,10 +20,20 @@ typedef struct _azuDICI{
   //unsigned int        decisionLevel; This will go to model
   double              scoreBonus; //Remember to initialize this.
 
-  kvec_t(unsigned int)  lastBinariesAdded;
-  kvec_t(bool)          varMarks;
-  kvec_t(ThNClause*)    thcdb; //thread clause data base
-  kvec_t(ThNClause*)    watches;
+  unsigned int        nVars;
+  unsigned int        numBinaries;
+  unsigned int        numClauses;
+  unsigned int        numUnits;
+  unsigned int        numNClauses;
+
+
+
+  //  kvec_t(unsigned int)     lastBinariesAdded;
+  kvec_t(bool)             varMarks;
+  kvec_t(Literal)          thudb; //local unitary data base
+  kvec_t(kvec_t(Literal))  thbdb; //local binary data base
+  kvec_t(ThNClause*)       thcdb; //thread clause data base
+  kvec_t(ThNClause*)       watches;
 
   Clause              conflict;
   Clause              lemma;
@@ -56,6 +66,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad); //to implement
 void azuDICI_restart_if_adequate(AzuDICI* ad); //to implement
 Literal  azuDICI_decide(AzuDICI* ad);
 void  azuDICI_increaseScore(AzuDICI* ad, Literal lit);
+void  azuDICI_insert_binary_clause(AzuDICI* ad, Clause *cl);
+void  azuDICI_insert_unitary_clause(AzuDICI* ad, Clause *cl);
 /****************/
 
 /*Other methods*/
