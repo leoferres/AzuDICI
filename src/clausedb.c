@@ -465,10 +465,10 @@ void clause_database_resize_vectors(ClauseDB* cdb){
 
   unsigned int currentSize;
   /*Init each of the binary clause database elements*/
-  for(int i=0;i<2*(cdb->numVars+1);i++){
-    currentSize = kv_max(kv_A(cdb->bDB,i));
-    kv_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
-  }
+  //for(int i=0;i<2*(cdb->numVars+1);i++){
+  //currentSize = kv_max(kv_A(cdb->bDB,i));
+  //kv_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
+  //}
   /******************************/
 
   //  printf("vector resized\n");
