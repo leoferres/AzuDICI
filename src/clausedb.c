@@ -49,46 +49,26 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   /*Init Unitary clauses database*/
   //  printf("Init unit db\n");
-  kv_init(cdb->uDB); //init vector with 0 elements
+  cdb->uDB = (Literal*)malloc(nVars*sizeof(Literal)); //init vector with 0 elements
   /******************************/
 
   /*Init Binary clauses database*/
   //  printf("Init bin db\n");
-  kv_init(cdb->bDB);//init vector 
-  kv_resize(kvec_t(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
-  kv_size(cdb->bDB)= 2*(nVars+1);
+  cdb->bDB = (Literal**)malloc((2*nVars+2)*sizeof(Literal*));
+  cdb->bListsSize = (unsigned int*)malloc((2*nVars+2)*sizeof(unsigned int));
 
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
-    kv_init(kv_A(cdb->bDB,i));
-    kv_resize(Literal, kv_A(cdb->bDB,i), MIN_MEM_LIT);
+    cdb->bDB[i]=(Literal*)malloc(MIN_MEM_LIT);
+    cdb->bListsSize[i]=0;
   }
   /******************************/
-
-  /*Init Ternary clauses database*/
-  //  printf("Init ternary db\n");
-  kv_init(cdb->tDB); //init vector with 0 element
-  kv_resize(TClause, cdb->tDB, MAX_TERNARY_CLAUSES); //reserve memory so that references don't change
-  /*******************************/
 
   /*******************************/
   //  printf("Init n db\n");
   kv_init(cdb->nDB); //init vector with 0 elements
   kv_resize(NClause, cdb->nDB, MAX_NARY_CLAUSES); //reserve memory so that references don't change
   /*******************************/
-
-  /*Init 3watches structures*/
-  kv_init( cdb->ternaryWatches );
-  //  printf("Init 3 watches structure\n");
-  kv_resize(kvec_t(TClause*), cdb->ternaryWatches,  2*(nVars+1) );
-  kv_size(cdb->ternaryWatches) = 2*(nVars+1);
-  //  printf("vector resized\n");
-  for(int i=0;i<2*(nVars+1);i++){
-    kv_init( kv_A(cdb->ternaryWatches,i) );
-    //kv_resize(TClause*, kv_A(cdb->ternaryWatches,i), MIN_MEM_LIT);
-  }
-  /*************************/
-
 
   /*Init random numbers vector*/
   srandom(0);
@@ -97,7 +77,6 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
     cdb->randomNumbers[i] = random();
   }
   /****************************/
-
   return cdb;
 }
 
@@ -164,9 +143,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
   //  printf("After unit lock\n");
   dassert(cl->size == 1);
   bool alreadyInList=false;
-  int listSize = kv_size(cdb->uDB);
-  //  ts_vec_size(listSize, cdb->uDB);
-  dassert(listSize == cdb->numUnits);
+  int listSize = cdb->numUnits;
 
   /*************Hack for same search*************/
   //We assume each thread learns the next ternary in the same order
@@ -185,7 +162,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
 
   /*If it isn't already in the uDB, add it*/
   if(!alreadyInList){
-    kv_push( Literal, cdb->uDB, kv_A(cl->lits,0) ); //Here vector can be rellocated
+    cdb->uDB[numUnits++] = kv_A(cl->lits,0);
     if(isOriginal) {
       cdb->numInputClauses++;
       cdb->numOriginalUnits++;
@@ -229,38 +206,20 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   if(!isOriginal){
     int listSize;
     Literal otherLit;
-    listSize = kv_size(kv_A(cdb->bDB, not_l1));
+    listSize = cdb->bListSize[not_l1];
     if(listSize > thLast1){
       alreadyInList = true;
-      /*FOR DEBUG*/
-      /* ts_vec_ith(otherLit, kv_A(cdb->bDB, not_l1), thLast1); */
-      /* dassert(otherLit == l2); */
-      /* ts_vec_ith(otherLit, kv_A(cdb->bDB, not_l2), thLast2); */
-      /* dassert(otherLit == l1); */
-      /**********/
     }
   }
   /*********************************************/
 
   /*Insert and update, if not previously inserted*/
   if(!alreadyInList){
-    unsigned int lastLit1Lst, lastLit2Lst;
-    kv_push(Literal,kv_A(cdb->bDB, not_l1),l2);
-    lastLit1Lst=kv_size(kv_A(cdb->bDB, not_l1));
-    lastLit1Lst--;
-    //If it is not in list, it's not in the other list either
-    kv_push(Literal, kv_A(cdb->bDB, not_l2),l1);
-    lastLit2Lst=kv_size(kv_A(cdb->bDB, not_l2));
-    lastLit2Lst--;
+    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
+    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
+
     //update clauseDB stats
     if(isOriginal){
-      /* unsigned int nOrLit1, nOrLit2; */
-      /* ts_vec_ith(nOrLit1, cdb->numBinaries, not_l1); */
-      /* ts_vec_ith(nOrLit2, cdb->numBinaries, not_l2); */
-      /* nOrLit1++; */
-      /* nOrLit2++; */
-      /* ts_vec_set_ith(nOrLit1, cdb->numBinaries, not_l1); */
-      /* ts_vec_set_ith(nOrLit2, cdb->numBinaries, not_l2); */
       cdb->numOriginalBinaries++;
       cdb->numInputClauses++;
     }
@@ -270,113 +229,6 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   }
   /********************************************/
   pthread_rwlock_unlock(&insert_binary_clause_lock);
-}
-
-/*Function for sorting literals in a vector.
- Sorts from lower to highest*/
-
-/* void vec_literal_sort(Literal *lits, unsigned int size) { */
-
-/*     struct sort_node *head; */
-/*     struct sort_node *current; */
-/*     struct sort_node *next; */
-/*     int i = 0; */
-
-/*     kvec_t(Literal) tmp; */
-/*     tmp.a = lits; */
-
-/*     head = NULL; */
-/*     /\* insert the numbers into the linked list *\/ */
-/*     for (i = 0; i < size; i++) */
-/*         head = addsort_node(kv_A(tmp, i), head); */
-
-/*     /\* sort the list *\/ */
-/*     head = mergesort(head); */
-
-/*     /\*Store the list back into the vector*\/ */
-/*     i = 0; */
-/*     for (current = head; current != NULL; current = current->next) */
-/*         kv_A(tmp, i++) = current->number; */
-
-/*     /\* free the list *\/ */
-/*     for (current = head; current != NULL; current = next) */
-/*         next = current->next, free(current); */
-/* } */
-
-
-/************MAKE THIS THREAD SAFE**********/
-/* To insert a clause with 3 literals into the tDB*/
-void insert_ternary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, int wId, TClause** ptrToTernary, unsigned int lastThTernary) {
-  dassert(false);
-  //  printf("Before ternary lock\n");
-  pthread_rwlock_wrlock(&insert_ternary_clause_lock);
-  //  printf("After ternary lock\n");
-  dassert(cl->size == 3);
-  int i;
-  vec_literal_sort(cl, cl->size);
-
-  bool alreadyInList = false;
-  int listSize;
-  listSize = kv_size(cdb->tDB);
-
-  //Init flags
-  /*************Hack for same search*************/
-  //We assume each thread learns the next ternary in the same order
-  if(!isOriginal){
-    if(listSize > lastThTernary){
-      alreadyInList = true;
-      *ptrToTernary = &kv_A(cdb->tDB,lastThTernary);
-      dassert((*ptrToTernary)->flags[wId]==false);
-      (*ptrToTernary)->flags[wId]=true; 
-      /*FOR DEBUG*/
-      /* for (i = 0; i < 3; i++) { */
-      /* 	dassert((*ptrToTernary)->lits[i] == kv_A(cl->lits, i)); */
-      /* } */
-      /***********/
-    }
-  }
-  /*********************************************/
-
-  if(!alreadyInList){
-    TClause ternary;
-    if (isOriginal) {
-      for (i = 0; i < cdb->numWorkers; i++) {
-	ternary.flags[i] = true;
-      }
-    } else {
-      for (i = 0; i < cdb->numWorkers; i++) {
-	if (i == wId) ternary.flags[i] = true;
-	else ternary.flags[i] = false;
-      }
-    }
-
-    //Insert literals
-    for (i = 0; i < 3; i++) {
-      ternary.lits[i] = kv_A(cl->lits, i);
-    }
-    //update clauseDB
-    kv_push(TClause, cdb->tDB, ternary);
-
-    /*add this clause position in tDB to each literal watches*/
-    unsigned int litIndex;
-
-    /*Return a pointer to the actual ternary inserted clause*/
-    *ptrToTernary=&kv_A(cdb->tDB,listSize);
-    
-    for (i = 0; i < 3; i++) {
-      litIndex = lit_as_uint(ternary.lits[i]);
-      kv_push(TClause*, kv_A(cdb->ternaryWatches, litIndex), *ptrToTernary);
-    }
-    if (isOriginal){
-      cdb->numInputClauses++;
-      cdb->numOriginalTernaries++;
-    }
-    cdb->numTernaries++;
-    cdb->numClauses++;
-    dassert( listSize+1 == cdb->numTernaries );
-    /************************************************/
-  }
-  pthread_rwlock_unlock(&insert_ternary_clause_lock);
 }
 
 /****MAKE THIS THREAD SAFE**********/

@@ -28,11 +28,10 @@ typedef struct _cdb {
   unsigned int               numInputClauses;
 
   unsigned int               randomNumbers[MAX_RANDOM_NUMBERS];
-  kvec_t(Literal)            uDB;  
-  kvec_t(kvec_t(Literal))    bDB; //THIS IS NOT THREAD SAFE
-  kvec_t(TClause)            tDB;
+  Literal*                   uDB;  
+  Literal**                  bDB; //THIS IS NOT THREAD SAFE
+  unsigned int*              bListsSize;
   kvec_t(NClause)            nDB;
-  kvec_t(kvec_t(TClause*))   ternaryWatches; //THIS IS NOT THREAD SAFE
 } ClauseDB;
 
 /**/
