@@ -142,13 +142,11 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
   //  printf("After unit lock\n");
   dassert(cl->size == 1);
   bool alreadyInList=false;
-  int listSize = cdb->numUnits;
 
   /*************Hack for same search*************/
   //We assume each thread learns the next ternary in the same order
   if(!isOriginal){
-    if(listSize > lastThUnit){
-      Literal unitInList;
+    if(cdb->numUnits > lastThUnit){
       alreadyInList = true;
       /*FOR DEBUG*/
       /* ts_vec_ith(unitInList,cdb->uDB,lastThUnit); */
@@ -157,11 +155,9 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
     }
   }
   /*********************************************/
-
-
   /*If it isn't already in the uDB, add it*/
   if(!alreadyInList){
-    cdb->uDB[cdb->numUnits++] = kv_A(cl->lits,0);
+    cdb->uDB[cdb->numUnits] = kv_A(cl->lits,0);
     if(isOriginal) {
       cdb->numInputClauses++;
       cdb->numOriginalUnits++;
