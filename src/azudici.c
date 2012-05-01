@@ -644,8 +644,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     
     printf("|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
 	   3,ad->wId, 15,ad->stats.numDecisions, 15,ad->stats.numProps, 
-	   10,ad->stats.numConflicts, 10,ad->lastUnitAdded, 
-	   10,ad->lastBinaryAdded, 10,ad->lastTernaryAdded, 10,ad->lastNaryAdded,
+	   10,ad->stats.numConflicts, 10,ad->numUnits, 
+	   10,ad->numBinaries, 10,ad->lastTernaryAdded, 10,ad->numNClauses,
 	   10,numUnits, 10,numBinaries, 10,numTernaries, 10,numTrueClauses, 
 	   10,numDeletes, 10,numRealDeletes);
     return azuDICI_propagate(ad);

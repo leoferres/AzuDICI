@@ -40,8 +40,8 @@ static void * work (void * voidptr) {
  printf("|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
 	 3,worker->solver->wId, 15,worker->solver->stats.numDecisions, 
 	 15,worker->solver->stats.numProps, 10,worker->solver->stats.numConflicts, 
-	 10,worker->solver->lastUnitAdded, 10,worker->solver->lastBinaryAdded, 
-	 10,worker->solver->lastTernaryAdded, 10,worker->solver->lastNaryAdded,
+	 10,worker->solver->numUnits, 10,worker->solver->numBinaries, 
+	 10,worker->solver->lastTernaryAdded, 10,worker->solver->numNClauses,
 	 10,0, 10,0, 10,0, 10,0, 10,0, 10,0);
 
   // msg (wid, 1, "result %d", worker->res);
