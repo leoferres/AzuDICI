@@ -58,7 +58,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
-    cdb->bDB[i]=(Literal*)malloc(MIN_MEM_LIT);
+    cdb->bDB[i]=(Literal*)malloc(MIN_MEM_LIT*sizeof(Literal));
     cdb->bListsSize[i]=0;
   }
   /******************************/
