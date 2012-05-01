@@ -7,7 +7,6 @@ Clause inputClause;
 unsigned int nInsertedClauses;
 pthread_rwlock_t insert_unitary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_binary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
-pthread_rwlock_t insert_ternary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_nary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
@@ -162,7 +161,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
 
   /*If it isn't already in the uDB, add it*/
   if(!alreadyInList){
-    cdb->uDB[numUnits++] = kv_A(cl->lits,0);
+    cdb->uDB[cdb->numUnits++] = kv_A(cl->lits,0);
     if(isOriginal) {
       cdb->numInputClauses++;
       cdb->numOriginalUnits++;
@@ -204,10 +203,7 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   /*************Hack for same search*************/
   //We assume each thread learns the next binary in the same order
   if(!isOriginal){
-    int listSize;
-    Literal otherLit;
-    listSize = cdb->bListSize[not_l1];
-    if(listSize > thLast1){
+    if(cdb->bListsSize[not_l1] > thLast1){
       alreadyInList = true;
     }
   }
@@ -311,25 +307,6 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
     /**************************************************/
   }
    pthread_rwlock_unlock(&insert_nary_clause_lock);
-}
-
-void clause_database_resize_vectors(ClauseDB* cdb){
-
-  unsigned int currentSize;
-  /*Init each of the binary clause database elements*/
-  for(int i=0;i<2*(cdb->numVars+1);i++){
-    currentSize = kv_max(kv_A(cdb->bDB,i));
-    kv_resize(Literal, kv_A(cdb->bDB,i), 4*currentSize );
-  }
-  /******************************/
-
-  //  printf("vector resized\n");
-  /* for(int i=0;i<2*(cdb->numVars+1);i++){ */
-  /*   currentSize =kv_max(kv_A(cdb->ternaryWatches,i)); */
-  /*   kv_resize(TClause*, kv_A(cdb->ternaryWatches,i), 4*currentSize ); */
-  /* } */
-  /*************************/
-
 }
 
 #endif /* _CLAUSEDB_C_ */

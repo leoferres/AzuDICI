@@ -37,9 +37,12 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   kv_resize(unsigned int,  ad->lastBinariesAdded, 2*(ad->cdb->numVars+1) );
   kv_size(ad->lastBinariesAdded) = 2*(ad->cdb->numVars+1);
   int listSize;
+
+  ad->localBinaries = (Literal**)malloc(2*(ad->cdb->numVars+1)*sizeof(Literal*));
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
-    listSize = kv_size(kv_A(ad->cdb->bDB, i) );
+    listSize = ad->cdb->bListsSize[i];
     kv_A(ad->lastBinariesAdded, i) = listSize;
+    ad->localBinaries[i]=ad->cdb->bDB[i];
   }
 
   //varMarks
@@ -151,13 +154,6 @@ bool azuDICI_propagate( AzuDICI* ad ){
       if ( !azuDICI_propagate_w_binaries(ad, lit)) return false;
       else continue; 
     } 
-    
-    /* lit = model_next_lit_for_3_prop( &ad->model); */
-    /* //printf("3 prop with lit %d\n",lit); */
-    /* if ( lit != 0 ) {   */
-    /*   if( !azuDICI_propagate_w_ternaries(ad, lit)) return false; */
-    /*   else continue;  */
-    /* }  */
     
     lit = model_next_lit_for_n_prop( &ad->model);
     //printf("n prop with lit %d\n",lit);
@@ -804,7 +800,8 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   r.thNClPtr = NULL;
 
   for(int i=0;i<sizeOfList;i++){
-    lToSetTrue= kv_A(kv_A(ad->cdb->bDB,litIndex), i);
+    lToSetTrue= ad->localBinaries[litIndex][i];
+    //lToSetTrue  = kv_A(kv_A(ad->cdb->bDB,litIndex), i);
     if (model_is_undef(lToSetTrue,&ad->model)){
       r.size   = 2;
       r.binLit = -l;
@@ -820,64 +817,6 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
       kv_A(ad->conflict.lits,1) = lToSetTrue;
       return false;
     }    
-  }
-  return true;
-}
-
-bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l){
-
-  //Propagate if proper flag is set to true
-  //  printf("3 propagating lit %d\n",l);
-  Literal lToSetTrue;
-  unsigned int sizeOfList;
-  unsigned int litIndex = lit_as_uint(-l);
-  sizeOfList =kv_size(kv_A(ad->cdb->ternaryWatches, litIndex));
-  Reason r;
-  r.size = 3;
-  r.binLit = 0;
-  r.thNClPtr = NULL;
-  TClause *ternaryClause;
-  Literal l1,l2,l3;
-  for(int i=0;i<sizeOfList;i++){
-    ternaryClause = kv_A(kv_A(ad->cdb->ternaryWatches, litIndex), i);
-    //    ts_vec_ith_ma(ternaryClause,ad->cdb->tDB,indexInTDB);
-    if(ternaryClause->flags[ad->wId]){ //Only propagate with self-learned clauses
-      l1 = ternaryClause->lits[0];
-      l2 = ternaryClause->lits[1];
-      l3 = ternaryClause->lits[2];
-      //  printf("lit %d participates in 3 clause %d v %d v %d \n",-l, l1, l2, l3);
-      lToSetTrue = 0;
-      dassert(l1==-l || l2==-l ||l3==-l);
-      if(model_is_false(l1,&ad->model) && model_is_false(l2,&ad->model)){
-	lToSetTrue = l3;
-      }else if (model_is_false(l2,&ad->model) && model_is_false(l3,&ad->model)){
-	lToSetTrue = l1;
-      }else if (model_is_false(l1,&ad->model) && model_is_false(l3,&ad->model)){
-	lToSetTrue = l2;
-      }else{
-	continue;
-      }
-
-      dassert(lToSetTrue!=0);
-      if (model_is_undef(lToSetTrue,&ad->model)){
-        //TClause *tmpPtr;
-        //ts_vec_ith_ma(tmpPtr,ad->cdb->tDB,indexInTDB);
-	r.tClPtr = ternaryClause;//&tmpPtr->lits[0]; //check if this works
-	model_set_true_w_reason(lToSetTrue,r,&ad->model);
-	ad->stats.numProps++;
-	if(ad->model.decision_lvl ==0){
-	  ad->stats.numDLZeroLits++;
-	  ad->stats.numDlZeroLitsSinceLastRestart++;
-	}
-      }else if(model_is_false(lToSetTrue,&ad->model)){ //Conflict
-	ad->conflict.size = 3;
-	kv_A(ad->conflict.lits,0) = l1;
-	kv_A(ad->conflict.lits,1) = l2;
-	kv_A(ad->conflict.lits,2) = l3;
-	//azuDICI_print_clause(ad, ad->conflict);
-	return false;
-      }    
-    }
   }
   return true;
 }
@@ -1208,9 +1147,6 @@ void azuDICI_init_thcdb(AzuDICI* ad){
 }
 
 bool azuDICI_set_true_units(AzuDICI *ad){
-  unsigned int numUnits;
-  numUnits = ad->cdb->numOriginalUnits;
-  //numUnits = ad->cdb->numUnits;
   Literal unitToSetTrue;
   Reason r;
 
@@ -1220,8 +1156,8 @@ bool azuDICI_set_true_units(AzuDICI *ad){
   r.thNClPtr = NULL;
 
   dassert(ad->model.decision_lvl==0);
-  for(int i=0;i<numUnits;i++){
-    unitToSetTrue = kv_A(ad->cdb->uDB,i);
+  for(int i=0;i<ad->cdb->numOriginalUnits;i++){
+    unitToSetTrue = ad->cdb->uDB[i];
 
     if (model_is_undef(unitToSetTrue,&ad->model)){
       //r.binLit = -unitToSetTrue;
