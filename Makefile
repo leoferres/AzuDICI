@@ -10,7 +10,7 @@ CFILES=src/azudici.c src/clause.c src/clausedb.c src/mergeSort.c src/var.c src/h
 all: ad
 
 ad:
-	$(CC) $(CFLAGS) src/main.c $(CFILES) -lz -lm -o ad
+	$(CC) $(CFLAGS) src/main.c $(CFILES) -lz -lm -static -o ad
 
 clean:
 	rm -f ad

@@ -210,6 +210,9 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
     cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
     cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
 
+    assert(cdb->bListsSize[not_l1]<MIN_MEM_LIT);
+    assert(cdb->bListsSize[not_l2]<MIN_MEM_LIT);
+
     //update clauseDB stats
     if(isOriginal){
       cdb->numOriginalBinaries++;
