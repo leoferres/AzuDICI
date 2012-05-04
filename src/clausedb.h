@@ -9,7 +9,7 @@
 #define MAX_RANDOM_NUMBERS     10000000
 #define MAX_NARY_CLAUSES       5000000
 #define MAX_NARYTHREAD_CLAUSES 5000000
-#define MIN_MEM_LIT            1200
+//#define MIN_MEM_LIT            300
 
 
 typedef struct _cdb {
@@ -28,8 +28,8 @@ typedef struct _cdb {
 
   unsigned int               randomNumbers[MAX_RANDOM_NUMBERS];
   Literal*                   uDB;  
-  Literal**                  bDB; //THIS IS NOT THREAD SAFE
-  unsigned int*              bListsSize;
+  BinList*                   bDB;
+  //Literal**                bDB; //THIS IS NOT THREAD SAFE
   kvec_t(NClause)            nDB;
 } ClauseDB;
 

@@ -20,7 +20,7 @@ typedef struct _azuDICI{
   //unsigned int        decisionLevel; This will go to model
   double              scoreBonus; //Remember to initialize this.
 
-  Literal**             localBinaries;
+  BinNode**             localBinaries;
   kvec_t(unsigned int)  lastBinariesAdded;
   kvec_t(bool)          varMarks;
   kvec_t(ThNClause*)    thcdb; //thread clause data base

@@ -9,6 +9,8 @@ pthread_rwlock_t insert_unitary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_binary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_nary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 
+pthread_rwlock_t *insert_binary_clause_locks;
+
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   //  printf("Init input clause\n");
@@ -53,15 +55,28 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
   /*Init Binary clauses database*/
   //  printf("Init bin db\n");
-  cdb->bDB = (Literal**)malloc((2*nVars+2)*sizeof(Literal*));
-  cdb->bListsSize = (unsigned int*)malloc((2*nVars+2)*sizeof(unsigned int));
+  cdb->bDB = (BinList*)malloc((2*nVars+2)*sizeof(BinList));
+  //cdb->bListsSize = (unsigned int*)malloc((2*nVars+2)*sizeof(unsigned int));
 
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
-    cdb->bDB[i]=(Literal*)malloc(MIN_MEM_LIT*sizeof(Literal));
-    cdb->bListsSize[i]=0;
+    cdb->bDB[i].size=0;
+    cdb->bDB[i].posInLastNode=0;
+    cdb->bDB[i].firstNode=(BinNode*)malloc(sizeof(BinNode));
+    cdb->bDB[i].firstNode->nextNode=NULL;
+    cdb->bDB[i].lastNode = cdb->bDB[i].firstNode;
   }
   /******************************/
+
+  /*Init binary locks*/
+  insert_binary_clause_locks=(pthread_rwlock_t*)malloc(2*(nVars+1)*sizeof(pthread_rwlock_t));
+
+  for(int i=0; i<2*nVars+2;i++){
+    pthread_rwlock_init(&(insert_binary_clause_locks[i]), NULL);
+    //insert_binary_clause_locks[i] = PTHREAD_RWLOCK_INITIALIZER;
+  }
+  /******************/
+
 
   /*******************************/
   //  printf("Init n db\n");
@@ -180,7 +195,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
    Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
 void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1, unsigned int thLast2){
   //  printf("Before binary lock\n");
-  pthread_rwlock_wrlock(&insert_binary_clause_lock);
+  //  pthread_rwlock_wrlock(&insert_binary_clause_lock);
   //  printf("After binary lock\n");
   //we will have problems here for keeping the same search for each thread
   dassert(cl->size == 2);
@@ -196,10 +211,11 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
 
   bool alreadyInList = false;
 
+  pthread_rwlock_wrlock(&(insert_binary_clause_locks[not_l1]));
   /*************Hack for same search*************/
   //We assume each thread learns the next binary in the same order
   if(!isOriginal){
-    if(cdb->bListsSize[not_l1] > thLast1){
+    if(cdb->bDB[not_l1].size > thLast1){
       alreadyInList = true;
     }
   }
@@ -207,11 +223,29 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
 
   /*Insert and update, if not previously inserted*/
   if(!alreadyInList){
-    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
-    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
+    BinNode* newNode;
+    if(cdb->bDB[not_l1].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+      newNode=(BinNode*)malloc(sizeof(BinNode));
+      newNode->nextNode=NULL;
+      cdb->bDB[not_l1].lastNode->nextNode=newNode;
+      cdb->bDB[not_l1].lastNode=newNode;
+      cdb->bDB[not_l1].posInLastNode=0;
+    }
 
-    assert(cdb->bListsSize[not_l1]<MIN_MEM_LIT);
-    assert(cdb->bListsSize[not_l2]<MIN_MEM_LIT);
+    if(cdb->bDB[not_l2].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+      newNode=(BinNode*)malloc(sizeof(BinNode));
+      newNode->nextNode=NULL;
+      cdb->bDB[not_l2].lastNode->nextNode=newNode;
+      cdb->bDB[not_l2].lastNode=newNode;
+      cdb->bDB[not_l2].posInLastNode=0;
+    }
+
+    //    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
+    //    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
+    cdb->bDB[not_l1].lastNode->litList[cdb->bDB[not_l1].posInLastNode++] = l2;
+    cdb->bDB[not_l2].lastNode->litList[cdb->bDB[not_l2].posInLastNode++] = l1;
+    cdb->bDB[not_l1].size++;
+    cdb->bDB[not_l2].size++;
 
     //update clauseDB stats
     if(isOriginal){
@@ -223,7 +257,7 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
     cdb->numClauses++;
   }
   /********************************************/
-  pthread_rwlock_unlock(&insert_binary_clause_lock);
+  pthread_rwlock_unlock(&(insert_binary_clause_locks[not_l1]));
 }
 
 /****MAKE THIS THREAD SAFE**********/

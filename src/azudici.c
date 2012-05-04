@@ -38,11 +38,10 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   kv_size(ad->lastBinariesAdded) = 2*(ad->cdb->numVars+1);
   int listSize;
 
-  ad->localBinaries = (Literal**)malloc(2*(ad->cdb->numVars+1)*sizeof(Literal*));
+  ad->localBinaries = (BinNode**)malloc(2*(ad->cdb->numVars+1)*sizeof(BinNode*));
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
-    listSize = ad->cdb->bListsSize[i];
-    kv_A(ad->lastBinariesAdded, i) = listSize;
-    ad->localBinaries[i]=ad->cdb->bDB[i];
+    kv_A(ad->lastBinariesAdded, i) = ad->cdb->bDB[i].size;
+    ad->localBinaries[i] = ad->cdb->bDB[i].firstNode;
   }
 
   //varMarks
@@ -799,25 +798,37 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   r.tClPtr = NULL;
   r.thNClPtr = NULL;
 
-  for(int i=0;i<sizeOfList;i++){
-    lToSetTrue= ad->localBinaries[litIndex][i];
-    //lToSetTrue  = kv_A(kv_A(ad->cdb->bDB,litIndex), i);
-    if (model_is_undef(lToSetTrue,&ad->model)){
-      r.size   = 2;
-      r.binLit = -l;
-      model_set_true_w_reason(lToSetTrue,r,&ad->model);
-      ad->stats.numProps++;
-      if(ad->model.decision_lvl ==0){
-	ad->stats.numDLZeroLits++;
-	ad->stats.numDlZeroLitsSinceLastRestart++;
+  //  printf("Propagating with binaries\n");
+  //BinNode* currentNode=ad->localBinaries[litIndex];
+  BinNode* currentNode=ad->cdb->bDB[litIndex].firstNode;
+  unsigned int binsPropagated=0;
+  while(currentNode!=NULL && sizeOfList>0){
+    for(int i=0;i<(CACHE_LINE_SIZE/4)-1;i++){
+      lToSetTrue= currentNode->litList[i];
+      //printf("lToSetTrue is %d\n",lToSetTrue);
+      //printf("Propagating lit %d of %d\n",binsPropagated,sizeOfList);
+      //lToSetTrue  = kv_A(kv_A(ad->cdb->bDB,litIndex), i);
+      if (model_is_undef(lToSetTrue,&ad->model)){
+	r.size   = 2;
+	r.binLit = -l;
+	model_set_true_w_reason(lToSetTrue,r,&ad->model);
+	ad->stats.numProps++;
+	if(ad->model.decision_lvl ==0){
+	  ad->stats.numDLZeroLits++;
+	  ad->stats.numDlZeroLitsSinceLastRestart++;
+	}
+      }else if(model_is_false(lToSetTrue,&ad->model)){ //Conflict
+	ad->conflict.size = 2;
+	kv_A(ad->conflict.lits,0) = -l;
+	kv_A(ad->conflict.lits,1) = lToSetTrue;
+	return false;
       }
-    }else if(model_is_false(lToSetTrue,&ad->model)){ //Conflict
-      ad->conflict.size = 2;
-      kv_A(ad->conflict.lits,0) = -l;
-      kv_A(ad->conflict.lits,1) = lToSetTrue;
-      return false;
-    }    
+      binsPropagated++;
+      if(binsPropagated==sizeOfList) return true; //We just propagate the number of lits we have in our local list. This is a hack for same search.
+    }
+    currentNode = currentNode->nextNode;
   }
+    
   return true;
 }
 
