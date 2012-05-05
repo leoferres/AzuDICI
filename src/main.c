@@ -37,12 +37,12 @@ static void * work (void * voidptr) {
     printf("UNSAT\n");
   }
 
- printf("|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
+ printf("|%*d|%*lu|%*lu|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
 	 3,worker->solver->wId, 15,worker->solver->stats.numDecisions, 
 	 15,worker->solver->stats.numProps, 10,worker->solver->stats.numConflicts, 
 	 10,worker->solver->lastUnitAdded, 10,worker->solver->lastBinaryAdded, 
-	 10,worker->solver->lastTernaryAdded, 10,worker->solver->lastNaryAdded,
-	 10,0, 10,0, 10,0, 10,0, 10,0, 10,0);
+	 10,worker->solver->lastNaryAdded,
+	 10,0, 10,0, 10,0, 10,0, 10,0);
 
   // msg (wid, 1, "result %d", worker->res);
   if (pthread_mutex_lock (&donemutex))
@@ -144,8 +144,8 @@ int main (int argc, char *argv[]) {
   }
   /**************************/
 
-      printf("|                                        GENERAL STATS                                     |                   CLEANUP STATS                                 |\n");
-      printf("|WID|   nDecisions  |     nProps    |nConflicts|   units  |    bins  | ternaries| nary_Cls | newUnits |  newBins | newTrnrs |delTrueCls|   nDels  | nRealDels|\n");
+      printf("|                                   GENERAL STATS                               |              CLEANUP STATS                           |\n");
+      printf("|WID|   nDecisions  |     nProps    |nConflicts|   units  |    bins  | nary_Cls | newUnits |  newBins |delTrueCls|   nDels  | nRealDels|\n");
 
   for(int i=0;i<nworkers;i++){
       ts_vec_ith_ma(w,workers,i);

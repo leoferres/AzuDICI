@@ -36,8 +36,6 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   cdb->numOriginalUnits     = 0;
   cdb->numBinaries          = 0;
   cdb->numOriginalBinaries  = 0;
-  cdb->numTernaries         = 0;
-  cdb->numOriginalTernaries = 0;
   cdb->numNClauses          = 0;
   cdb->numOriginalNClauses  = 0;
   cdb->numInputClauses      = 0;
@@ -124,15 +122,9 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
       break;
     case 2:
       //printf("About to add bin Clause\n");
-      insert_binary_clause(cdb, &inputClause, true, 0, 0);
+      insert_binary_clause(cdb, &inputClause, true, 0);
       //printf("Binary Clause read\n");
       break;
-      /*case 3:
-      //printf("About to add Ternary Clause\n");
-      ;TClause* ptrToTernary = NULL;
-      insert_ternary_clause(cdb, &inputClause,true, 0, &ptrToTernary, 0);
-      //printf("Ternary Clause read\n");
-      break;*/
     default:
       ;NClause* ptrToNary = NULL;
       //printf("About to add N Clause\n");
@@ -193,7 +185,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
    to literal ~x1. This way we have an implication vector for all literals. 
    Associating x1 with x2 means that if x2 were to be true, then x1 must also be true.
    Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
-void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1, unsigned int thLast2){
+void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1){
   //  printf("Before binary lock\n");
   //  pthread_rwlock_wrlock(&insert_binary_clause_lock);
   //  printf("After binary lock\n");
