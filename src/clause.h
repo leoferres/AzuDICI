@@ -5,6 +5,8 @@
 #include "literal.h"
 #include "kvec.h"
 
+#define CACHE_LINE_SIZE 64
+
 typedef struct _naryclause { /*half a cacheline per ternary clause*/ 
   //unsigned int    size;
   Literal         *lits;  //lit[0] will keep size
@@ -42,6 +44,18 @@ typedef struct _reasonStruct{
   TClause*         tClPtr;
   ThNClause*       thNClPtr; //this we need to update activity of clause
 }Reason;
+
+typedef struct _binNode{ //one cache line
+  void* nextNode;
+  Literal litList[(CACHE_LINE_SIZE/4)-1];
+}BinNode;
+
+typedef struct _binList{
+  unsigned int size;
+  unsigned int posInLastNode;
+  BinNode *firstNode;
+  BinNode *lastNode;
+}BinList;
 
 Reason no_reason();
 

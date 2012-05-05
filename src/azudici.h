@@ -20,6 +20,7 @@ typedef struct _azuDICI{
   //unsigned int        decisionLevel; This will go to model
   double              scoreBonus; //Remember to initialize this.
 
+  BinNode**             localBinaries;
   kvec_t(unsigned int)  lastBinariesAdded;
   kvec_t(bool)          varMarks;
   kvec_t(ThNClause)     thcdb; //thread clause data base
@@ -61,9 +62,8 @@ void  azuDICI_increaseScore(AzuDICI* ad, Literal lit);
 /*Other methods*/
 void azuDICI_init_thcdb(AzuDICI* ad); //to implement
 bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l);
-bool azuDICI_propagate_w_ternaries(AzuDICI* ad, Literal l);
 bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l);
-void azuDICI_get_clause_from_reason(AzuDICI* ad, Clause *cl, Reason r, Literal l); //¿in clause.c?
+void azuDICI_get_clause_from_reason(Clause *cl, Reason r, Literal l); //¿in clause.c?
 void azuDICI_increase_activity(Reason r); //¿in clause.c?
 void azuDICI_sort_lits_according_to_DL_from_index(Model m, Clause cl, unsigned int indexFrom); //¿in model.c? 
 void azuDICI_notify_unassigned_lit(AzuDICI *ad, Literal l);
