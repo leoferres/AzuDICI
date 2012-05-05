@@ -509,7 +509,6 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
   if(ad->stats.numConflictsSinceLastCleanup >= ad->currentCleanupLimit){
     unsigned int numUnits = 0;
     unsigned int numBinaries = 0;
-    unsigned int numTernaries = 0;
     unsigned int numDeletes = 0;
     unsigned int numRealDeletes = 0;
     unsigned int numTrueClauses = 0;
@@ -1049,7 +1048,7 @@ void azuDICI_init_thcdb(AzuDICI* ad){
   //BINARY DB INITIALIZATION
   kv_init(ad->thbdb);//init vector 
   kv_resize(kvec_t(Literal), ad->thbdb, 2*(ad->nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
-  kv_size(ad->thbdb)= 2*(ad->nVars+1);
+  kv_size(ad->thbdb)=(size_t)(2*(ad->nVars+1));
 
   for(int i=0;i<2*(ad->nVars+1);i++){
     kv_init(kv_A(ad->thbdb,i));

@@ -48,7 +48,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   //  printf("Init bin db\n");
   kv_init(cdb->bDB);//init vector 
   kv_resize(kvec_t(Literal), cdb->bDB, 2*(nVars+1) ); //We know size is fixed to 2*(nVars+1) elements
-  kv_size(cdb->bDB)= 2*(nVars+1);
+  kv_size(cdb->bDB)=(size_t)(2*(nVars+1));
 
   /*Init each of the binary clause database elements*/
   for(int i=0;i<2*(nVars+1);i++){
@@ -104,7 +104,7 @@ unsigned int add_input_literal(ClauseDB* cdb, Literal l){
       break;
     case 2:
       //printf("About to add bin Clause\n");
-      insert_binary_clause(cdb, &inputClause, true, 0, 0);
+      insert_binary_clause(cdb, &inputClause, true, 0);
       //printf("Binary Clause read\n");
       break;
     default:
@@ -163,16 +163,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
 }
 
 
-/*******************Make this Thread safe****************************/
-  /*bDB stores 2 literals in a clause as following:
-   dDB is a vector which size is 2*(numVars+1) and each position in the vector
-   corresponds to a literal which has a literal vector associated to it. If the 
-   clause (x1 or ~x2) is to be stored in dBD, we store x1 in the literal vector
-   associated to the literal x2, and we store ~x2 in the literal vector associated
-   to literal ~x1. This way we have an implication vector for all literals. 
-   Associating x1 with x2 means that if x2 were to be true, then x1 must also be true.
-   Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
-void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1, unsigned int thLast2){
+void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1){
   //  printf("Before binary lock\n");
   pthread_rwlock_wrlock(&insert_binary_clause_lock);
   //  printf("After binary lock\n");
