@@ -569,7 +569,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
       delete = true;
       generalCl = &kv_A(ad->cdb->nDB, cl->posInDB);
       if( generalCl->is_original ||
- 	  cl->activity >= ad->strat.activityThreshold || cl->lits[0] <=4 ){ //keep it //remember cl->lits[0] stores size
+ 	  cl->activity >= ad->strat.activityThreshold || cl->lits[0] <=3 ){ //keep it //remember cl->lits[0] stores size
 	delete = false;
 
  	tentativeTernaryOrBinary.size=0;
@@ -664,15 +664,15 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
       //remember cl.lits[0] stores size of nclause
       //select two undef lits to watch
       /*FOR DEBUG*/
-      unsigned int countUndefs=0;
-      for(j=0;j<cl.lits[0];j++){
-	l1 = cl.lits[j+1];
-	dassert(!model_is_true(l1,&ad->model));
-	if( model_is_undef(l1, &ad->model)){
-	  countUndefs++;
-	}
-      }
-      dassert(countUndefs>=3);
+      //unsigned int countUndefs=0;
+      //for(j=0;j<cl.lits[0];j++){
+      //l1 = cl.lits[j+1];
+      //dassert(!model_is_true(l1,&ad->model));
+      //if( model_is_undef(l1, &ad->model)){
+      //countUndefs++;
+      //}
+      //}
+      //assert(countUndefs>=3);
       /************/
 
       for(j=0;j<cl.lits[0];j++){
