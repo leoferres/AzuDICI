@@ -484,8 +484,9 @@ void azuDICI_learn_lemma(AzuDICI* ad){
       }
     }
 
+    //printf("Previous insert:");azuDICI_print_clause(ad,ad->lemmaToLearn);
     ThNClause *ptrToThNClause = 
-      azuDICI_insert_th_clause(ad, ad->lemmaToLearn, false);
+      azuDICI_insert_th_clause(ad, &(ad->lemmaToLearn), false);
 
     ad->rUIP.size     = ad->lemmaToLearn.size;
     ad->rUIP.binLit   = 0;
@@ -961,16 +962,30 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
   return true;
 }
 
-ThNClause* azuDICI_insert_th_clause( AzuDICI* ad, Clause cl, bool isOriginal ){
+void vec_literal_sort1(Clause* cl, unsigned int size){
+  int i,j;
+  Literal aux;
+  for( i=0; i < size-1; i++ ){
+    for( j = i+1; j < size; j++ ){
+      if( kv_A(cl->lits,i) > kv_A(cl->lits,j)){
+	aux = kv_A(cl->lits,i);
+	kv_A(cl->lits,i) = kv_A(cl->lits,j);
+	kv_A(cl->lits,j) = aux;
+      }
+    }
+  }
+}
 
-  ThNClause* newThClause = (ThNClause*)malloc(sizeof(ThNClause)+(cl.size-3)*sizeof(Literal));//3 literals already considered in the size of ThNClause
+ThNClause* azuDICI_insert_th_clause( AzuDICI* ad, Clause *cl, bool isOriginal ){
+
+  ThNClause* newThClause = (ThNClause*)malloc(sizeof(ThNClause)+(cl->size-3)*sizeof(Literal));//3 literals already considered in the size of ThNClause
   //ThNClause threadClause;
   Literal l1,l2;
-  l1 = kv_A(cl.lits, 0);
-  l2 = kv_A(cl.lits, 1);
+  l1 = kv_A(cl->lits, 0);
+  l2 = kv_A(cl->lits, 1);
 
   newThClause->activity   = 0;
-  newThClause->size       = cl.size;
+  newThClause->size       = cl->size;
   newThClause->isOriginal = isOriginal;
   newThClause->lwatch1    = l1;
   newThClause->lwatch2    = l2;
@@ -978,9 +993,11 @@ ThNClause* azuDICI_insert_th_clause( AzuDICI* ad, Clause cl, bool isOriginal ){
   //init nextWatches with appropiate information
   newThClause->nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
   newThClause->nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(l2));
-
-  for(int i=0;i<cl.size;i++){
-    newThClause->lits[i] =  kv_A(cl.lits, i);
+  //printf("Previous sort:");  azuDICI_print_clause(ad,*cl);
+  //vec_literal_sort(cl, cl->size);
+  //printf("After sort:");  azuDICI_print_clause(ad,*cl);
+  for(int i=0;i<cl->size;i++){
+    newThClause->lits[i] =  kv_A(cl->lits, i);
   }
 
   /*printf("inserting nclause in local db: ");
