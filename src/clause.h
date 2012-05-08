@@ -26,12 +26,12 @@ typedef struct _clause {
 } Clause; /*Can be unit, binary, ternary or nary*/
 
 //The fist two literals of the list are the two watched ones
-typedef struct _naryThreadClause{//at least 29 bytes per thnClause
+typedef struct _naryThreadClause{//at least 37 bytes per thnClause
   unsigned int       activity; 
   unsigned int       size;
   bool               isOriginal;
-  //Literal            lwatch1;
-  //Literal            lwatch2;
+  Literal            lwatch1;
+  Literal            lwatch2;
   void*              nextWatched1;
   void*              nextWatched2;
   //  unsigned int       posInDB; //needed for clause cleanup
