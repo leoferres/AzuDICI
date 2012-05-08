@@ -233,7 +233,7 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   bool alreadyInList = false;
   
   //  vec_literal_sort(cl->lits.a,cl->size);
-  vec_literal_sort(cl,cl->size);
+  //vec_literal_sort(cl,cl->size);
   int listSize;
   listSize =kv_size(cdb->nDB);
   

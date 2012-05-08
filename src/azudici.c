@@ -558,13 +558,14 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
  	    delete = true; //it is true at dl 0, no need to have it.
  	    break;
  	  }else if(model_is_undef(cl->lits[j], &ad->model)){ //keep only false lits
-	    cl->lits[keptLits++] = cl->lits[j];
+	    keptLits++;
+	    //cl->lits[keptLits++] = cl->lits[j];
  	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) 
 	      = cl->lits[j];
 	    //tentativeTernaryOrBinary.size++;
  	  }
  	}
-	cl->size = keptLits;
+	//cl->size = keptLits;
 	
  	if( !delete && keptLits <= 2 ){ //new unit or binary
 	  numDeletes++;
@@ -616,6 +617,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 
 void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   uint lastValidPos=0;
+  uint posFoundLast = 0;
   Literal l1, l2;
   ThNClause *cl;
   int i,j;
@@ -628,14 +630,36 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
       //remember cl.lits[0] stores size of nclause
       //select two undef lits to watch
       /*FOR DEBUG*/
-      for(j=0;j<cl->size;j++){
-	dassert(model_is_undef(cl->lits[j],&ad->model));
-      }
+      //for(j=0;j<cl->size;j++){
+      //dassert(model_is_undef(cl->lits[j],&ad->model));
+      //}
       /************/
+      for(j=0;j<cl->size;j++){
+	l1 = cl->lits[j];
+	dassert(!model_is_true(l1,&ad->model));
+	if( model_is_undef(l1, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
 
-      l1 = cl->lits[0];
-      l2 = cl->lits[1];
+      for(j=posFoundLast+1; j < cl->size;j++){
+	l2 = cl->lits[j];
+	dassert(!model_is_true(l2,&ad->model));
+	if( model_is_undef(l2, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
 
+
+      assert(model_is_undef(l1,&ad->model));
+      assert(model_is_undef(l2,&ad->model));
+      //l1 = cl->lits[0];
+      //l2 = cl->lits[1];
+
+      cl->lwatch1 = l1;
+      cl->lwatch2 = l2;
       cl->nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
       cl->nextWatched2  = (void*)kv_A(ad->watches, lit_as_uint(l2));
 
@@ -782,15 +806,15 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     //}
     //printf("\n");
 
-    if (watchedClause->lits[0] == -l){
+    if (watchedClause->lwatch1 == -l){
       //printf("Is first watch %d\n",watchedClause->lwatch1);
       first=true;
-      otherLit = watchedClause->lits[1];
+      otherLit = watchedClause->lwatch2;
     } else{
       //printf("Is second watch  %d\n", watchedClause->lwatch2);
-      dassert(watchedClause->lits[1] == -l);
+      dassert(watchedClause->lwatch2 == -l);
       first=false;
-      otherLit = watchedClause->lits[0];
+      otherLit = watchedClause->lwatch1;
     }
 
     if(model_is_true(otherLit,&ad->model) ){
@@ -817,18 +841,18 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
     
     foundForReselection=false;
 
-    if(!foundForReselection){
-      sizeOfClause = watchedClause->size;
-      for(i=0;i<sizeOfClause;i++){
-	toReselect = watchedClause->lits[i];
-	//printf("toReselect is %d\n",toReselect);
-	if( (toReselect!=-l && toReselect!=otherLit) && 
-	    model_is_true_or_undef(toReselect,&ad->model)){ //found to reselect
-	  foundForReselection =true;
-	  break;
-	}
+    //    if(!foundForReselection){
+    sizeOfClause = watchedClause->size;
+    for(i=0;i<sizeOfClause;i++){
+      toReselect = watchedClause->lits[i];
+      //printf("toReselect is %d\n",toReselect);
+      if( (toReselect!=-l && toReselect!=otherLit) && 
+	  model_is_true_or_undef(toReselect,&ad->model)){ //found to reselect
+	foundForReselection =true;
+	break;
       }
     }
+    //}
   
     //    if( i < sizeOfClause){  //Found lit to reselect
     if( foundForReselection ){  //Found lit to reselect
@@ -838,16 +862,16 @@ bool azuDICI_propagate_w_n_clauses(AzuDICI* ad, Literal l){
       //watchedClause->cachedLit = -l;
 
       if ( first ) {
-	watchedClause->lits[i] = watchedClause->lits[0];
-	watchedClause->lits[0] = toReselect;
+	//watchedClause->lits[i] = watchedClause->lits[0];
+	watchedClause->lwatch1 = toReselect;
 	//what stores this direction, is overwritten 
 	//	ptrToWatchedClauseAddr = (ThNClause**)&(watchedClause->nextWatched1); 
 	*ptrToWatchedClauseAddr = watchedClause->nextWatched1;
 	//printf("nextWatched1 is %d\n",watchedClause->nextWatched1);
 	watchedClause->nextWatched1 = (void*)kv_A(ad->watches,lit_as_uint(toReselect));
       } else {
-	watchedClause->lits[i] = watchedClause->lits[1];
-	watchedClause->lits[1] = toReselect;
+	//watchedClause->lits[i] = watchedClause->lits[1];
+	watchedClause->lwatch2 = toReselect;
 	//what stores this direction, is overwritten 
 	//ptrToWatchedClauseAddr = (ThNClause**)&(watchedClause->nextWatched2); 
 	*ptrToWatchedClauseAddr = watchedClause->nextWatched2;
@@ -918,6 +942,8 @@ ThNClause* azuDICI_insert_th_clause( AzuDICI* ad, Clause cl, bool isOriginal ){
   newThClause->activity   = 0;
   newThClause->size       = cl.size;
   newThClause->isOriginal = isOriginal;
+  newThClause->lwatch1    = l1;
+  newThClause->lwatch2    = l2;
 
   //init nextWatches with appropiate information
   newThClause->nextWatched1  = (void*)kv_A(ad->watches, lit_as_uint(l1)); 
@@ -1079,6 +1105,8 @@ void azuDICI_init_thcdb(AzuDICI* ad){
     localClause->activity     = 0;
     localClause->size         = sizeOfClause;
     localClause->isOriginal   = true;
+    localClause->lwatch1      = l1;
+    localClause->lwatch2      = l2;
     localClause->nextWatched1 = (void*)kv_A(ad->watches, lit_as_uint(l1));
     localClause->nextWatched2 = (void*)kv_A(ad->watches, lit_as_uint(l2));
     for(int j=0;j<sizeOfClause;j++){
