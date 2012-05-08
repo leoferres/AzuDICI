@@ -581,13 +581,14 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
  	    delete = true; //it is true at dl 0, no need to have it.
  	    break;
  	  }else if(model_is_undef(cl->lits[j], &ad->model)){ //keep only false lits
-	    cl->lits[keptLits++] = cl->lits[j];
+	    keptLits++;
+	    //cl->lits[keptLits++] = cl->lits[j];
  	    kv_A(tentativeTernaryOrBinary.lits,tentativeTernaryOrBinary.size++) 
 	      = cl->lits[j];
 	    //tentativeTernaryOrBinary.size++;
  	  }
  	}
-	cl->size = keptLits;
+	//cl->size = keptLits;
 
  	if( !delete && keptLits <= 2 ){ //new unit or binary
 	  numDeletes++;
@@ -605,8 +606,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 	    }
 	  }else if(keptLits == 2){
 	    numBinaries++;
-	    l1 = cl->lits[0];
-	    l2 = cl->lits[1];
+	    l1 = kv_A(tentativeTernaryOrBinary.lits,0); 
+	    l2 = kv_A(tentativeTernaryOrBinary.lits,1); 
 	    lastPos1 = kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack
 	    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack
 
@@ -656,6 +657,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 
 void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   uint lastValidPos=0;
+  uint posFoundLast=0;
   Literal l1, l2;
   ThNClause *cl;
   int i,j;
@@ -668,14 +670,35 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
       //remember cl.lits[0] stores size of nclause
       //select two undef lits to watch
       /*FOR DEBUG*/
-      for(j=0;j<cl->size;j++){
-	l1 = cl->lits[j];
-	dassert(model_is_undef(l1,&ad->model));
-      }
+      //for(j=0;j<cl->size;j++){
+      //l1 = cl->lits[j];
+      //dassert(model_is_undef(l1,&ad->model));
+      //}
       /************/
 
-      l1 = cl->lits[0];
-      l2 = cl->lits[1];
+      for(j=0;j<cl->size;j++){
+	l1 = cl->lits[j];
+	assert(!model_is_true(l1,&ad->model));
+	if( model_is_undef(l1, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
+
+      for(j=posFoundLast+1; j < cl->size;j++){
+	l2 = cl->lits[j];
+	assert(!model_is_true(l2,&ad->model));
+	if( model_is_undef(l2, &ad->model)){
+	  posFoundLast = j;
+	  break;
+	}
+      }
+
+      assert(model_is_undef(l1, &ad->model));
+      assert(model_is_undef(l2, &ad->model));
+
+      //l1 = cl->lits[0];
+      //l2 = cl->lits[1];
 
       cl->lwatch1 = l1;
       cl->lwatch2 = l2;
