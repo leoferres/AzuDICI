@@ -122,32 +122,27 @@ In Section \ref{} we.....
 \label{sec:preliminaries}
 \subsection{SAT and SAT solvers}
 
-A symbol $v \in V $ is known as a \emph{propositional variable} if $V$ is
+Let $v \in V $ be a \emph{propositional variable} and $V$
  a fixed finite set of propositional symbols.  If $v \in V$,
 then $v$ and $\lnot v$ are \emph{literals} of $V$.  
 The \emph{negation} of a literal $l$, written $\lnot l$, denotes 
 $\lnot v$ if $l$ is $v$, and $v$ if $l$ is $\lnot v$.
 A \emph{clause} is a disjunction of literals $l_1 \lor\ldots\lor l_n$.
-A \emph{unit clause} is a clause consisting of a single literal.  The
-\emph{empty clause} is a clause that has no literals and will be
-denoted by $\Box$.  A (CNF) \emph{formula} is a conjunction of one or
-more clauses $C_1 \land\ldots\land C_n$. When it leads to no
-ambiguities, we will sometimes also write such a formula in set
-notation $\{C_1,\ldots,C_n\}$, or simply replace the $\land$
-connectives by commas.  A (partial truth) \emph{assignment} $M$ is a
+A (CNF) \emph{formula} is a conjunction of one or
+more clauses $C_1 \land\ldots\land C_n$. 
+ A (partial truth) \emph{assignment} $M$ is a
 set of literals such that $\{ v, \lnot v \} \subseteq M$ for no $v$. A
 literal $l$ is \emph{true} in $M$ if $l \in M$, is \emph{false} in $M$
 if $\lnot l \in M$, and is \emph{undefined} in $M$ otherwise.  In this
-paper $M$ will be written as a sequence (also seen as a set when
-convenient) of literals with $M l$ meaning the concatenation of $M$
+paper $M$ will be written as a sequence 
+ of literals with $M l$ meaning the concatenation of $M$
 with $l$.   A clause $C$ is true in $M$ if at least one of its
 literals is true in $M$.  It is false in $M$ if all its literals are
 false in $M$, and it is undefined in $M$ otherwise. 
 If $C$ is a clause $l_1
 \lor\ldots\lor l_n$, we write $\lnot C$ to denote the formula $\lnot
 l_1 \land\ldots\land \lnot l_n$.
-Hence, the empty
-clause is always false.  A formula $F$ is true in $M$, or
+A formula $F$ is true in $M$, or
 \emph{satisfied} by $M$, denoted $M\models F$, if all its clauses are
 true in $M$.  In that case, $M$ is a \emph{model} of $F$.  If $F$ has
 no models then it is \emph{unsatisfiable}.  
@@ -159,34 +154,32 @@ Since there exists a polynomial transformation
 (see~\cite{Tseitin1968}) for any arbitrary formula to an
 equisatisfiable CNF one, we will assume w.l.o.g. that $F$ is in CNF.
 
-A software program that solves this problems is called a \emph{SAT solver}
+A software program that solves this problem is called a \emph{SAT solver}
 The Conflict-Driven-Clause-Learning (CDCL) algorithm, is nowadays at the 
-basis of most state-of-ther-art SAT-solvers\cite{EenSorensson2003SAT,
-picosat2008,rsat,siege, plingeling}. This algorithm has, at its roots, the very 
+basis of most state-of-ther-art SAT-solvers\cite{gluclose,plingeling,cryptominisat}. 
+This algorithm has, at its roots, the very 
 simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
- in \cite{relsat,Chaff2001, GRASP1999IEEE, ZhangStickel1996IMATH} it has evolved
+ in \cite{relsat,Chaff2001, GRASP1999IEEE, ZhangStickel1996IMATH, EenSorensson2003SAT,
+picosat2008,} it has evolved
  to an algorithm that incorpores several conceptual and implementation 
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 
-\IncMargin{1em}
+%\IncMargin{1em}
 \begin{algorithm}
 \SetKwData{Conflict}{conflict}
 \SetKwData{Dl}{dl}
 \SetKwData{Lemma}{lemma}
 \SetKwData{Dec}{dec}
-  \SetKwData{Cost}{cost}\SetKwData{J}{j}\SetKwData{Core}{core}
-  \SetKwData{Result}{res}\SetKwData{BV}{BV}
-  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
-  \Input{formula $F=\{C_1,\ldots,C_m\}$}
-  \Output{SAT OR UNSAT}
-  \BlankLine
-  \Cost \assign 0\;
-  \J \assign 1\;
+\SetKwData{Result}{res}\SetKwData{BV}{BV}
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+\Input{formula $F=\{C_1,\ldots,C_m\}$}
+\Output{SAT OR UNSAT}
+ \BlankLine
   $F_w$ \assign $F$\;
   \While{true}{
-    \While{ \Conflict \assign PROPAGATE() } 
-      \lIf{ DECISION\_LEVEL == 0 } \Return UNSAT\;
+    \While{\Conflict \assign PROPAGATE()}{
+      \lIf{DECISION\_LEVEL == 0}{\Return UNSAT\;}
       \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
       \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
       LEMMA\_LEARNING(\Lemma)\;
@@ -197,11 +190,10 @@ of variables and clauses. In \ref{} we sketch the CDCL algorithm.
     \lIf{ \Dec = 0 }\Return SAT\;
     DECIDE( \Dec )\;
   }
-
-  \caption{CDCL algorithm}
+\caption{CDCL algorithm}
 \label{alg:CDCL}
 \end{algorithm}
-\DecMargin{1em}
+%\DecMargin{1em}
 
 As can be seen ..... explain and link concepts of the algorithm.
 
@@ -210,18 +202,55 @@ termination and soundness we refer to \cite{Nieuwenhuisetal2006JACM}
 
 
 \subsection{Parallel SAT solvers}
+Parallel SAT solvers are not as mature 
+as sequential ones and it is still not clear which path to follow
+when designing and implementing such new solvers.  
+We mainly classify parallel SAT solvers into two categories: 
+Portfolio approach solvers and divide-and-conquer ones.
 
-As mentioned before, some parallel SAT solvers have performed at the top of the last SAT competitions, but even though they all fall into the parallel solvers category, their parallel strategies and implementations vastly differ from each other. We mainly classify parallel SAT solvers into two categories: Portfolio approach solvers and divide-and-conquer solvers.
+The main idea behind portfolio approach solvers is the fact that different 
+strategies/parameters of CDCL sequential solvers will perform better 
+for different families of SAT problems. 
+In sequential CDCL SAT-solving, there exist several parameters/strategies 
+related with the algorithm's heuristics in, for example, restarting, deciding 
+or cleaning the clause database. Taking this into 
+consideration, the portfolio approach is very straightforward: 
+Run a group of sequential solvers in different threads, 
+each with different parameters
+ and/or different strategies. The time the portfolio-approach based 
+solver will take to solve the problem will be the time of the fastest 
+thread in the group of solvers running in parallel. 
+Differences between this kind of solvers lie in whether the clause
+database should be shared~\cite{Sartagnan}, or otherwise if each thread should 
+have its own database. If so, it is possible to implement the threads in order to
+interchange lemmas both: aggressively~\cite{ManySAT} or selectively~\cite{plingeling} or 
+not have communications between threads at all~\cite{ppfolio}.
 
-The main idea behind portfolio approach solvers is the fact that different kinds of sequential solvers will perform differently for different kinds of SAT problems. The most successful sequential solvers [?] all have random factors coming into play when solving SAT problems. They need random numbers for their search heuristics [?] and thus the same solver might perform very differently in two different instances of the exact same SAT problem. Taking this into consideration, the portfolio approach is a very straight forward strategy: They run a group of sequential solvers in parallel, each with different random values and/or different search strategies. The time they take to solve the problem will be the time of the fastest solver in the group of solvers running in parallel. Although all portfolio approach solvers share this same principle, they also have quite different kinds of implementations. We identify in this group the solvers that are pure portfolio approach, the ones that share clauses only logically, and the ones that share clauses physically and logically.
+Divide-and-conquer solvers do not try to run different solvers in parallel, 
+they run one solving instance, but try to parallelize the search and divide it 
+between the different threads. A common strategy to divide the search space is 
+to use guiding paths~\cite{psato}. A guiding path is a partial assignment $M$ in $F$, 
+which restricts the search space of the SAT problem. A solver that divides 
+its search space with guiding paths will assign threads to solve $F$ with the 
+given $M$ from the guiding path the thread was assigned to. Once a thread 
+finishes searching a guiding path with no success, it can request another to 
+keep searching (we refer to \cite{paMiraXT} for further explanations). 
+Both parallelization strategies (portfolio approach and divide-and-conquer approach) 
+were and are currently being applied 
+to shared memory parallel computers (plingeling) as well as distributed 
+memory ones~\cite{paMiraXT}. 
 
-Solvers which are pure portfolio approach have the most simple design. They run completely independent solvers in parallel and wait for one of them to give an answer. Despite their simplicity, the solver ppfolio [?], a pure portfolio approach solver, was the winner of the crafted and random categories, and second place in the application category of the 2011 SAT competition of parallel solvers. 
+%As mentioned before, some parallel SAT solvers have performed at the top of the last SAT competitions, but even though they all fall into the parallel solvers category, their parallel strategies and implementations vastly differ from each other. We mainly classify parallel SAT solvers into two categories: Portfolio approach solvers and divide-and-conquer solvers.
 
-On the other hand, we have more elaborated portfolio approach solvers, which can also share clauses logically between their different solvers [?]. One of the advantages of CDCL solvers is the fact that they can learn new lemmas as they solve a SAT problem [?]. These new lemmas will provide additional information during the solution search, so that the solver doesn't fall into previous fruitless search paths (there are also some drawbacks to adding new lemmas, which are addresses by clause database cleanups [?]). The idea is that different solvers running in parallel can share their learned lemmas so that they all benefit from what other solvers have learned and improve their own search. An example of these kind of solvers is ManySAT [?], which won the 2009 SAT competition in the parallel solver application category. ManySAT has its own sequential state-of-the-art SAT solver and runs different instances of it in parallel, using different VSIDS heuristics [?] and restart policies [?] for each of it, both of which account for random factors in the solver. The difference with pure portfolio approach solvers, is that ManySAT also shares learned lemmas between solving threads. It is called logical sharing of clauses, because the lemmas are passed as messages between threads and they never share the same physical information in memory. The advantage of logical sharing is that it is easier to implement message passing between threads, than having threads reading and modifying the same memory locations, which often requires locks that could end hindering the overall solver performance. [TALK ABOUT PLINGELING].
+%The main idea behind portfolio approach solvers is the fact that different kinds of sequential solvers will perform differently for different kinds of SAT problems. The most successful sequential solvers [?] all have random factors coming into play when solving SAT problems. They need random numbers for their search heuristics [?] and thus the same solver might perform very differently in two different instances of the exact same SAT problem. Taking this into consideration, the portfolio approach is a very straight forward strategy: They run a group of sequential solvers in parallel, each with different random values and/or different search strategies. The time they take to solve the problem will be the time of the fastest solver in the group of solvers running in parallel. Although all portfolio approach solvers share this same principle, they also have quite different kinds of implementations. We identify in this group the solvers that are pure portfolio approach, the ones that share clauses only logically, and the ones that share clauses physically and logically.
 
-Portfolio approach solvers that share clauses physically have the same strategy as mentioned before, but they share clauses by allowing threads to access the same memory locations, instead of message passing. One solver in this category is SarTagnan [?], which shares clauses logically and physically. [EXPLAIN MORE ABOUT SARTAGNAN]. 
+%Solvers which are pure portfolio approach have the most simple design. They run completely independent solvers in parallel and wait for one of them to give an answer. Despite their simplicity, the solver ppfolio [?], a pure portfolio approach solver, was the winner of the crafted and random categories, and second place in the application category of the 2011 SAT competition of parallel solvers. 
 
-Divide-and-conquer solvers do not try to run different solvers in parallel, they run one solving instance, but try to parallelize the search and divide it between the different threads. A common strategy to divide the search space is to use guiding paths [?]. A guiding path is a partial assignment $M$ in $F$, which restricts the search space of the SAT problem. A solver that divides its search space with guiding paths will assign threads to solve $F$ with the given $M$ from the guiding path the thread was assigned with. Once a thread finishes searching a guiding path with no success, it can request another to keep searching. MiraXT [?] is a divide-and-conquer SAT solver which uses guiding paths. Moreover, different threads solving different guiding paths also share a common clause database, in which they store their learned lemmas. This is another example of physical clause sharing. [TALK MORE ABOUT MIRAXT]
+%On the other hand, we have more elaborated portfolio approach solvers, which can also share clauses logically between their different solvers [?]. One of the advantages of CDCL solvers is the fact that they can learn new lemmas as they solve a SAT problem [?]. These new lemmas will provide additional information during the solution search, so that the solver doesn't fall into previous fruitless search paths (there are also some drawbacks to adding new lemmas, which are addresses by clause database cleanups [?]). The idea is that different solvers running in parallel can share their learned lemmas so that they all benefit from what other solvers have learned and improve their own search. An example of these kind of solvers is ManySAT [?], which won the 2009 SAT competition in the parallel solver application category. ManySAT has its own sequential state-of-the-art SAT solver and runs different instances of it in parallel, using different VSIDS heuristics [?] and restart policies [?] for each of it, both of which account for random factors in the solver. The difference with pure portfolio approach solvers, is that ManySAT also shares learned lemmas between solving threads. It is called logical sharing of clauses, because the lemmas are passed as messages between threads and they never share the same physical information in memory. The advantage of logical sharing is that it is easier to implement message passing between threads, than having threads reading and modifying the same memory locations, which often requires locks that could end hindering the overall solver performance. [TALK ABOUT PLINGELING].
+
+%Portfolio approach solvers that share clauses physically have the same strategy as mentioned before, but they share clauses by allowing threads to access the same memory locations, instead of message passing. One solver in this category is SarTagnan [?], which shares clauses logically and physically. [EXPLAIN MORE ABOUT SARTAGNAN]. 
+
+%Divide-and-conquer solvers do not try to run different solvers in parallel, they run one solving instance, but try to parallelize the search and divide it between the different threads. A common strategy to divide the search space is to use guiding paths [?]. A guiding path is a partial assignment $M$ in $F$, which restricts the search space of the SAT problem. A solver that divides its search space with guiding paths will assign threads to solve $F$ with the given $M$ from the guiding path the thread was assigned with. Once a thread finishes searching a guiding path with no success, it can request another to keep searching. MiraXT [?] is a divide-and-conquer SAT solver which uses guiding paths. Moreover, different threads solving different guiding paths also share a common clause database, in which they store their learned lemmas. This is another example of physical clause sharing. [TALK MORE ABOUT MIRAXT]
 
 \section{Cache performance in Plingeling}
 \subsection{Memory hierarchy}
