@@ -113,7 +113,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       //printf("backjump to dl %d, \n",ad->dlToBackjump);
       azuDICI_backjump_to_dl(ad,ad->dlToBackjump);
       //printf("Set true uip\n");
-      azuDICI_set_true_uip(ad);
+      if( !azuDICI_set_true_uip(ad) ) return 20; //we check here if new units have been added by other thread and, hence, we can detect unsatisfiability
     }
     azuDICI_restart_if_adequate(ad);
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
@@ -423,7 +423,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
   //printf("Learning lemma size %d: ",ad->lemmaToLearn.size); azuDICI_print_clause(ad,ad->lemmaToLearn);
   switch(ad->lemmaToLearn.size){
   case 1:
-    insert_unitary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->lastUnitAdded++);
+    insert_unitary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->lastUnitAdded);
     ad->rUIP.size     = 1;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = NULL;
@@ -511,15 +511,28 @@ void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl){
   ad->model.decision_lvl = dl;
 }
 
-void azuDICI_set_true_uip(AzuDICI* ad){
-  if(ad->lemmaToLearn.size==1) {
-    ad->stats.numDlZeroLitsSinceLastRestart++;
-    ad->stats.numDLZeroLits++;
+bool azuDICI_set_true_uip(AzuDICI* ad){
+  //  if(ad->lemmaToLearn.size==1) {
+  //}
+  Literal lToSetTrue;
+  if(ad->model.decision_lvl == 0){ //we have learned a unit
+    for( int i = ad->lastUnitAdded+1; i<kv_size(ad->cdb->uDB); i++){
+      lToSetTrue = kv_A(ad->cdb->uDB,i);
+      if( model_is_undef(lToSetTrue, &ad->model) ){
+	model_set_true_w_reason(lToSetTrue, ad->rUIP, &ad->model);
+	ad->stats.numDlZeroLitsSinceLastRestart++;
+	ad->stats.numDLZeroLits++;
+      }else if(model_is_false(lToSetTrue, &ad->model)){
+	return false;
+      }      
+    }
+    ad->lastUnitAdded = kv_size(ad->cdb->uDB)-1;
+  }else{
+    model_set_true_w_reason(kv_A(ad->lemmaToLearn.lits,0), ad->rUIP, &ad->model);
   }
-
-  model_set_true_w_reason(kv_A(ad->lemmaToLearn.lits,0), ad->rUIP, &ad->model);
   //conflict ends, and then we propagate
   ad->conflict.size = 0;
+  return true;
 }
 
 bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
@@ -531,7 +544,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     unsigned int numDeletes = 0;
     unsigned int numRealDeletes = 0;
     unsigned int numTrueClauses = 0;
-    
+    Literal lToSetTrue;    
+
     azuDICI_backjump_to_dl(ad,  0 );
     dassert(ad->model.decision_lvl == 0);
     //update stats
@@ -539,6 +553,19 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     ad->stats.numCleanups++;
 
     ad->currentCleanupLimit *= ad->strat.cleanupMultiplier;
+
+    //set true units from other threads
+    for( int i = ad->lastUnitAdded+1; i<kv_size(ad->cdb->uDB); i++){
+      lToSetTrue = kv_A(ad->cdb->uDB,i);
+      if( model_is_undef(lToSetTrue, &ad->model) ){
+	model_set_true_w_reason(lToSetTrue, ad->rUIP, &ad->model);
+	ad->stats.numDlZeroLitsSinceLastRestart++;
+	ad->stats.numDLZeroLits++;
+      }else if(model_is_false(lToSetTrue, &ad->model)){
+	return false;
+      }      
+    }
+    ad->lastUnitAdded = kv_size(ad->cdb->uDB)-1;
 
     //    printf("CLEANUP\n");
     //Cleanup
@@ -800,7 +827,8 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList, litIndex;
   litIndex = lit_as_uint(l);
-  sizeOfList = kv_A(ad->lastBinariesAdded,litIndex); //hack for same search
+  sizeOfList = ad->cdb->bDB[litIndex].size;
+  //kv_A(ad->lastBinariesAdded,litIndex); //hack for same search
   //  ts_vec_size(sizeOfList, list);
   Reason r;
   r.tClPtr = NULL;
@@ -832,7 +860,7 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
 	return false;
       }
       binsPropagated++;
-      if(binsPropagated==sizeOfList) return true; //We just propagate the number of lits we have in our local list. This is a hack for same search.
+      if(binsPropagated==sizeOfList) return true; //We just propagate the number of lits we certainly know have been inserted, although, some other bins could have been inserted while propagating.
     }
     currentNode = currentNode->nextNode;
   }

@@ -43,6 +43,8 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   /*Init Unitary clauses database*/
   //  printf("Init unit db\n");
   kv_init(cdb->uDB); //init vector with 0 elements
+  kv_resize(Literal, cdb->uDB, nVars); //We now max nvars can be true
+  kv_size(cdb->uDB)=0;
   /******************************/
 
   /*Init Binary clauses database*/
@@ -150,16 +152,18 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
   /*************Hack for same search*************/
   //We assume each thread learns the next ternary in the same order
   if(!isOriginal){
-    if(listSize > lastThUnit){
-      alreadyInList = true;
-      /*FOR DEBUG*/
-      /* ts_vec_ith(unitInList,cdb->uDB,lastThUnit); */
-      /* dassert(unitInList == kv_A(cl->lits,0)); */
-      /***********/
+    for(int i=lastThUnit;i<listSize;i++){
+      if( kv_A(cdb->uDB,i) == kv_A(cl->lits,0)){
+	alreadyInList = true;
+	break;
+	/*FOR DEBUG*/
+	/* ts_vec_ith(unitInList,cdb->uDB,lastThUnit); */
+	/* dassert(unitInList == kv_A(cl->lits,0)); */
+	/***********/
+      }
     }
   }
   /*********************************************/
-
 
   /*If it isn't already in the uDB, add it*/
   if(!alreadyInList){
@@ -199,53 +203,56 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   not_l1 = lit_as_uint(-l1);
   not_l2 = lit_as_uint(-l2);
 
-  bool alreadyInList = false;
+  //bool alreadyInList = false;
 
   pthread_rwlock_wrlock(&(insert_binary_clause_locks[not_l1]));
+
+
   /*************Hack for same search*************/
   //We assume each thread learns the next binary in the same order
-  if(!isOriginal){
-    if(cdb->bDB[not_l1].size > thLast1){
-      alreadyInList = true;
-    }
-  }
+  //if(!isOriginal){
+  //for(int i=thLast1;i<cdb->bDB[not_l1].size;
+  //if(cdb->bDB[not_l1].size > thLast1){
+  //alreadyInList = true;
+  //}
+  //}
   /*********************************************/
 
   /*Insert and update, if not previously inserted*/
-  if(!alreadyInList){
-    BinNode* newNode;
-    if(cdb->bDB[not_l1].posInLastNode==(CACHE_LINE_SIZE/4)-1){
-      newNode=(BinNode*)malloc(sizeof(BinNode));
-      newNode->nextNode=NULL;
-      cdb->bDB[not_l1].lastNode->nextNode=newNode;
-      cdb->bDB[not_l1].lastNode=newNode;
-      cdb->bDB[not_l1].posInLastNode=0;
-    }
-
-    if(cdb->bDB[not_l2].posInLastNode==(CACHE_LINE_SIZE/4)-1){
-      newNode=(BinNode*)malloc(sizeof(BinNode));
-      newNode->nextNode=NULL;
-      cdb->bDB[not_l2].lastNode->nextNode=newNode;
-      cdb->bDB[not_l2].lastNode=newNode;
-      cdb->bDB[not_l2].posInLastNode=0;
-    }
-
-    //    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
-    //    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
-    cdb->bDB[not_l1].lastNode->litList[cdb->bDB[not_l1].posInLastNode++] = l2;
-    cdb->bDB[not_l2].lastNode->litList[cdb->bDB[not_l2].posInLastNode++] = l1;
-    cdb->bDB[not_l1].size++;
-    cdb->bDB[not_l2].size++;
-
-    //update clauseDB stats
-    if(isOriginal){
-      cdb->numOriginalBinaries++;
-      cdb->numInputClauses++;
-    }
-
-    cdb->numBinaries++;
-    cdb->numClauses++;
+  //if(!alreadyInList){
+  BinNode* newNode;
+  if(cdb->bDB[not_l1].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+    newNode=(BinNode*)malloc(sizeof(BinNode));
+    newNode->nextNode=NULL;
+    cdb->bDB[not_l1].lastNode->nextNode=newNode;
+    cdb->bDB[not_l1].lastNode=newNode;
+    cdb->bDB[not_l1].posInLastNode=0;
   }
+
+  if(cdb->bDB[not_l2].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+    newNode=(BinNode*)malloc(sizeof(BinNode));
+    newNode->nextNode=NULL;
+    cdb->bDB[not_l2].lastNode->nextNode=newNode;
+    cdb->bDB[not_l2].lastNode=newNode;
+    cdb->bDB[not_l2].posInLastNode=0;
+  }
+
+  //    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
+  //    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
+  cdb->bDB[not_l1].lastNode->litList[cdb->bDB[not_l1].posInLastNode++] = l2;
+  cdb->bDB[not_l2].lastNode->litList[cdb->bDB[not_l2].posInLastNode++] = l1;
+  cdb->bDB[not_l1].size++;
+  cdb->bDB[not_l2].size++;
+  
+  //update clauseDB stats
+  if(isOriginal){
+    cdb->numOriginalBinaries++;
+    cdb->numInputClauses++;
+  }
+  
+  cdb->numBinaries++;
+  cdb->numClauses++;
+  //}
   /********************************************/
   pthread_rwlock_unlock(&(insert_binary_clause_locks[not_l1]));
 }
@@ -261,7 +268,7 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   bool alreadyInList = false;
 
   //  vec_literal_sort(cl->lits.a,cl->size);
-  //vec_literal_sort(cl,cl->size);
+  vec_literal_sort(cl,cl->size);
   int listSize;
   listSize =kv_size(cdb->nDB);
 
@@ -270,23 +277,23 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   //printf("Last nary is %d\n",lastThNary);
   //printf("Num Nary clauses is %d\n",cdb->numNClauses);
   //printf("listSize is %d\n",listSize);
-  /*************Hack for same search*************/
-  //We assume each thread learns the next ternary in the same order
-  if(!isOriginal){
-    if(listSize > lastThNary){
-      alreadyInList = true;
-      *ptrToNClause = &kv_A(cdb->nDB,lastThNary);
-      dassert((*ptrToNClause)->flags[wId]==false);
-
-      (*ptrToNClause)->flags[wId]=true;
-      dassert( (*ptrToNClause)->lits[0] == cl->size );
-      /*FOR DEBUG*/
-      /* for (i = 0; i < cl->size; i++) { */
-      /* 	dassert(kv_A((*ptrToNClause)->lits,i) == kv_A(cl->lits, i)); */
-      /* } */
-      /***********/
-    }
-  }
+  //We assume each thread learns the next nary in the same order
+  //int j;
+  //if(!isOriginal){
+  //for(int i=cdb->numOriginalNClauses;i<listSize;i++){
+  //if( kv_A(cdb->nDB,i).lits[0] == cl->size){
+  //for(j=0;j<cl->size;j++){
+  //if(kv_A(cdb->nDB,i).lits[j+1]!=kv_A(cl->lits,j)) break;
+  //}
+  //if(j==cl->size){
+  // alreadyInList = true;
+  //*ptrToNClause = &kv_A(cdb->nDB,lastThNary);
+  //(*ptrToNClause)->flags[wId]=true;
+  //break;
+  //}
+  //}
+  //}
+  //}
   /*********************************************/
 
   if(!alreadyInList){
@@ -301,12 +308,12 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
 	else nclause.flags[i] = false;
       }
     }
-    
+  
     //Insert literals
     nclause.lits = (Literal*)malloc((cl->size+1)*sizeof(Literal));
     //nclause.size = cl->size;
-  //kv_resize(Literal, nclause.lits, cl->size);
-  //kv_size(nclause.lits) = cl->size;
+    //kv_resize(Literal, nclause.lits, cl->size);
+    //kv_size(nclause.lits) = cl->size;
     nclause.lits[0] = cl->size;
     for(i=0;i<cl->size;i++){
       nclause.lits[i+1] = kv_A( cl->lits, i );
@@ -327,8 +334,8 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
     cdb->numNClauses++;
     cdb->numClauses++;
     dassert( listSize+1 == cdb->numNClauses );
-    /**************************************************/
+  /**************************************************/
   }
-   pthread_rwlock_unlock(&insert_nary_clause_lock);
+  pthread_rwlock_unlock(&insert_nary_clause_lock);
 }
 #endif /* _CLAUSEDB_C_ */
