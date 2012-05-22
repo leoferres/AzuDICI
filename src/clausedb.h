@@ -22,7 +22,10 @@ typedef struct _cdb {
   unsigned int               numNClauses;
   unsigned int               numOriginalNClauses;
   unsigned int               numInputClauses;
-
+  
+  kvec_t(int)*               clIndex;
+  //unsigned int*              indexSize;
+  unsigned int*              indexInputClauses;
   unsigned int               randomNumbers[MAX_RANDOM_NUMBERS];
   kvec_t(Literal)            uDB;  
   BinList*                   bDB;

@@ -62,6 +62,8 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   }
   /******************************/
 
+
+
   /*Init binary locks*/
   insert_binary_clause_locks=(pthread_rwlock_t*)malloc(2*(nVars+1)*sizeof(pthread_rwlock_t));
 
@@ -85,6 +87,11 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   }
   /****************************/
 
+  cdb->clIndex = (kvec_t(NClause)*)malloc((2*nVars+2)*sizeof(kvec_t(NClause)));
+  cdb->indexInputClauses = (unsigned int*)malloc((2*nVars+2)*sizeof(unsigned int));
+  for(int i=0;i<2*nVars+2;i++){
+    cdb->indexInputClauses[i]=0;
+  }
   return cdb;
 }
 
@@ -278,8 +285,25 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   //printf("Num Nary clauses is %d\n",cdb->numNClauses);
   //printf("listSize is %d\n",listSize);
   //We assume each thread learns the next nary in the same order
-  //int j;
-  //if(!isOriginal){
+  unsigned int smallestLit = lit_as_uint(kv_A(cl->lits,0));
+  if(!isOriginal){
+    int j;
+    unsigned int posInNDB;
+    for(i=cdb->indexInputClauses[smallestLit];i<kv_size(cdb->clIndex[smallestLit]);i++){
+      posInNDB = kv_A(cdb->clIndex[smallestLit],i);
+      if(kv_A(cdb->nDB,posInNDB).lits[0]==cl->size){
+	for(j=0;j<cl->size;j++){
+	  if( kv_A(cdb->nDB,posInNDB).lits[j+1]!=kv_A(cl->lits,j)) break;
+	}
+	if(j==cl->size){
+	  alreadyInList = true;
+	  *ptrToNClause = &kv_A(cdb->nDB,posInNDB);
+	  (*ptrToNClause)->flags[wId]=true;
+	  break;
+	}
+      }
+    }
+  }
   //for(int i=cdb->numOriginalNClauses;i<listSize;i++){
   //if( kv_A(cdb->nDB,i).lits[0] == cl->size){
   //for(j=0;j<cl->size;j++){
@@ -322,11 +346,13 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
     //  printf("nclause literals added\n");
     
     //update clauseDB
+    kv_push(unsigned int, cdb->clIndex[smallestLit], kv_size(cdb->nDB)); //new clause will be in kv_size position in nDB.
     kv_push(NClause, cdb->nDB, nclause);
     *ptrToNClause = &kv_A(cdb->nDB, listSize);
     
     //    printf("Pointer to NClause is %d\n", *ptrToNClause);
     if(isOriginal){
+      cdb->indexInputClauses[smallestLit]++;
       cdb->numInputClauses++;
       cdb->numOriginalNClauses++;
     }
