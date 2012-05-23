@@ -15,7 +15,7 @@
 %\titlebanner{DRAFT---Do not distribute}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
- \newcommand{\assign}{$\,$:=$\;$}
+\newcommand{\assign}{$\,$:=$\;$}
 \newcommand{\barc}{Barelogic$^S$}
 \newcommand{\pling}{{\tt plingeling}}
 
@@ -169,39 +169,37 @@ simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 
-\IncMargin{1em}
+%\IncMargin{1em}
 \begin{algorithm}
 \SetKwData{Conflict}{conflict}
 \SetKwData{Dl}{dl}
 \SetKwData{Lemma}{lemma}
 \SetKwData{Dec}{dec}
-  \SetKwData{Cost}{cost}\SetKwData{J}{j}\SetKwData{Core}{core}
-  \SetKwData{Result}{res}\SetKwData{BV}{BV}
-  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+\SetKwData{Status}{status}
+\SetKwData{Result}{res}\SetKwData{BV}{BV}
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
   \Input{formula $F=\{C_1,\ldots,C_m\}$}
   \Output{SAT OR UNSAT}
   \BlankLine
-  \Cost \assign 0\;
-  \J \assign 1\;
-  $F_w$ \assign $F$\;
-  \While{true}{
-    \While{ \Conflict \assign PROPAGATE() } 
-      \lIf{ DECISION\_LEVEL == 0 } \Return UNSAT\;
+  \Status \assign UNDEF\;
+  \While{\Status == UNDEF}{
+    \While{ \Conflict \assign PROPAGATE() }{ 
+      \lIf{ DECISION\_LEVEL == 0 }{ \Status \assign UNSAT\;}
       \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
       \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
       LEMMA\_LEARNING(\Lemma)\;
       \Dl \assign LARGEST\_DL(\Lemma)\;
       BACKJUMP(\Dl)\;
-    }
+   }
   \Dec \assign DECIDE()\;
-    \lIf{ \Dec = 0 }\Return SAT\;
+    \lIf{ \Dec = 0 }\Status \assign SAT\;
     DECIDE( \Dec )\;
   }
 
   \caption{CDCL algorithm}
 \label{alg:CDCL}
 \end{algorithm}
-\DecMargin{1em}
+%\DecMargin{1em}
 
 As can be seen ..... explain and link concepts of the algorithm.
 
