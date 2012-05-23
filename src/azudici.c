@@ -33,9 +33,12 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   kv_size(ad->lastBinariesAdded) = 2*(ad->cdb->numVars+1);
 
   ad->localBinaries = (BinNode**)malloc(2*(ad->cdb->numVars+1)*sizeof(BinNode*));
+  unsigned int binsPropagated;
+
+  BinNode* currentNode;
   for( i=0; i < 2*(ad->cdb->numVars + 1) ; i++ ){
     kv_A(ad->lastBinariesAdded, i) = ad->cdb->bDB[i].size;
-    ad->localBinaries[i] = ad->cdb->bDB[i].firstNode;
+    ad->localBinaries[i] = ad->cdb->bDB[i].lastNode;
   }
 
   //varMarks
@@ -434,10 +437,8 @@ void azuDICI_learn_lemma(AzuDICI* ad){
   case 2:
     l1 = kv_A(ad->lemmaToLearn.lits,0);
     l2 = kv_A(ad->lemmaToLearn.lits,1);
-    unsigned int lastPos1;
-    lastPos1 = kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack for same search
-    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack for same search
-    insert_binary_clause(ad->cdb, &ad->lemmaToLearn, false, lastPos1);
+    BinNode* lastNode = ad->localBinaries[lit_as_uint(-l1)]; //optimization for avoiding duplications in list
+    insert_binary_clause(ad->cdb, &ad->lemmaToLearn, false, lastNode);
     ad->lastBinaryAdded++;
     ad->rUIP.size     = 2;
     ad->rUIP.binLit   = kv_A(ad->lemmaToLearn.lits,1);
@@ -579,7 +580,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     Reason r;
 
     Literal l1, l2;
-    unsigned int lastPos1;
+    BinNode* lastPos1;
 
     r.size     = 1;
     r.binLit   = 0;
@@ -630,10 +631,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 	  }else if(tentativeTernaryOrBinary.size == 2){
 	    numBinaries++;
 	    l1 = kv_A(tentativeTernaryOrBinary.lits,0);
-	    l2 = kv_A(tentativeTernaryOrBinary.lits,1);
-	    lastPos1 = kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack
-	    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack
-
+	    lastPos1 = ad->localBinaries[lit_as_uint(-l1)]; //optimization
 	    insert_binary_clause(ad->cdb, &tentativeTernaryOrBinary, false, lastPos1);
 	    ad->lastBinaryAdded++;
  	  }
@@ -860,7 +858,10 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
 	return false;
       }
       binsPropagated++;
-      if(binsPropagated==sizeOfList) return true; //We just propagate the number of lits we certainly know have been inserted, although, some other bins could have been inserted while propagating.
+      if(binsPropagated==sizeOfList){
+	ad->localBinaries[litIndex] = currentNode; //we always store for each bin which is the last binNode it has visited propagating
+	return true; //We just propagate the number of lits we certainly know have been inserted, although, some other bins could have been inserted while propagating.
+      }
     }
     currentNode = currentNode->nextNode;
   }

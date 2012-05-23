@@ -57,6 +57,9 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
     cdb->bDB[i].size=0;
     cdb->bDB[i].posInLastNode=0;
     cdb->bDB[i].firstNode=(BinNode*)malloc(sizeof(BinNode));
+    for(int j=0;j<(CACHE_LINE_SIZE/4)-1;j++){
+      cdb->bDB[i].firstNode->litList[j]=0;
+    }
     cdb->bDB[i].firstNode->nextNode=NULL;
     cdb->bDB[i].lastNode = cdb->bDB[i].firstNode;
   }
@@ -194,7 +197,7 @@ void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned 
    to literal ~x1. This way we have an implication vector for all literals. 
    Associating x1 with x2 means that if x2 were to be true, then x1 must also be true.
    Associating ~x2 with ~x1 means that if ~x1 were to be true, then ~x2 must also be true*/
-void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1){
+void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, BinNode* thLastL1){
   //  printf("Before binary lock\n");
   //  pthread_rwlock_wrlock(&insert_binary_clause_lock);
   //  printf("After binary lock\n");
@@ -210,56 +213,75 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned i
   not_l1 = lit_as_uint(-l1);
   not_l2 = lit_as_uint(-l2);
 
-  //bool alreadyInList = false;
+  bool alreadyInList = false;
 
   pthread_rwlock_wrlock(&(insert_binary_clause_locks[not_l1]));
 
 
   /*************Hack for same search*************/
   //We assume each thread learns the next binary in the same order
-  //if(!isOriginal){
-  //for(int i=thLast1;i<cdb->bDB[not_l1].size;
-  //if(cdb->bDB[not_l1].size > thLast1){
-  //alreadyInList = true;
-  //}
-  //}
+  if(!isOriginal){
+    //printf("A none original bin learned\n");
+    BinNode* currentNode = thLastL1;
+    unsigned int i=0;
+    while(currentNode!=NULL && (currentNode!=cdb->bDB[not_l1].lastNode || i!= cdb->bDB[not_l1].posInLastNode) && !alreadyInList ){
+      if(currentNode->litList[i] == l2 ){
+	//printf("found in list\n");
+	alreadyInList = true;
+	break;
+      }
+
+      if(i==(CACHE_LINE_SIZE/4)-2){
+	currentNode = currentNode->nextNode;
+	i=0;
+      }else{
+	i++;
+      }
+    }
+  }
   /*********************************************/
 
   /*Insert and update, if not previously inserted*/
-  //if(!alreadyInList){
-  BinNode* newNode;
-  if(cdb->bDB[not_l1].posInLastNode==(CACHE_LINE_SIZE/4)-1){
-    newNode=(BinNode*)malloc(sizeof(BinNode));
-    newNode->nextNode=NULL;
-    cdb->bDB[not_l1].lastNode->nextNode=newNode;
-    cdb->bDB[not_l1].lastNode=newNode;
-    cdb->bDB[not_l1].posInLastNode=0;
+  if(!alreadyInList){
+    BinNode* newNode;
+    if(cdb->bDB[not_l1].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+      newNode=(BinNode*)malloc(sizeof(BinNode));
+      for(int j=0;j<(CACHE_LINE_SIZE/4)-1;j++){
+	newNode->litList[j]=0;
+      }
+      newNode->nextNode=NULL;
+      cdb->bDB[not_l1].lastNode->nextNode=newNode;
+      cdb->bDB[not_l1].lastNode=newNode;
+      cdb->bDB[not_l1].posInLastNode=0;
+    }
+    
+    if(cdb->bDB[not_l2].posInLastNode==(CACHE_LINE_SIZE/4)-1){
+      newNode=(BinNode*)malloc(sizeof(BinNode));
+      for(int j=0;j<(CACHE_LINE_SIZE/4)-1;j++){
+	newNode->litList[j]=0;
+      }
+      newNode->nextNode=NULL;
+      cdb->bDB[not_l2].lastNode->nextNode=newNode;
+      cdb->bDB[not_l2].lastNode=newNode;
+      cdb->bDB[not_l2].posInLastNode=0;
+    }
+    
+    //    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
+    //    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
+    cdb->bDB[not_l1].lastNode->litList[cdb->bDB[not_l1].posInLastNode++] = l2;
+    cdb->bDB[not_l2].lastNode->litList[cdb->bDB[not_l2].posInLastNode++] = l1;
+    cdb->bDB[not_l1].size++;
+    cdb->bDB[not_l2].size++;
+    
+    //update clauseDB stats
+    if(isOriginal){
+      cdb->numOriginalBinaries++;
+      cdb->numInputClauses++;
+    }
+    
+    cdb->numBinaries++;
+    cdb->numClauses++;
   }
-
-  if(cdb->bDB[not_l2].posInLastNode==(CACHE_LINE_SIZE/4)-1){
-    newNode=(BinNode*)malloc(sizeof(BinNode));
-    newNode->nextNode=NULL;
-    cdb->bDB[not_l2].lastNode->nextNode=newNode;
-    cdb->bDB[not_l2].lastNode=newNode;
-    cdb->bDB[not_l2].posInLastNode=0;
-  }
-
-  //    cdb->bDB[not_l1][cdb->bListsSize[not_l1]++] = l2;
-  //    cdb->bDB[not_l2][cdb->bListsSize[not_l2]++] = l1;
-  cdb->bDB[not_l1].lastNode->litList[cdb->bDB[not_l1].posInLastNode++] = l2;
-  cdb->bDB[not_l2].lastNode->litList[cdb->bDB[not_l2].posInLastNode++] = l1;
-  cdb->bDB[not_l1].size++;
-  cdb->bDB[not_l2].size++;
-  
-  //update clauseDB stats
-  if(isOriginal){
-    cdb->numOriginalBinaries++;
-    cdb->numInputClauses++;
-  }
-  
-  cdb->numBinaries++;
-  cdb->numClauses++;
-  //}
   /********************************************/
   pthread_rwlock_unlock(&(insert_binary_clause_locks[not_l1]));
 }
