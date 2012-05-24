@@ -128,7 +128,6 @@ portfolio-approach-based SAT solvers.
 \section{Preliminaries}
 \label{sec:preliminaries}
 \subsection{SAT and SAT solvers}
-
 Let $v \in V $ be a \emph{propositional variable} and $V$
  a fixed finite set of propositional symbols.  If $v \in V$,
 then $v$ and $\lnot v$ are \emph{literals} of $V$.  
@@ -169,7 +168,7 @@ simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
 picosat2008,} it has evolved
  to an algorithm that incorpores several conceptual and implementation 
 improvements, making modern SAT-solvers able to handle formulas of millons 
-of variables and clauses. In \ref{} we sketch the CDCL algorithm.
+of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
 
 %\IncMargin{1em}
 \begin{algorithm}
@@ -177,27 +176,29 @@ of variables and clauses. In \ref{} we sketch the CDCL algorithm.
 \SetKwData{Dl}{dl}
 \SetKwData{Lemma}{lemma}
 \SetKwData{Dec}{dec}
+\SetKwData{Status}{status}
 \SetKwData{Result}{res}\SetKwData{BV}{BV}
 \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
 \Input{formula $F=\{C_1,\ldots,C_m\}$}
 \Output{SAT OR UNSAT}
  \BlankLine
-  $F_w$ \assign $F$\;
-  \While{true}{
-    \While{\Conflict \assign PROPAGATE()}{
-      \lIf{DECISION\_LEVEL == 0}{\Return UNSAT\;}
-      \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
-      \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
-      LEMMA\_LEARNING(\Lemma)\;
-      \Dl \assign LARGEST\_DL(\Lemma)\;
-      BACKJUMP(\Dl)\;
-    }
-  \Dec \assign DECIDE()\;
-    \lIf{ \Dec = 0 }\Return SAT\;
-    DECIDE( \Dec )\;
-  }
-\caption{CDCL algorithm}
-\label{alg:CDCL}
+ \Status \assign UNDEF
+ \While{\Status == UNDEF}{
+   \While{\Conflict \assign PROPAGATE()}{
+     \lIf{DECISION\_LEVEL == 0}{\Status \assign UNSAT\;}
+     \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
+     \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
+     LEMMA\_LEARNING(\Lemma)\;
+     \Dl \assign LARGEST\_DL(\Lemma)\;
+     BACKJUMP(\Dl)\;
+   }
+   \Dec \assign DECIDE()\;
+   \lIf{ \Dec = 0 }{\Status \assign SAT\;}
+   DECIDE( \Dec )\;
+ }
+ \Return \Status
+ \caption{CDCL algorithm}
+ \label{alg:cdcl}
 \end{algorithm}
 %\DecMargin{1em}
 
