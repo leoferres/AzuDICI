@@ -139,22 +139,17 @@ more clauses $C_1 \land\ldots\land C_n$.
  A (partial truth) \emph{assignment} $M$ is a
 set of literals such that $\{ v, \lnot v \} \subseteq M$ for no $v$. A
 literal $l$ is \emph{true} in $M$ if $l \in M$, is \emph{false} in $M$
-if $\lnot l \in M$, and is \emph{undefined} in $M$ otherwise.  In this
-paper $M$ will be written as a sequence 
- of literals with $M l$ meaning the concatenation of $M$
-with $l$.   A clause $C$ is true in $M$ if at least one of its
+if $\lnot l \in M$, and is \emph{undefined} in $M$ otherwise. 
+A clause $C$ is true in $M$ if at least one of its
 literals is true in $M$.  It is false in $M$ if all its literals are
 false in $M$, and it is undefined in $M$ otherwise. 
-If $C$ is a clause $l_1
-\lor\ldots\lor l_n$, we write $\lnot C$ to denote the formula $\lnot
-l_1 \land\ldots\land \lnot l_n$.
 A formula $F$ is true in $M$, or
 \emph{satisfied} by $M$, denoted $M\models F$, if all its clauses are
 true in $M$.  In that case, $M$ is a \emph{model} of $F$.  If $F$ has
 no models then it is \emph{unsatisfiable}.  
 
 The problem we are interested in is the \emph{SAT problem}: given a
-formula $F$, decide whether there exists a model that satisfies $F$.
+formula $F$, decide whether there exists a model of $F$ or not.
 Since there exists a polynomial transformation
 (see~\cite{Tseitin1968}) for any arbitrary formula to an
 equisatisfiable CNF one, we will assume w.l.o.g. that $F$ is in CNF.
@@ -165,7 +160,7 @@ basis of most state-of-ther-art SAT-solvers\cite{gluclose,plingeling,cryptominis
 This algorithm has, at its roots, the very 
 simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
  in \cite{relsat,Chaff2001, GRASP1999IEEE, ZhangStickel1996IMATH, EenSorensson2003SAT,
-picosat2008,} it has evolved
+picosat2008} it has evolved
  to an algorithm that incorpores several conceptual and implementation 
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
@@ -177,24 +172,35 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
 \SetKwData{Lemma}{lemma}
 \SetKwData{Dec}{dec}
 \SetKwData{Status}{status}
+\SetKwData{Model}{model}
 \SetKwData{Result}{res}\SetKwData{BV}{BV}
 \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
 \Input{formula $F=\{C_1,\ldots,C_m\}$}
 \Output{SAT OR UNSAT}
  \BlankLine
- \Status \assign UNDEF
+ \Status \assign UNDEF\;
+ \Model \assign \{\}\;
  \While{\Status == UNDEF}{
-   \While{\Conflict \assign PROPAGATE()}{
-     \lIf{DECISION\_LEVEL == 0}{\Status \assign UNSAT\;}
-     \Lemma \assign CONFLICT\_ANALYSIS(\Conflict)\;
-     \Lemma \assign LEMMA\_SHORTENING(\Lemma)\;
-     LEMMA\_LEARNING(\Lemma)\;
-     \Dl \assign LARGEST\_DL(\Lemma)\;
-     BACKJUMP(\Dl)\;
+   (\Conflict, \Model) \assign UNIT\_PROPAGATE(\Model, $F$)\;
+   \While{ \Conflict $\neq$ NULL}{
+     \If{DECISION\_LEVEL == 0}{
+       \Status \assign UNSAT\;
+       BREAK()\;
+     }
+     \Lemma \assign CONFLICT\_ANALYSIS(\Conflict, \Model, $F$)\;
+%     \Lemma \assign LEMMA\_SHORTENING(\Lemma,\Model,$F$)\;
+     $F$ \assign F $\land$ \Lemma\;
+     \Dl \assign LARGEST\_DL(\Lemma, \Model)\;
+     \Model \assign BACKJUMP\_TO\_DL(\Dl, \Model)\;
+     (\Conflict, \Model) \assign UNIT\_PROPAGATE(\Model, $F$)\;
    }
-   \Dec \assign DECIDE()\;
-   \lIf{ \Dec = 0 }{\Status \assign SAT\;}
-   DECIDE( \Dec )\;
+
+   \If{\Status == UNDEF }{
+     \Dec \assign DECIDE(\Model, $F$)\;
+     \lIf{ \Dec = $0$ }{\Status \assign SAT\;}
+     \Model \assign \Model $\cup$ \{\Dec\}\;
+   }
+
  }
  \Return \Status
  \caption{CDCL algorithm}
@@ -202,7 +208,30 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
 \end{algorithm}
 %\DecMargin{1em}
 
-As can be seen ..... explain and link concepts of the algorithm.
+Basically, the CDCL algorithm is a backumping search algorithm 
+that incrementally builds a partial assignment $M$ over iterations of the
+\emph{DECIDE} and \emph{UNIT\_PROPAGATE} returning SAT if $M$ becomes a model of $F$ or 
+UNSAT if $M$ can never be a model. 
+
+The DECIDE procedure
+correspond to a branching step of the search and 
+applies when the unit propagation procedure can not do any futher job (see below).
+When no inference can be done about which literals should be true in $M$, a 
+literal $l^d$ is chosen (guessed) and added to $M$ in order to 
+continue the search.
+Each time a new decision literal $l^d$ is added to $M$ the \emph{
+decision level} $dl$ of the search is increased and we say that 
+all the none-guessed literals in $M$ after $l^d$ belong to decision level $ld$.
+
+Unit propagation
+applies when certain assignment $M$ falsifies all literals of a clause $C$ 
+but one $l$, thus, in order for $M$ to become a model of $F$, $l$ 
+must be added to $M$ so as to satisfy $C$. This unit propagation procedure ends
+when there is no literal left to add to $M$ or when it finds that all literals
+of certain clause $C$ are false (because of previously propagated literals). 
+If it happens the first case, it returns 
+an updated model containing all such propagations, and, in the second case
+it returns the falsified clause which we call a \emph{conflict}. 
 
 For a complete review of this algorithm as well as proofs over its
 termination and soundness we refer to \cite{Nieuwenhuisetal2006JACM}
@@ -242,10 +271,11 @@ its search space with guiding paths will assign threads to solve $F$ with the
 given $M$ from the guiding path the thread was assigned to. Once a thread 
 finishes searching a guiding path with no success, it can request another to 
 keep searching (we refer to \cite{paMiraXT} for further explanations). 
+
 Both parallelization strategies (portfolio approach and divide-and-conquer approach) 
 were and are currently being applied 
-to shared memory parallel computers (plingeling) as well as distributed 
-memory ones~\cite{paMiraXT}. 
+to shared memory parallel computers (e.g. \cite{plingeling}) as well as distributed 
+memory ones~(e.g. \cite{paMiraXT}). 
 
 %As mentioned before, some parallel SAT solvers have performed at the top of the last SAT competitions, but even though they all fall into the parallel solvers category, their parallel strategies and implementations vastly differ from each other. We mainly classify parallel SAT solvers into two categories: Portfolio approach solvers and divide-and-conquer solvers.
 
