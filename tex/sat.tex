@@ -180,12 +180,13 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
  \BlankLine
  \Status \assign UNDEF\;
  \Model \assign \{\}\;
+ \Dl \assign $0$\;
  \While{\Status == UNDEF}{
    (\Conflict, \Model) \assign UNIT\_PROPAGATE(\Model, $F$)\;
    \While{ \Conflict $\neq$ NULL}{
-     \If{DECISION\_LEVEL == 0}{
+     \If{\Dl == 0}{
        \Status \assign UNSAT\;
-       BREAK()\;
+       \Return \Status\;
      }
      \Lemma \assign CONFLICT\_ANALYSIS(\Conflict, \Model, $F$)\;
 %     \Lemma \assign LEMMA\_SHORTENING(\Lemma,\Model,$F$)\;
@@ -198,7 +199,7 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
    \If{\Status == UNDEF }{
      \Dec \assign DECIDE(\Model, $F$)\;
      \lIf{ \Dec = $0$ }{\Status \assign SAT\;}
-     \Model \assign \Model $\cup$ \{\Dec\}\;
+     \Model \assign \Model $\cup$ \{ \Dec\}\;
    }
 
  }
