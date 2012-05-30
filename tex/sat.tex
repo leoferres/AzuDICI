@@ -159,8 +159,7 @@ The Conflict-Driven-Clause-Learning (CDCL) algorithm, is nowadays at the
 basis of most state-of-ther-art SAT-solvers\cite{gluclose,plingeling,cryptominisat}. 
 This algorithm has, at its roots, the very 
 simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
- in \cite{relsat,Chaff2001, GRASP1999IEEE, ZhangStickel1996IMATH, EenSorensson2003SAT,
-picosat2008} it has evolved
+ in \cite{relsat,Chaff2001,GRASP1999IEEE,ZhangStickel1996AIMATH,EenSorensson2003SAT,picosat2008} it has evolved
  to an algorithm that incorpores several conceptual and implementation 
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
@@ -211,28 +210,44 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
 
 Basically, the CDCL algorithm is a backumping search algorithm 
 that incrementally builds a partial assignment $M$ over iterations of the
-\emph{DECIDE} and \emph{UNIT\_PROPAGATE} returning SAT if $M$ becomes a model of $F$ or 
-UNSAT if $M$ can never be a model. 
+\emph{DECIDE} and \emph{UNIT\_PROPAGATE} procedures, returning SAT if $M$ becomes a model of $F$ or 
+UNSAT if no such model exists. 
 
 The DECIDE procedure
 correspond to a branching step of the search and 
-applies when the unit propagation procedure can not do any futher job (see below).
+applies when the unit propagation procedure can not set true any further literal (see below).
 When no inference can be done about which literals should be true in $M$, a 
-literal $l^d$ is chosen (guessed) and added to $M$ in order to 
+literal $l^{dl}$ is chosen (guessed) and added to $M$ in order to 
 continue the search.
-Each time a new decision literal $l^d$ is added to $M$ the \emph{
+Each time a new decision literal $l^{dl}$ is added to $M$ the \emph{
 decision level} $dl$ of the search is increased and we say that 
-all the none-guessed literals in $M$ after $l^d$ belong to decision level $ld$.
+all the literals in $M$ after $l^{dl}$ and before $l^{dl+1}$ belong to decision level $dl$.
+For further reading about the DECIDE procedure, we refer to \cite{Chaff2001,MiniSat,rsat}.
 
-Unit propagation
-applies when certain assignment $M$ falsifies all literals of a clause $C$ 
-but one $l$, thus, in order for $M$ to become a model of $F$, $l$ 
-must be added to $M$ so as to satisfy $C$. This unit propagation procedure ends
+The UNIT\_PROPAGATE (UP) procedure
+applies when certain assignment $M$ falsifies all literals but one, of a clause $C$. 
+If $l$ is the undefined literal in $C$, in order for $M$ to become a model of $F$, $l$ 
+must be added to $M$ so as to satisfy $C$. This procedure ends
 when there is no literal left to add to $M$ or when it finds that all literals
-of certain clause $C$ are false (because of previously propagated literals). 
-If it happens the first case, it returns 
-an updated model containing all such propagations, and, in the second case
-it returns the falsified clause which we call a \emph{conflict}. 
+of certain clause $C$ are false. 
+If it happens the first case, UP returns 
+an updated model containing all such propagations and the search continues. 
+In the second case it returns the falsified clause which we call a \emph{conflicting clause}.
+For details on how modern SAT Solvers implement this procedure and literature regarding
+Cache performance (mainly related) with UP, we refer to \cite{Chaff2001,ZhangMalik2003SAT}
+ 
+If unit propagation finds a conflicting clause, then two possibilities apply. If the decision level
+at which such conflict is found is zero (i.e. no decisions have been made) then the CDCL procedure
+returns UNSAT. If this is not the case, a \emph{CONFLICT ANALISIS}
+ procedure is called. This procedure analizes the cause of such conflict (i.e. determines which 
+decisions have driven to this conflict) and returns a new clause (which we call a \emph{lemma}) 
+that is entailed by the original formula. Then, the algorithm backjumps to an earlier 
+decision level $dl'$ that corresponds to the highest $dl'<dl$ in the lemma, and propagates with it.
+CONFLICT ANALISIS works in such a way that, when backjumping and propagating with the lemma, the 
+original conflict is avoided. The lemmas learned at CONFLICT ANALISIS time are usually added to 
+the formula in order to avoid similar conflicts and can also be deleted 
+(when the formula is too big and they are no longer needed). For details of this procedure, we
+refer to \cite{GRASP1999IEEE,Zhang2001} and for lemma deletion heuristics to \cite{Relsat97,Goldberg2002DATE,gluclose}.
 
 For a complete review of this algorithm as well as proofs over its
 termination and soundness we refer to \cite{Nieuwenhuisetal2006JACM}
