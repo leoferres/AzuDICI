@@ -3,7 +3,7 @@
 
 \usepackage{graphicx}
 \usepackage{url}
-\usepackage{algorithm2e}
+\usepackage[ruled, linesnumbered,noend]{algorithm2e}
 \usepackage{amsmath,amssymb}
 
 \begin{document}
@@ -164,8 +164,7 @@ simple DPLL algorithm~\cite{Davisetal1962CACM}. Thanks to the work done, mainly,
 improvements, making modern SAT-solvers able to handle formulas of millons 
 of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
 
-%\IncMargin{1em}
-\begin{algorithm}[H]
+\begin{algorithm}[h]
 \SetLine
 \SetKwData{Conflict}{conflict}
 \SetKwData{Dl}{dl}
@@ -207,7 +206,6 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
  \caption{CDCL algorithm}
  \label{alg:cdcl}
 \end{algorithm}
-%\DecMargin{1em}
 
 Basically, the CDCL algorithm is a backumping search algorithm 
 that incrementally builds a partial assignment $M$ over iterations of the
