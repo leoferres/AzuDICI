@@ -184,8 +184,7 @@ of variables and clauses. Algorithm \ref{alg:cdcl} sketches the CDCL algorithm.
    (\Conflict, \Model) \assign UNIT\_PROPAGATE(\Model, $F$)\;
    \While{ \Conflict $\neq$ NULL}{
      \If{\Dl == 0}{
-       \Status \assign UNSAT\;
-       \Return \Status\;
+       \Return UNSAT\;
      }
      \Lemma \assign CONFLICT\_ANALYSIS(\Conflict, \Model, $F$)\;
 %     \Lemma \assign LEMMA\_SHORTENING(\Lemma,\Model,$F$)\;
