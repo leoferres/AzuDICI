@@ -94,7 +94,7 @@ AzuDICI* azuDICI_init(ClauseDB* generalClauseDB, unsigned int wId){
   return ad;
 }
 
-unsigned int azuDICI_solve(AzuDICI* ad){
+unsigned int azuDICI_solve (AzuDICI* ad){
   //setTrue at dl 0 all unit clauses
   //printf("Solve called for worker %d\n",ad->wId);
   if( !azuDICI_set_true_units(ad) ) return 20;
@@ -118,7 +118,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       //printf("Set true uip\n");
       if( !azuDICI_set_true_uip(ad) ) return 20; //we check here if new units have been added by other thread and, hence, we can detect unsatisfiability
     }
-    azuDICI_restart_if_adequate(ad);
+    if( azuDICI_restart_if_adequate(ad) ) return 0;
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
     
     //printf("Decide\n");
@@ -739,7 +739,7 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   kv_size(ad->thcdb) = lastValidPos;
 }
 
-void azuDICI_restart_if_adequate(AzuDICI* ad){
+bool azuDICI_restart_if_adequate(AzuDICI* ad){
   if( ad->stats.numConflictsSinceLastRestart >= ad->currentRestartLimit ){
     //printf("Restart\n");
     ad->stats.numRestarts++;
@@ -747,11 +747,14 @@ void azuDICI_restart_if_adequate(AzuDICI* ad){
     ad->stats.numConflictsSinceLastRestart  = 0;
     ad->currentRestartLimit = strategy_get_next_restart_limit(&(ad->strat), ad->currentRestartLimit);
     azuDICI_backjump_to_dl(ad,  0 );
+    return isSolved(ad->cdb);
   }
+  return false;
 }
 
 Literal  azuDICI_decide(AzuDICI* ad){
   int i,v=0;
+  unsigned int ui;
   Literal l;
 
   if ( (ad->model.decision_lvl < ad->strat.DLBelowWhichRandomDecisions) &&
@@ -786,9 +789,11 @@ Literal  azuDICI_decide(AzuDICI* ad){
     l=0;
     if (!v) 
       do {
-	l = uint_as_lit(maxHeap_remove_max(&ad->heap));
+	while( (ui=maxHeap_remove_max(&ad->heap)) == 1 );
+	assert(ui!=1);
+	l = uint_as_lit(ui);
 	//printf("heap decision is %d\n",l);
-	if (!l) return(0);
+	if (l==0) return(0);
       } while (!model_is_undef_var(var(l),&ad->model));
     dassert( var(l) <= ad->cdb->numVars );
     return l;  

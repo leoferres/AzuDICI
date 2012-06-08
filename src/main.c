@@ -32,9 +32,13 @@ static void * work (void * voidptr) {
   worker->res = azuDICI_solve ( worker->solver );
 
   if(worker->res == 10){
+    setSolved(worker->solver->cdb);
     printf("SAT\n");
   }else if(worker->res==20){
+    setSolved(worker->solver->cdb);
     printf("UNSAT\n");
+  }else {
+    printf("OTHER SOLVER SOLVED\n");
   }
 
  printf("|%*d|%*lu|%*lu|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
@@ -45,11 +49,6 @@ static void * work (void * voidptr) {
 	 10,0, 10,0, 10,0, 10,0, 10,0);
 
   // msg (wid, 1, "result %d", worker->res);
-  if (pthread_mutex_lock (&donemutex))
-    printf ("failed to lock 'done' mutex in worker");
-  done = 1;
-  if (pthread_mutex_unlock (&donemutex)) 
-    printf ("failed to unlock 'done' mutex in worker");
   return worker->res ? worker : 0;
 }
 
@@ -148,10 +147,10 @@ int main (int argc, char *argv[]) {
       printf("|                                   GENERAL STATS                               |              CLEANUP STATS                           |\n");
       printf("|WID|   nDecisions  |     nProps    |nConflicts|   units  |    bins  | nary_Cls | newUnits |  newBins |delTrueCls|   nDels  | nRealDels|\n");
 
-  for(int i=0;i<nworkers;i++){
-      ts_vec_ith_ma(w,workers,i);
-      pthread_join(w->thread, NULL);
-  }
+      for(int i=0;i<nworkers;i++){
+	ts_vec_ith_ma(w,workers,i);
+	pthread_join(w->thread, NULL);
+      }
   
   return 0;
 }

@@ -14,8 +14,6 @@ typedef struct Worker {
 
 /*Global structures for solving*/
 static ts_vec_t(Worker) workers;
-static pthread_mutex_t donemutex = PTHREAD_MUTEX_INITIALIZER;
-static int done;
 
 
 

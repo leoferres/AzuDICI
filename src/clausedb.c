@@ -10,6 +10,7 @@ pthread_rwlock_t insert_unitary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_ternary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t insert_nary_clause_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_rwlock_t *insert_binary_clause_locks;
+pthread_rwlock_t donelock = PTHREAD_RWLOCK_INITIALIZER;
 
 ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
 
@@ -28,6 +29,7 @@ ClauseDB* init_clause_database(unsigned int nVars, unsigned int nWorkers){
   ClauseDB* cdb = (ClauseDB*)malloc(sizeof(ClauseDB));
 
   //  printf("Init parameters\n");
+  cdb->solved          = false;
   cdb->numVars         = nVars;
   cdb->numWorkers      = nWorkers;
 
@@ -385,5 +387,19 @@ void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int
   /**************************************************/
   }
   pthread_rwlock_unlock(&insert_nary_clause_lock);
+}
+
+void setSolved(ClauseDB* cdb){
+  pthread_rwlock_wrlock(&donelock);
+  cdb->solved = true;
+  pthread_rwlock_unlock(&donelock);
+}
+
+bool isSolved(ClauseDB* cdb){
+  bool wasSolved=false;
+  pthread_rwlock_wrlock(&donelock);
+  wasSolved = cdb->solved;
+  pthread_rwlock_unlock(&donelock);
+  return wasSolved;
 }
 #endif /* _CLAUSEDB_C_ */

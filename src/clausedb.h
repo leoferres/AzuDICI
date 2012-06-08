@@ -22,6 +22,7 @@ typedef struct _cdb {
   unsigned int               numNClauses;
   unsigned int               numOriginalNClauses;
   unsigned int               numInputClauses;
+  bool                       solved;
   
   kvec_t(int)*               clIndex;
   //unsigned int*              indexSize;
@@ -43,6 +44,9 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, BinNode* t
 void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId, NClause** ptrToNary, unsigned int lastThNary);
 void cleanup_database(ClauseDB* cdb);
 void vec_literal_sort(Clause *cl, unsigned int size);
+void setSolved(ClauseDB* cdb);
+bool isSolved(ClauseDB* cdb);
 //void vec_literal_sort(Litera *lits, unsigned int size);
+
 
 #endif /* _CLAUSEDB_H_ */
