@@ -32,9 +32,13 @@ static void * work (void * voidptr) {
   worker->res = azuDICI_solve ( worker->solver );
 
   if(worker->res == 10){
+    set_done(worker->solver->cdb);
     printf("SAT\n");
   }else if(worker->res==20){
+    set_done(worker->solver->cdb);
     printf("UNSAT\n");
+  }else{
+    printf("Solved by other thread\n");
   }
 
  printf("|%*d|%*lu|%*lu|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 

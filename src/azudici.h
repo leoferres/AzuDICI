@@ -62,7 +62,7 @@ void azuDICI_learn_lemma(AzuDICI* ad);
 void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl);
 void azuDICI_set_true_uip(AzuDICI* ad);
 bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad); //to implement
-void azuDICI_restart_if_adequate(AzuDICI* ad); //to implement
+bool azuDICI_restart_if_adequate(AzuDICI* ad); //to implement
 Literal  azuDICI_decide(AzuDICI* ad);
 void  azuDICI_increaseScore(AzuDICI* ad, Literal lit);
 void  azuDICI_insert_binary_clause(AzuDICI* ad, Clause *cl);

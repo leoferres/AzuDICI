@@ -117,7 +117,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       azuDICI_set_true_uip(ad);
       //printf("done set true\n");
     }
-    azuDICI_restart_if_adequate(ad);
+    if( !azuDICI_restart_if_adequate(ad)) return 0;
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
     
     //printf("Decide\n");
@@ -648,8 +648,9 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   kv_size(ad->thcdb) = lastValidPos;
 }
 
-void azuDICI_restart_if_adequate(AzuDICI* ad){
+bool azuDICI_restart_if_adequate(AzuDICI* ad){
   if( ad->stats.numConflictsSinceLastRestart >= ad->currentRestartLimit ){
+    if(is_done(ad->cdb)) return false;
     //printf("Restart\n");
     ad->stats.numRestarts++;
     ad->stats.numDlZeroLitsSinceLastRestart = 0;
@@ -657,6 +658,7 @@ void azuDICI_restart_if_adequate(AzuDICI* ad){
     ad->currentRestartLimit = strategy_get_next_restart_limit(&(ad->strat), ad->currentRestartLimit);
     azuDICI_backjump_to_dl(ad,  0 );
   }
+  return true;
 }
 
 Literal  azuDICI_decide(AzuDICI* ad){
