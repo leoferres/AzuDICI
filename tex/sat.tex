@@ -291,17 +291,82 @@ were and are currently being applied
 to shared memory parallel computers (e.g. \cite{plingeling}) as well as distributed 
 memory ones~(e.g. \cite{paMiraXT}). 
 
-%As mentioned before, some parallel SAT solvers have performed at the top of the last SAT competitions, but even though they all fall into the parallel solvers category, their parallel strategies and implementations vastly differ from each other. We mainly classify parallel SAT solvers into two categories: Portfolio approach solvers and divide-and-conquer solvers.
+% As mentioned before, some parallel SAT solvers have performed at the
+% top of the last SAT competitions, but even though they all fall into
+% the parallel solvers category, their parallel strategies and
+% implementations vastly differ from each other. We mainly classify
+% parallel SAT solvers into two categories: Portfolio approach solvers
+% and divide-and-conquer solvers.
 
-%The main idea behind portfolio approach solvers is the fact that different kinds of sequential solvers will perform differently for different kinds of SAT problems. The most successful sequential solvers [?] all have random factors coming into play when solving SAT problems. They need random numbers for their search heuristics [?] and thus the same solver might perform very differently in two different instances of the exact same SAT problem. Taking this into consideration, the portfolio approach is a very straight forward strategy: They run a group of sequential solvers in parallel, each with different random values and/or different search strategies. The time they take to solve the problem will be the time of the fastest solver in the group of solvers running in parallel. Although all portfolio approach solvers share this same principle, they also have quite different kinds of implementations. We identify in this group the solvers that are pure portfolio approach, the ones that share clauses only logically, and the ones that share clauses physically and logically.
+%The main idea behind portfolio approach solvers is the fact that
+% different kinds of sequential solvers will perform differently for
+% different kinds of SAT problems. The most successful sequential
+% solvers [?] all have random factors coming into play when solving
+% SAT problems. They need random numbers for their search heuristics
+% [?] and thus the same solver might perform very differently in two
+% different instances of the exact same SAT problem. Taking this into
+% consideration, the portfolio approach is a very straight forward
+% strategy: They run a group of sequential solvers in parallel, each
+% with different random values and/or different search strategies. The
+% time they take to solve the problem will be the time of the fastest
+% solver in the group of solvers running in parallel. Although all
+% portfolio approach solvers share this same principle, they also have
+% quite different kinds of implementations. We identify in this group
+% the solvers that are pure portfolio approach, the ones that share
+% clauses only logically, and the ones that share clauses physically
+% and logically.
 
-%Solvers which are pure portfolio approach have the most simple design. They run completely independent solvers in parallel and wait for one of them to give an answer. Despite their simplicity, the solver ppfolio [?], a pure portfolio approach solver, was the winner of the crafted and random categories, and second place in the application category of the 2011 SAT competition of parallel solvers. 
+%Solvers which are pure portfolio approach have the most simple
+% design. They run completely independent solvers in parallel and wait
+% for one of them to give an answer. Despite their simplicity, the
+% solver ppfolio [?], a pure portfolio approach solver, was the winner
+% of the crafted and random categories, and second place in the
+% application category of the 2011 SAT competition of parallel
+% solvers.
 
-%On the other hand, we have more elaborated portfolio approach solvers, which can also share clauses logically between their different solvers [?]. One of the advantages of CDCL solvers is the fact that they can learn new lemmas as they solve a SAT problem [?]. These new lemmas will provide additional information during the solution search, so that the solver doesn't fall into previous fruitless search paths (there are also some drawbacks to adding new lemmas, which are addresses by clause database cleanups [?]). The idea is that different solvers running in parallel can share their learned lemmas so that they all benefit from what other solvers have learned and improve their own search. An example of these kind of solvers is ManySAT [?], which won the 2009 SAT competition in the parallel solver application category. ManySAT has its own sequential state-of-the-art SAT solver and runs different instances of it in parallel, using different VSIDS heuristics [?] and restart policies [?] for each of it, both of which account for random factors in the solver. The difference with pure portfolio approach solvers, is that ManySAT also shares learned lemmas between solving threads. It is called logical sharing of clauses, because the lemmas are passed as messages between threads and they never share the same physical information in memory. The advantage of logical sharing is that it is easier to implement message passing between threads, than having threads reading and modifying the same memory locations, which often requires locks that could end hindering the overall solver performance. [TALK ABOUT PLINGELING].
+%On the other hand, we have more elaborated portfolio approach
+% solvers, which can also share clauses logically between their
+% different solvers [?]. One of the advantages of CDCL solvers is the
+% fact that they can learn new lemmas as they solve a SAT problem
+% [?]. These new lemmas will provide additional information during the
+% solution search, so that the solver doesn't fall into previous
+% fruitless search paths (there are also some drawbacks to adding new
+% lemmas, which are addresses by clause database cleanups [?]). The
+% idea is that different solvers running in parallel can share their
+% learned lemmas so that they all benefit from what other solvers have
+% learned and improve their own search. An example of these kind of
+% solvers is ManySAT [?], which won the 2009 SAT competition in the
+% parallel solver application category. ManySAT has its own sequential
+% state-of-the-art SAT solver and runs different instances of it in
+% parallel, using different VSIDS heuristics [?] and restart policies
+% [?] for each of it, both of which account for random factors in the
+% solver. The difference with pure portfolio approach solvers, is that
+% ManySAT also shares learned lemmas between solving threads. It is
+% called logical sharing of clauses, because the lemmas are passed as
+% messages between threads and they never share the same physical
+% information in memory. The advantage of logical sharing is that it
+% is easier to implement message passing between threads, than having
+% threads reading and modifying the same memory locations, which often
+% requires locks that could end hindering the overall solver
+% performance. [TALK ABOUT PLINGELING].
 
 %Portfolio approach solvers that share clauses physically have the same strategy as mentioned before, but they share clauses by allowing threads to access the same memory locations, instead of message passing. One solver in this category is SarTagnan [?], which shares clauses logically and physically. [EXPLAIN MORE ABOUT SARTAGNAN]. 
 
-%Divide-and-conquer solvers do not try to run different solvers in parallel, they run one solving instance, but try to parallelize the search and divide it between the different threads. A common strategy to divide the search space is to use guiding paths [?]. A guiding path is a partial assignment $M$ in $F$, which restricts the search space of the SAT problem. A solver that divides its search space with guiding paths will assign threads to solve $F$ with the given $M$ from the guiding path the thread was assigned with. Once a thread finishes searching a guiding path with no success, it can request another to keep searching. MiraXT [?] is a divide-and-conquer SAT solver which uses guiding paths. Moreover, different threads solving different guiding paths also share a common clause database, in which they store their learned lemmas. This is another example of physical clause sharing. [TALK MORE ABOUT MIRAXT]
+%Divide-and-conquer solvers do not try to run different solvers in
+% parallel, they run one solving instance, but try to parallelize the
+% search and divide it between the different threads. A common
+% strategy to divide the search space is to use guiding paths [?]. A
+% guiding path is a partial assignment $M$ in $F$, which restricts the
+% search space of the SAT problem. A solver that divides its search
+% space with guiding paths will assign threads to solve $F$ with the
+% given $M$ from the guiding path the thread was assigned with. Once a
+% thread finishes searching a guiding path with no success, it can
+% request another to keep searching. MiraXT [?] is a
+% divide-and-conquer SAT solver which uses guiding paths. Moreover,
+% different threads solving different guiding paths also share a
+% common clause database, in which they store their learned
+% lemmas. This is another example of physical clause sharing. [TALK
+% MORE ABOUT MIRAXT]
 
 \section{Cache performance in Plingeling}
 \subsection{Memory hierarchy}
@@ -494,10 +559,68 @@ inserting clauses to a same clause database at the same time,
 because the chance that this event occurs is so low, in practice
 there is no significant contention between threads.
 
-
 \section{Cache Performance in Azudici}
 
-Experiments with AZUDICI
+\begin{minipage}[h]{.5\linewidth}
+%%% First figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedNonePerfDecay.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+%%% Second figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedNonePercentCacheMisses.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+\end{minipage}
+
+
+
+\begin{minipage}[h]{.5\linewidth}
+%%% First figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedAllPerfDecay.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+%%% Second figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedAllPercentCacheMisses.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+\end{minipage}
+
+\begin{minipage}[h]{.5\linewidth}
+%%% First figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedBinaryPerfDecay.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+%%% Second figure 
+  \begin{figure}[htp]
+    \centering
+    \includegraphics[scale=.3]{SharedBinaryPercentCacheMisses.eps}
+    \caption{MyCaption}
+    \label{fig:MyLabel}
+  \end{figure}
+\end{minipage}
+
+Shared-all performs well wrt to cache misses, but that is not
+necessarily true for time. In general, the number of cache loads is
+larger when we are sharing the clause DB. Still, we think this is an
+implementation issue. That is, even if we may be saving on cache
+misses while sharing data, the more complex nature of the
+implementation can negatively influence overall time.
+
 
 \section{Related Work}
 
