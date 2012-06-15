@@ -428,7 +428,7 @@ also some logical clause sharing among threads. These are all valid
 assumptions in theory, but empirical results on multicore shared
 memory computers also show us that increasing the number of threads
 also carries a considerable decrease in performance for portfolio
-solvers like plingeling.
+solvers like {\tt plingeling}.
 
 Multicore shared memory systems have their cores sharing the same last
 level cache (LLC) memory. The last level cache size in modern machines
@@ -490,6 +490,17 @@ plingeling with two threads on different cores of different
 CPUs. Because each CPU has its own LLC cache, we would expect in this
 case to have equal performance when running one thread compared to
 running two threads, which is what was observed in our measures.
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[scale=1]{plingperfperthread.eps}
+  \caption{Number of solved benchmarks per number of threads.}
+  \label{fig:pperfpthread}
+\end{figure}
+
+Figure \ref{fig:pperfpthread} shows the results of running {\tt
+  plingeling} over 200 standard benchmarks varying the number of
+threads. As we can see...
 
 \section{AzuDICI}
 \label{sec:azudici}
