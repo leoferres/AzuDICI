@@ -118,7 +118,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       if( !azuDICI_set_true_uip(ad) ) return 20; //we check here if new units have been added by other thread and, hence, we can detect unsatisfiability
       //printf("done set true\n");
     }
-    azuDICI_restart_if_adequate(ad);
+    if( azuDICI_restart_if_adequate(ad)) return 0;
     if( !azuDICI_clause_cleanup_if_adequate(ad) ) return 20;
     
     //printf("Decide\n");
@@ -540,7 +540,8 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     unsigned int numDeletes = 0;
     unsigned int numRealDeletes = 0;
     unsigned int numTrueClauses = 0;
-    
+    Literal lToSetTrue;
+
     azuDICI_backjump_to_dl(ad,  0 );
     dassert(ad->model.decision_lvl == 0);
     //update stats
@@ -548,6 +549,19 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     ad->stats.numCleanups++;
 
     ad->currentCleanupLimit *= ad->strat.cleanupMultiplier;
+
+    //set true units from other threads
+    for( int i = ad->lastUnitAdded+1; i<kv_size(ad->cdb->uDB); i++){
+      lToSetTrue = kv_A(ad->cdb->uDB,i);
+      if( model_is_undef(lToSetTrue, &ad->model) ){
+	model_set_true_w_reason(lToSetTrue, ad->rUIP, &ad->model);
+	ad->stats.numDlZeroLitsSinceLastRestart++;
+	ad->stats.numDLZeroLits++;
+      }else if(model_is_false(lToSetTrue, &ad->model)){
+	return false;
+      }      
+    }
+    ad->lastUnitAdded = kv_size(ad->cdb->uDB)-1;
 
     //printf("CLEANUP\n");
     //Cleanup
@@ -695,7 +709,7 @@ void azuDICI_compact_and_watch_thdb(AzuDICI* ad){
   kv_size(ad->thcdb) = lastValidPos;
 }
 
-void azuDICI_restart_if_adequate(AzuDICI* ad){
+bool azuDICI_restart_if_adequate(AzuDICI* ad){
   if( ad->stats.numConflictsSinceLastRestart >= ad->currentRestartLimit ){
     //printf("Restart\n");
     ad->stats.numRestarts++;
@@ -703,6 +717,7 @@ void azuDICI_restart_if_adequate(AzuDICI* ad){
     ad->stats.numConflictsSinceLastRestart  = 0;
     ad->currentRestartLimit = strategy_get_next_restart_limit(&(ad->strat), ad->currentRestartLimit);
     azuDICI_backjump_to_dl(ad,  0 );
+    return isSolved(ad->cdb);
   }
 }
 

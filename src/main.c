@@ -32,10 +32,15 @@ static void * work (void * voidptr) {
   worker->res = azuDICI_solve ( worker->solver );
 
   if(worker->res == 10){
+    setSolved(worker->solver->cdb);
     printf("SAT\n");
   }else if(worker->res==20){
+    setSolved(worker->solver->cdb);
     printf("UNSAT\n");
+  }else {
+    printf("OTHER SOLVER SOLVED\n");
   }
+
 
  printf("|%*d|%*lu|%*lu|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|%*d|\n", 
 	 3,worker->solver->wId, 15,worker->solver->stats.numDecisions, 
