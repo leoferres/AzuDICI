@@ -220,8 +220,7 @@ void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, BinNode* t
   pthread_rwlock_wrlock(&(insert_binary_clause_locks[not_l1]));
 
 
-  /*************Hack for same search*************/
-  //We assume each thread learns the next binary in the same order
+  /*************Search for already learned bins*************/
   if(!isOriginal){
     //printf("A none original bin learned\n");
     BinNode* currentNode = thLastL1;
