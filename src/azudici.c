@@ -115,7 +115,7 @@ unsigned int azuDICI_solve(AzuDICI* ad){
       //printf("backjump to dl %d, \n",ad->dlToBackjump);
       azuDICI_backjump_to_dl(ad,ad->dlToBackjump);
       //printf("Set true uip\n");
-      azuDICI_set_true_uip(ad);
+      if( !azuDICI_set_true_uip(ad) ) return 20; //we check here if new units have been added by other thread and, hence, we can detect unsatisfiability
       //printf("done set true\n");
     }
     azuDICI_restart_if_adequate(ad);
@@ -424,7 +424,7 @@ void azuDICI_learn_lemma(AzuDICI* ad){
   //printf("Learning lemma size %d: ",ad->lemmaToLearn.size); azuDICI_print_clause(ad,ad->lemmaToLearn);
   switch(ad->lemmaToLearn.size){
   case 1:
-    insert_unitary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->lastUnitAdded++);
+    insert_unitary_clause(ad->cdb, &ad->lemmaToLearn, false, ad->lastUnitAdded);
     ad->rUIP.size     = 1;
     ad->rUIP.binLit   = 0;
     ad->rUIP.tClPtr   = NULL;
@@ -435,10 +435,8 @@ void azuDICI_learn_lemma(AzuDICI* ad){
   case 2:
     l1 = kv_A(ad->lemmaToLearn.lits,0);
     l2 = kv_A(ad->lemmaToLearn.lits,1);
-    unsigned int lastPos1;
-    lastPos1 = kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack for same search
-    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack for same search
-    insert_binary_clause(ad->cdb, &ad->lemmaToLearn, false, lastPos1);
+    BinNode* lastNode = ad->localBinaries[lit_as_uint(-l1)]; //optimization for avoiding duplications in list
+    insert_binary_clause(ad->cdb, &ad->lemmaToLearn, false, lastNode);
     ad->lastBinaryAdded++;
     ad->rUIP.size     = 2;
     ad->rUIP.binLit   = kv_A(ad->lemmaToLearn.lits,1);
@@ -511,15 +509,26 @@ void azuDICI_backjump_to_dl(AzuDICI* ad, unsigned int dl){
   ad->model.decision_lvl = dl;
 }
 
-void azuDICI_set_true_uip(AzuDICI* ad){
-  if(ad->lemmaToLearn.size==1) {
-    ad->stats.numDlZeroLitsSinceLastRestart++;
-    ad->stats.numDLZeroLits++;
+bool azuDICI_set_true_uip(AzuDICI* ad){
+  Literal lToSetTrue;
+  if(ad->model.decision_lvl == 0){ //we have learned a unit
+    for( int i = ad->lastUnitAdded+1; i<kv_size(ad->cdb->uDB); i++){
+      lToSetTrue = kv_A(ad->cdb->uDB,i);
+      if( model_is_undef(lToSetTrue, &ad->model) ){
+	model_set_true_w_reason(lToSetTrue, ad->rUIP, &ad->model);
+	ad->stats.numDlZeroLitsSinceLastRestart++;
+	ad->stats.numDLZeroLits++;
+      }else if(model_is_false(lToSetTrue, &ad->model)){
+	return false;
+      }      
+    }
+    ad->lastUnitAdded = kv_size(ad->cdb->uDB)-1;
+  }else{
+    model_set_true_w_reason(kv_A(ad->lemmaToLearn.lits,0), ad->rUIP, &ad->model);
   }
-
-  model_set_true_w_reason(kv_A(ad->lemmaToLearn.lits,0), ad->rUIP, &ad->model);
   //conflict ends, and then we propagate
   ad->conflict.size = 0;
+  return true;
 }
 
 bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
@@ -551,7 +560,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
     Reason r;
 
     Literal l1, l2;
-    unsigned int lastPos1;
+    BinNode* lastPos1;
 
     r.size     = 1;
     r.binLit   = 0;
@@ -606,9 +615,7 @@ bool azuDICI_clause_cleanup_if_adequate(AzuDICI* ad){
 	    numBinaries++;
 	    l1 = cl->lits[0];
 	    l2 = cl->lits[1];
-	    lastPos1 = kv_A(ad->lastBinariesAdded,lit_as_uint(-l1))++; //hack
-	    kv_A(ad->lastBinariesAdded,lit_as_uint(-l2))++; //hack
-
+	    lastPos1 = ad->localBinaries[lit_as_uint(-l1)]; 
 	    insert_binary_clause(ad->cdb, &tentativeTernaryOrBinary, false, lastPos1);
 	    ad->lastBinaryAdded++;
  	  }
@@ -774,7 +781,7 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
   Literal lToSetTrue;
   unsigned int sizeOfList, litIndex;
   litIndex = lit_as_uint(l);
-  sizeOfList = kv_A(ad->lastBinariesAdded,litIndex); //hack for same search
+  sizeOfList = ad->cdb->bDB[litIndex].size;
   //  ts_vec_size(sizeOfList, list);
   Reason r;
   r.tClPtr = NULL;
@@ -806,7 +813,10 @@ bool azuDICI_propagate_w_binaries(AzuDICI* ad, Literal l){
 	return false;
       }
       binsPropagated++;
-      if(binsPropagated==sizeOfList) return true; //We just propagate the number of lits we have in our local list. This is a hack for same search.
+      if(binsPropagated==sizeOfList){
+	ad->localBinaries[litIndex] = currentNode;
+	return true; 
+      }
     }
     currentNode = currentNode->nextNode;
   }
@@ -1139,6 +1149,9 @@ void azuDICI_init_thcdb(AzuDICI* ad){
 }
 
 bool azuDICI_set_true_units(AzuDICI *ad){
+unsigned int numUnits;
+  numUnits = ad->cdb->numOriginalUnits;
+  //numUnits = ad->cdb->numUnits;
   Literal unitToSetTrue;
   Reason r;
 
@@ -1148,8 +1161,8 @@ bool azuDICI_set_true_units(AzuDICI *ad){
   r.thNClPtr = NULL;
 
   dassert(ad->model.decision_lvl==0);
-  for(int i=0;i<ad->cdb->numOriginalUnits;i++){
-    unitToSetTrue = ad->cdb->uDB[i];
+  for(int i=0;i<numUnits;i++){
+    unitToSetTrue = kv_A(ad->cdb->uDB,i);
 
     if (model_is_undef(unitToSetTrue,&ad->model)){
       //r.binLit = -unitToSetTrue;
