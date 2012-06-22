@@ -7,10 +7,9 @@
 #include "ts_vec.h"
 
 #define MAX_RANDOM_NUMBERS     10000000
+#define MAX_TERNARY_CLAUSES    0
 #define MAX_NARY_CLAUSES       5000000
 #define MAX_NARYTHREAD_CLAUSES 5000000
-//#define MIN_MEM_LIT            300
-
 
 typedef struct _cdb {
   unsigned int               numVars;
@@ -23,10 +22,15 @@ typedef struct _cdb {
   unsigned int               numNClauses;
   unsigned int               numOriginalNClauses;
   unsigned int               numInputClauses;
-
+  bool                       solved;
+  
+  kvec_t(int)*               clIndex;
+  //unsigned int*              indexSize;
+  unsigned int*              indexInputClauses;
   unsigned int               randomNumbers[MAX_RANDOM_NUMBERS];
-  Literal*                   uDB;  
+  kvec_t(Literal)            uDB;  
   BinList*                   bDB;
+  kvec_t(TClause)            tDB;
   kvec_t(NClause)            nDB;
 } ClauseDB;
 
@@ -36,9 +40,13 @@ ClauseDB* init_clause_database(unsigned int numVars, unsigned int nWorkers);
 /**/
 unsigned int add_input_literal(ClauseDB* cdb, Literal lit);
 void insert_unitary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int lastThUnit);
-void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int thLast1);
+void insert_binary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, BinNode* thLast1);
 void insert_nary_clause(ClauseDB* cdb, Clause *cl, bool isOriginal, unsigned int wId, NClause** ptrToNary, unsigned int lastThNary);
 void cleanup_database(ClauseDB* cdb);
 void vec_literal_sort(Clause *cl, unsigned int size);
+void setSolved(ClauseDB* cdb);
+bool isSolved(ClauseDB* cdb);
+//void vec_literal_sort(Litera *lits, unsigned int size);
+
 
 #endif /* _CLAUSEDB_H_ */
